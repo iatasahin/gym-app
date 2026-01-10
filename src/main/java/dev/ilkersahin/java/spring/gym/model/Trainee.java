@@ -9,8 +9,8 @@ public class Trainee extends User {
     private String address;
     private UUID userId;
 
-    public Trainee(String firstName, String lastname, String userName, String password, boolean isActive, LocalDate dateOfBirth, String address, UUID userId) {
-        super(firstName, lastname, userName, password, isActive);
+    public Trainee(String firstName, String lastName, String username, String password, boolean isActive, LocalDate dateOfBirth, String address, UUID userId) {
+        super(firstName, lastName, username, password, isActive);
         this.dateOfBirth = dateOfBirth;
         this.address = address;
         this.userId = userId;

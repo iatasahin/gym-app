@@ -28,8 +28,8 @@ public class TrainerService {
     public Trainer createTrainer(Trainer trainer) {
         trainer.setPassword(passwordGeneratorService.generate(10));
 
-        String defaultUsername = trainer.getFirstName() + "." + trainer.getLastname();
-        trainer.setUserName(defaultUsername);
+        String defaultUsername = trainer.getFirstName() + "." + trainer.getLastName();
+        trainer.setUsername(defaultUsername);
         int usernameSerialSuffix = 2;
 
         while (true) {
@@ -37,7 +37,7 @@ public class TrainerService {
                 trainer = trainerDAO.createTrainer(trainer);
                 return trainer;
             } catch (UsernameExistsException e) {
-                trainer.setUserName(defaultUsername + usernameSerialSuffix);
+                trainer.setUsername(defaultUsername + usernameSerialSuffix);
                 usernameSerialSuffix++;
             }
         }

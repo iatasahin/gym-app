@@ -18,8 +18,8 @@ public class TrainingMapStorage implements TrainingDAO {
     public Training createTraining(Training training) {
         List<Training> trainingsOnDay = trainingsByTrainingKey.putIfAbsent(
                 new Training.TrainingKey(
-                        training.getTrainerID(),
-                        training.getTraineeID(),
+                        training.getTrainerId(),
+                        training.getTraineeId(),
                         training.getTrainingDate()
                 ),
                 List.of(training)
@@ -31,9 +31,9 @@ public class TrainingMapStorage implements TrainingDAO {
     }
 
     @Override
-    public List<Training> getTraining(UUID traineeID, UUID trainerID, LocalDate trainingDate) {
+    public List<Training> getTraining(UUID traineeId, UUID trainerId, LocalDate trainingDate) {
         return trainingsByTrainingKey.getOrDefault(
-                new Training.TrainingKey(trainerID, traineeID, trainingDate),
+                new Training.TrainingKey(trainerId, traineeId, trainingDate),
                 List.of()
         );
     }

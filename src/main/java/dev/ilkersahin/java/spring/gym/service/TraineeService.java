@@ -29,8 +29,8 @@ public class TraineeService {
     public Trainee createTrainee(Trainee trainee) {
         trainee.setPassword(passwordGeneratorService.generate(10));
 
-        String defaultUsername = trainee.getFirstName() + "." + trainee.getLastname();
-        trainee.setUserName(defaultUsername);
+        String defaultUsername = trainee.getFirstName() + "." + trainee.getLastName();
+        trainee.setUsername(defaultUsername);
         int usernameSerialSuffix = 2;
 
         while (true) {
@@ -38,7 +38,7 @@ public class TraineeService {
                 trainee = traineeDAO.createTrainee(trainee);
                 return trainee;
             } catch (UsernameExistsException e) {
-                trainee.setUserName(defaultUsername + usernameSerialSuffix);
+                trainee.setUsername(defaultUsername + usernameSerialSuffix);
                 usernameSerialSuffix++;
             }
         }

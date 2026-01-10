@@ -18,8 +18,8 @@ public class TrainingService {
         this.trainingDAO = trainingDAO;
     }
 
-    public List<Training> getTraining(UUID traineeID, UUID trainerID, LocalDate trainingDate) {
-        return trainingDAO.getTraining(traineeID, trainerID, trainingDate);
+    public List<Training> getTraining(UUID traineeId, UUID trainerId, LocalDate trainingDate) {
+        return trainingDAO.getTraining(traineeId, trainerId, trainingDate);
     }
 
     public Training createTraining(Training training) {

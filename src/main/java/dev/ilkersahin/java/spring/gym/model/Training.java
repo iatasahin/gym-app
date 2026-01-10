@@ -8,22 +8,22 @@ import java.util.UUID;
 public class Training {
 
     public static record TrainingKey(
-            UUID trainerID,
-            UUID traineeID,
+            UUID trainerId,
+            UUID traineeId,
             LocalDate trainingDate
     ) {
     }
 
-    private UUID traineeID;
-    private UUID trainerID;
+    private UUID traineeId;
+    private UUID trainerId;
     private String trainingName;
     private TrainingType trainingType;
     private LocalDate trainingDate;
     private Duration trainingDuration;
 
-    public Training(UUID traineeID, UUID trainerID, String trainingName, TrainingType trainingType, LocalDate trainingDate, Duration trainingDuration) {
-        this.traineeID = traineeID;
-        this.trainerID = trainerID;
+    public Training(UUID traineeId, UUID trainerId, String trainingName, TrainingType trainingType, LocalDate trainingDate, Duration trainingDuration) {
+        this.traineeId = traineeId;
+        this.trainerId = trainerId;
         this.trainingName = trainingName;
         this.trainingType = trainingType;
         this.trainingDate = trainingDate;
@@ -33,20 +33,20 @@ public class Training {
     public Training() {
     }
 
-    public UUID getTraineeID() {
-        return traineeID;
+    public UUID getTraineeId() {
+        return traineeId;
     }
 
-    public void setTraineeID(UUID traineeID) {
-        this.traineeID = traineeID;
+    public void setTraineeId(UUID traineeId) {
+        this.traineeId = traineeId;
     }
 
-    public UUID getTrainerID() {
-        return trainerID;
+    public UUID getTrainerId() {
+        return trainerId;
     }
 
-    public void setTrainerID(UUID trainerID) {
-        this.trainerID = trainerID;
+    public void setTrainerId(UUID trainerId) {
+        this.trainerId = trainerId;
     }
 
     public String getTrainingName() {
@@ -84,8 +84,8 @@ public class Training {
     @Override
     public String toString() {
         return "Training{" +
-                "traineeID=" + traineeID +
-                ", trainerID=" + trainerID +
+                "traineeId=" + traineeId +
+                ", trainerId=" + trainerId +
                 ", trainingName='" + trainingName + '\'' +
                 ", trainingType=" + trainingType +
                 ", trainingDate=" + trainingDate +
@@ -97,8 +97,8 @@ public class Training {
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
         Training training = (Training) o;
-        return Objects.equals(traineeID, training.traineeID) &&
-                Objects.equals(trainerID, training.trainerID) &&
+        return Objects.equals(traineeId, training.traineeId) &&
+                Objects.equals(trainerId, training.trainerId) &&
                 Objects.equals(trainingName, training.trainingName) &&
                 Objects.equals(trainingType, training.trainingType) &&
                 Objects.equals(trainingDate, training.trainingDate) &&
@@ -107,6 +107,6 @@ public class Training {
 
     @Override
     public int hashCode() {
-        return Objects.hash(traineeID, trainerID, trainingName, trainingType, trainingDate, trainingDuration);
+        return Objects.hash(traineeId, trainerId, trainingName, trainingType, trainingDate, trainingDuration);
     }
 }

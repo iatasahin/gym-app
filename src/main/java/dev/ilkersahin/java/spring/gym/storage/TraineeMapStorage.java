@@ -28,21 +28,21 @@ public class TraineeMapStorage implements TraineeDAO {
 
     @Override
     public Trainee createTrainee(Trainee trainee) {
-        if (traineesByUsername.putIfAbsent(trainee.getUserName(), trainee) == null) {
+        if (traineesByUsername.putIfAbsent(trainee.getUsername(), trainee) == null) {
             return trainee;
         } else {
             throw new UsernameExistsException(
-                    "Trainee with username '%s' already exists.".formatted(trainee.getUserName())
+                    "Trainee with username '%s' already exists.".formatted(trainee.getUsername())
             );
         }
     }
 
     @Override
     public Trainee updateTrainee(Trainee trainee) {
-        Trainee traineeStored = traineesByUsername.get(trainee.getUserName());
+        Trainee traineeStored = traineesByUsername.get(trainee.getUsername());
         if(traineeStored != null){
             traineeStored.setFirstName(trainee.getFirstName());
-            traineeStored.setLastname(trainee.getLastname());
+            traineeStored.setLastName(trainee.getLastName());
             traineeStored.setDateOfBirth(trainee.getDateOfBirth());
             traineeStored.setAddress(trainee.getAddress());
             traineeStored.setActive(trainee.isActive());
@@ -50,7 +50,7 @@ public class TraineeMapStorage implements TraineeDAO {
             return traineeStored;
         }
         throw new TraineeDoesNotExistException(
-                "Trainee with Username '%s' does not exist".formatted(trainee.getUserName())
+                "Trainee with Username '%s' does not exist".formatted(trainee.getUsername())
         );
     }
 

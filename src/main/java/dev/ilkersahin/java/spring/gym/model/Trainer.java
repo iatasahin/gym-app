@@ -5,12 +5,12 @@ import java.util.UUID;
 
 public class Trainer extends User {
     private TrainingType specialization;
-    private UUID userID;
+    private UUID userId;
 
-    public Trainer(String firstName, String lastname, String userName, String password, boolean isActive, TrainingType specialization, UUID userID) {
-        super(firstName, lastname, userName, password, isActive);
+    public Trainer(String firstName, String lastName, String username, String password, boolean isActive, TrainingType specialization, UUID userId) {
+        super(firstName, lastName, username, password, isActive);
         this.specialization = specialization;
-        this.userID = userID;
+        this.userId = userId;
     }
 
     public Trainer() {
@@ -25,19 +25,19 @@ public class Trainer extends User {
         this.specialization = specialization;
     }
 
-    public UUID getUserID() {
-        return userID;
+    public UUID getUserId() {
+        return userId;
     }
 
-    public void setUserID(UUID userID) {
-        this.userID = userID;
+    public void setUserId(UUID userId) {
+        this.userId = userId;
     }
 
     @Override
     public String toString() {
         return "Trainer{" +
                 "specialization=" + specialization +
-                ", userID=" + userID +
+                ", userId=" + userId +
                 "} " + super.toString();
     }
 
@@ -46,12 +46,12 @@ public class Trainer extends User {
         if (o == null || getClass() != o.getClass()) return false;
         if (!super.equals(o)) return false;
         Trainer trainer = (Trainer) o;
-        return Objects.equals(userID, trainer.userID);
+        return Objects.equals(userId, trainer.userId);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), userID);
+        return Objects.hash(super.hashCode(), userId);
     }
 
 }

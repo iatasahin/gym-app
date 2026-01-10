@@ -4,15 +4,15 @@ import java.util.Objects;
 
 public abstract class User {
     private String firstName;
-    private String lastname;
-    private String userName;
+    private String lastName;
+    private String username;
     private String password;
     private boolean isActive;
 
-    public User(String firstName, String lastname, String userName, String password, boolean isActive) {
+    public User(String firstName, String lastName, String username, String password, boolean isActive) {
         this.firstName = firstName;
-        this.lastname = lastname;
-        this.userName = userName;
+        this.lastName = lastName;
+        this.username = username;
         this.password = password;
         this.isActive = isActive;
     }
@@ -28,20 +28,20 @@ public abstract class User {
         this.firstName = firstName;
     }
 
-    public String getLastname() {
-        return lastname;
+    public String getLastName() {
+        return lastName;
     }
 
-    public void setLastname(String lastname) {
-        this.lastname = lastname;
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
     }
 
-    public String getUserName() {
-        return userName;
+    public String getUsername() {
+        return username;
     }
 
-    public void setUserName(String userName) {
-        this.userName = userName;
+    public void setUsername(String username) {
+        this.username = username;
     }
 
     public String getPassword() {
@@ -63,9 +63,9 @@ public abstract class User {
     @Override
     public String toString() {
         return "User{" +
-                "userName='" + userName + '\'' +
-                ", lastname='" + lastname + '\'' +
+                "username='" + username + '\'' +
                 ", firstName='" + firstName + '\'' +
+                ", lastName='" + lastName + '\'' +
                 ", isActive=" + isActive +
                 '}';
     }
@@ -74,12 +74,12 @@ public abstract class User {
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
         User user = (User) o;
-        return Objects.equals(userName, user.userName);
+        return Objects.equals(username, user.username);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(userName);
+        return Objects.hashCode(username);
     }
 
 }
