@@ -6,6 +6,14 @@ import java.util.Objects;
 import java.util.UUID;
 
 public class Training {
+
+    public static record TrainingKey(
+            UUID trainerID,
+            UUID traineeID,
+            LocalDate trainingDate
+    ) {
+    }
+
     private UUID traineeID;
     private UUID trainerID;
     private String trainingName;

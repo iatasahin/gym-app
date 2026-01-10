@@ -10,5 +10,5 @@ public interface TraineeDAO {
     List<Trainee> getAllTrainees();
     Trainee createTrainee(Trainee trainee);
     Trainee updateTrainee(Trainee trainee);
-    Optional<Trainee> deleteTrainee(Trainee trainee);
+    Optional<Trainee> deleteTrainee(String traineeUsername);
 }
