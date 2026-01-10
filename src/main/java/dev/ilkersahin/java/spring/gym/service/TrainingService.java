@@ -25,4 +25,8 @@ public class TrainingService {
     public Training createTraining(Training training) {
         return trainingDAO.createTraining(training);
     }
+
+    public List<Training> getAllTrainings() {
+        return trainingDAO.getAllTrainings();
+    }
 }

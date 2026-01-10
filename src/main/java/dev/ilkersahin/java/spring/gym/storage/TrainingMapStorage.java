@@ -31,6 +31,11 @@ public class TrainingMapStorage implements TrainingDAO {
     }
 
     @Override
+    public List<Training> getAllTrainings() {
+        return trainingsByTrainingKey.values().stream().flatMap(List::stream).toList();
+    }
+
+    @Override
     public List<Training> getTraining(UUID traineeId, UUID trainerId, LocalDate trainingDate) {
         return trainingsByTrainingKey.getOrDefault(
                 new Training.TrainingKey(trainerId, traineeId, trainingDate),

@@ -9,4 +9,5 @@ import java.util.UUID;
 public interface TrainingDAO {
     List<Training> getTraining(UUID traineeID, UUID trainerID, LocalDate trainingDate);
     Training createTraining(Training training);
+    List<Training> getAllTrainings();
 }
