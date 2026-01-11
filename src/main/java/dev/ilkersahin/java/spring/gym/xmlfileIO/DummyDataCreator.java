@@ -9,6 +9,7 @@ import dev.ilkersahin.java.spring.gym.service.TrainerService;
 import dev.ilkersahin.java.spring.gym.service.TrainingService;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
@@ -16,6 +17,7 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 @Component
+@Profile("xml-write")
 public class DummyDataCreator {
     private TraineeService traineeService;
     private TrainerService trainerService;

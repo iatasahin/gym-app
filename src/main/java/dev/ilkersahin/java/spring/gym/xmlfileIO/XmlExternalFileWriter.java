@@ -11,6 +11,7 @@ import dev.ilkersahin.java.spring.gym.xmlfileIO.mapper.TraineeXmlMapper;
 import dev.ilkersahin.java.spring.gym.xmlfileIO.mapper.TrainerXmlMapper;
 import dev.ilkersahin.java.spring.gym.xmlfileIO.mapper.TrainingXmlMapper;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.io.WritableResource;
@@ -23,6 +24,7 @@ import java.io.OutputStream;
 import java.util.List;
 
 @Component
+@Profile("xml-write")
 public class XmlExternalFileWriter {
 
     @Value("${gymapp.file.storage.path}")
