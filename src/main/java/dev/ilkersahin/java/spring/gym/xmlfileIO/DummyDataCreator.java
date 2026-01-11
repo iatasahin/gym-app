@@ -8,6 +8,8 @@ import dev.ilkersahin.java.spring.gym.service.TraineeService;
 import dev.ilkersahin.java.spring.gym.service.TrainerService;
 import dev.ilkersahin.java.spring.gym.service.TrainingService;
 import jakarta.annotation.PostConstruct;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
@@ -19,6 +21,8 @@ import java.util.UUID;
 @Component
 @Profile("xml-write")
 public class DummyDataCreator {
+    private static final Logger log = LoggerFactory.getLogger(DummyDataCreator.class);
+
     private TraineeService traineeService;
     private TrainerService trainerService;
     private TrainingService trainingService;
@@ -37,6 +41,9 @@ public class DummyDataCreator {
 
     @PostConstruct
     public void initializeTheExternalDataFile(){
+
+        log.info("xml-write profile active → generating dummy data");
+
         Trainer trainer1 = new Trainer(
                 "Tom", "Smith",
                 null, null,
@@ -92,17 +99,17 @@ public class DummyDataCreator {
         trainingService.createTraining(training2);
         trainingService.createTraining(training3);
 
-        System.out.println("trainerService = " + trainerService.getAllTrainers());
-
-        System.out.println("traineeService = " + traineeService.getAllTrainees());
-
-        System.out.println("trainingService.getAllTrainings() = " + trainingService.getAllTrainings());
-
+        log.info("Dummy data created");
+        log.debug("Trainers: {}", trainerService.getAllTrainers().stream().map(Trainer::getUsername).toList());
+        log.debug("Trainees: {}", traineeService.getAllTrainees().stream().map(Trainee::getUsername).toList());
+        log.debug("Trainings: {}", trainingService.getAllTrainings());
 
         xmlExternalFileWriter.writeToXml(
                 trainerService.getAllTrainers(),
                 traineeService.getAllTrainees(),
                 trainingService.getAllTrainings()
         );
+
+        log.info("XML generation finished");
     }
 }

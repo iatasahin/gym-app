@@ -10,6 +10,8 @@ import dev.ilkersahin.java.spring.gym.xmlfileIO.dto.TrainingXml;
 import dev.ilkersahin.java.spring.gym.xmlfileIO.mapper.TraineeXmlMapper;
 import dev.ilkersahin.java.spring.gym.xmlfileIO.mapper.TrainerXmlMapper;
 import dev.ilkersahin.java.spring.gym.xmlfileIO.mapper.TrainingXmlMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
@@ -27,6 +29,8 @@ import java.util.List;
 @Profile("xml-write")
 public class XmlExternalFileWriter {
 
+    private static final Logger log = LoggerFactory.getLogger(XmlExternalFileWriter.class);
+
     @Value("${gymapp.file.storage.path}")
     private String path;
 
@@ -40,6 +44,11 @@ public class XmlExternalFileWriter {
 
     void writeToXml(List<Trainer> trainers, List<Trainee> trainees, List<Training> trainings) {
 
+        log.info("Writing XML to {}", path);
+        log.debug("Trainers: {}", trainers.stream().map(Trainer::getUsername).toList());
+        log.debug("Trainees: {}", trainees.stream().map(Trainee::getUsername).toList());
+        log.debug("Trainings: {}", trainings);
+
         List<TrainerXml> trainerXmls = trainers.stream().map(TrainerXmlMapper::toXml).toList();
         List<TraineeXml> traineeXmls = trainees.stream().map(TraineeXmlMapper::toXml).toList();
         List<TrainingXml> trainingXmls = trainings.stream().map(TrainingXmlMapper::toXml).toList();
@@ -52,6 +61,7 @@ public class XmlExternalFileWriter {
         Resource resource = resourceLoader.getResource(path);
 
         if(!(resource instanceof WritableResource writable)){
+            log.error("File at {} is not writable", path);
             throw new IllegalStateException(
                     "Resource is not writable: " + path
             );
@@ -60,6 +70,7 @@ public class XmlExternalFileWriter {
         try(OutputStream outputStream = writable.getOutputStream()) {
             marshaller.marshal(root, new StreamResult(outputStream));
         } catch (IOException e) {
+            log.error("Failed to write XML at {}", path);
             throw new RuntimeException("Failed to write XML", e);
         }
     }
