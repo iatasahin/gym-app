@@ -3,6 +3,8 @@ package dev.ilkersahin.java.spring.gym.service;
 import dev.ilkersahin.java.spring.gym.dao.TraineeDAO;
 import dev.ilkersahin.java.spring.gym.exception.UsernameExistsException;
 import dev.ilkersahin.java.spring.gym.model.Trainee;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -11,6 +13,7 @@ import java.util.Optional;
 
 @Service
 public class TraineeService {
+    private static final Logger log = LoggerFactory.getLogger(TraineeService.class);
 
     private TraineeDAO traineeDAO;
     private PasswordGeneratorService passwordGeneratorService;
@@ -27,6 +30,8 @@ public class TraineeService {
 
 
     public Trainee createTrainee(Trainee trainee) {
+        log.info("Creating trainee {} {}", trainee.getFirstName(), trainee.getLastName());
+
         trainee.setPassword(passwordGeneratorService.generate(10));
 
         String defaultUsername = trainee.getFirstName() + "." + trainee.getLastName();
@@ -35,9 +40,13 @@ public class TraineeService {
 
         while (true) {
             try {
-                trainee = traineeDAO.createTrainee(trainee);
-                return trainee;
+                Trainee saved = traineeDAO.createTrainee(trainee);
+                log.info("Trainee created with username '{}'", saved.getUsername());
+                return saved;
             } catch (UsernameExistsException e) {
+                log.warn("Trainee with Username '{}' already exists — trying '{}{}'",
+                        trainee.getUsername(), defaultUsername, usernameSerialSuffix
+                );
                 trainee.setUsername(defaultUsername + usernameSerialSuffix);
                 usernameSerialSuffix++;
             }
@@ -45,18 +54,22 @@ public class TraineeService {
     }
 
     public Trainee updateTrainee(Trainee trainee) {
+        log.info("Updating trainee '{}'", trainee.getUsername());
         return traineeDAO.updateTrainee(trainee);
     }
 
     public Optional<Trainee> deleteTrainee(String traineeUsername) {
+        log.info("Deleting trainee '{}'", traineeUsername);
         return traineeDAO.deleteTrainee(traineeUsername);
     }
 
-    public Optional<Trainee> getTrainee(String userName) {
-        return traineeDAO.getTrainee(userName);
+    public Optional<Trainee> getTrainee(String username) {
+        log.debug("Fetching trainee '{}'", username);
+        return traineeDAO.getTrainee(username);
     }
 
     public List<Trainee> getAllTrainees() {
+        log.debug("Fetching all trainees");
         return traineeDAO.getAllTrainees();
     }
 }
