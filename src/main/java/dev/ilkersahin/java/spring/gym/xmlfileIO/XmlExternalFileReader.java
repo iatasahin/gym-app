@@ -8,6 +8,8 @@ import dev.ilkersahin.java.spring.gym.xmlfileIO.mapper.TraineeXmlMapper;
 import dev.ilkersahin.java.spring.gym.xmlfileIO.mapper.TrainerXmlMapper;
 import dev.ilkersahin.java.spring.gym.xmlfileIO.mapper.TrainingXmlMapper;
 import jakarta.annotation.PostConstruct;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
@@ -22,6 +24,8 @@ import java.io.InputStream;
 @Component
 @Profile("xml-read")
 public class XmlExternalFileReader {
+
+    private static final Logger log = LoggerFactory.getLogger(XmlExternalFileReader.class);
 
     @Value("${gymapp.file.storage.path}")
     private String path;
@@ -44,11 +48,8 @@ public class XmlExternalFileReader {
     @PostConstruct
     void readFromXml() {
 
-        System.out.println("trainerService = " + trainerService.getAllTrainers());
-        System.out.println("traineeService = " + traineeService.getAllTrainees());
-        System.out.println("trainingService = " + trainingService.getAllTrainings());
-
-        System.out.println("------- Before file read -------");
+        log.info("xml-read profile active → reading data from file");
+        log.info("Loading XML from {}", path);
 
         Resource resource = resourceLoader.getResource(path);
 
@@ -71,9 +72,10 @@ public class XmlExternalFileReader {
                 .map(TrainingXmlMapper::toDomain)
                 .forEach(trainingService::createTraining);
 
-        System.out.println("------- After file read --------");
-        System.out.println("trainerService = " + trainerService.getAllTrainers());
-        System.out.println("traineeService = " + traineeService.getAllTrainees());
-        System.out.println("trainingService = " + trainingService.getAllTrainings());
+        log.info("Loaded {} trainers, {} trainees, {} trainings",
+                trainerService.getAllTrainers().size(),
+                traineeService.getAllTrainees().size(),
+                trainingService.getAllTrainings().size()
+        );
     }
 }
