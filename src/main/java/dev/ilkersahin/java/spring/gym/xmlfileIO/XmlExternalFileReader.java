@@ -9,6 +9,7 @@ import dev.ilkersahin.java.spring.gym.xmlfileIO.mapper.TrainerXmlMapper;
 import dev.ilkersahin.java.spring.gym.xmlfileIO.mapper.TrainingXmlMapper;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.oxm.Unmarshaller;
@@ -19,6 +20,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 @Component
+@Profile("xml-read")
 public class XmlExternalFileReader {
 
     @Value("${gymapp.file.storage.path}")
