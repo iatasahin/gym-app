@@ -131,6 +131,12 @@
                                     </limits>
                                 </rule>
                             </rules>
+                            <excludes>
+                                <exclude>dev/ilkersahin/java/spring/gym/xmlfileIO/**</exclude>
+                                <exclude>dev/ilkersahin/java/spring/gym/config/**</exclude>
+                                <exclude>dev/ilkersahin/java/spring/gym/model/**</exclude>
+                                <exclude>dev/ilkersahin/java/spring/gym/SpringGymApplication.class</exclude>
+                            </excludes>
                         </configuration>
                     </execution>
                 </executions>
