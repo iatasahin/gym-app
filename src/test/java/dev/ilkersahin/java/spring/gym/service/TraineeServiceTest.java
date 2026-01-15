@@ -1,12 +1,12 @@
 package dev.ilkersahin.java.spring.gym.service;
 
 import dev.ilkersahin.java.spring.gym.dao.TraineeDAO;
+import dev.ilkersahin.java.spring.gym.exception.TraineeDoesNotExistException;
 import dev.ilkersahin.java.spring.gym.exception.UsernameExistsException;
 import dev.ilkersahin.java.spring.gym.model.Trainee;
 import dev.ilkersahin.java.spring.gym.service.util.PasswordGeneratorService;
 import dev.ilkersahin.java.spring.gym.service.util.UserCreationService;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -16,6 +16,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class TraineeServiceTest {
     private TraineeService service;
     private TraineeDAO traineeDAO;
@@ -39,131 +40,371 @@ public class TraineeServiceTest {
         Trainee t = new Trainee();
         t.setFirstName("Jack");
         t.setLastName("Black");
-        t.setDateOfBirth(LocalDate.of(1990,1,1));
+        t.setDateOfBirth(LocalDate.of(1990, 1, 1));
         t.setUserId(UUID.randomUUID());
+        t.setAddress("123 Main Street");
+        t.setActive(true);
         return t;
     }
 
-    @Test
-    void createsTraineeWithGeneratedPasswordAndDefaultUsername() {
-        Trainee t = sample();
-
-        when(passwordService.generate(10)).thenReturn("secretPass");
-        when(traineeDAO.createTrainee(any()))
-                .thenAnswer(inv -> inv.getArgument(0));
-
-        Trainee saved = service.createTrainee(t);
-
-        assertThat(saved.getPassword()).isEqualTo("secretPass");
-        assertThat(saved.getUsername()).isEqualTo("Jack.Black");
+    private Trainee sample(String firstName, String lastName) {
+        Trainee t = new Trainee();
+        t.setFirstName(firstName);
+        t.setLastName(lastName);
+        t.setDateOfBirth(LocalDate.of(1990, 1, 1));
+        t.setAddress("123 Main Street");
+        t.setUserId(UUID.randomUUID());
+        t.setActive(true);
+        return t;
     }
 
+    // === CREATE TRAINEE TESTS ===
 
     @Test
-    void appendsNumberWhenUsernameExists() {
-        Trainee t = sample();
+    @Order(101)
+    void createTrainee_withValidTrainee_shouldGeneratePasswordAndDefaultUsername() {
+        Trainee trainee = sample();
 
         when(passwordService.generate(10)).thenReturn("secretPass");
-
-        when(traineeDAO.createTrainee(any()))
-                .thenThrow(new UsernameExistsException(""))
+        when(traineeDAO.createTrainee(any(Trainee.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
 
-        Trainee saved = service.createTrainee(t);
+        Trainee result = service.createTrainee(trainee);
 
-        assertThat(saved.getUsername()).isEqualTo("Jack.Black2");
+        assertThat(result.getPassword()).isEqualTo("secretPass");
+        assertThat(result.getUsername()).isEqualTo("Jack.Black");
+        verify(passwordService).generate(10);
+        verify(traineeDAO).createTrainee(trainee);
     }
 
     @Test
-    void retriesUntilUniqueUsernameFound() {
-        Trainee t = sample();
+    @Order(102)
+    void createTrainee_withDuplicateUsername_shouldGenerateUniqueUsername() {
+        Trainee trainee = sample();
+
+        when(passwordService.generate(10)).thenReturn("secretPass");
+
+        when(traineeDAO.createTrainee(any(Trainee.class)))
+                .thenThrow(new UsernameExistsException("Username already exists"))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        Trainee result = service.createTrainee(trainee);
+
+        assertThat(result.getUsername()).isEqualTo("Jack.Black2");
+        assertThat(result.getPassword()).isEqualTo("secretPass");
+        verify(traineeDAO, times(2)).createTrainee(any(Trainee.class));
+    }
+
+    @Test
+    @Order(103)
+    void createTrainee_withMultipleDuplicateUsernames_shouldIncrementUsernameSerially() {
+        Trainee trainee = sample();
 
         when(passwordService.generate(10)).thenReturn("pw");
 
         when(traineeDAO.createTrainee(any()))
-                .thenThrow(new UsernameExistsException(""))
-                .thenThrow(new UsernameExistsException(""))
+                .thenThrow(new UsernameExistsException("Username already exists"))
+                .thenThrow(new UsernameExistsException("Username already exists"))
                 .thenAnswer(inv -> inv.getArgument(0));
 
-        Trainee saved = service.createTrainee(t);
+        Trainee result = service.createTrainee(trainee);
 
-        assertThat(saved.getUsername()).isEqualTo("Jack.Black3");
-        verify(traineeDAO, times(3)).createTrainee(any());
+        assertThat(result.getUsername()).isEqualTo("Jack.Black3");
+        verify(traineeDAO, times(3)).createTrainee(any(Trainee.class));
     }
 
     @Test
-    void updateTraineeDelegatesToDao() {
-        Trainee t = sample();
-        t.setUsername("Jack.Black");
+    @Order(104)
+    void createTrainee_withSpecialCharactersInName_shouldGenerateValidUsername() {
+        Trainee trainee = sample("Jack-John", "O'Black");
 
-        when(traineeDAO.updateTrainee(t)).thenReturn(t);
+        when(passwordService.generate(10)).thenReturn("secretPass");
+        when(traineeDAO.createTrainee(any(Trainee.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
 
-        Trainee updated = service.updateTrainee(t);
+        Trainee result = service.createTrainee(trainee);
 
-        assertThat(updated).isSameAs(t);
-        verify(traineeDAO).updateTrainee(t);
+        assertThat(result.getUsername()).isEqualTo("Jack-John.O'Black");
+        assertThat(result.getPassword()).isEqualTo("secretPass");
     }
 
-    @Test
-    void deleteTraineeDelegatesToDao() {
-        Trainee t = sample();
-        t.setUsername("Jack.Black");
-
-        when(traineeDAO.deleteTrainee("Jack.Black"))
-                .thenReturn(Optional.of(t));
-
-        Optional<Trainee> result = service.deleteTrainee("Jack.Black");
-
-        assertThat(result).contains(t);
-        verify(traineeDAO).deleteTrainee("Jack.Black");
-    }
+    // === GET TRAINEE TESTS ===
 
     @Test
-    void deleteTraineeReturnsEmptyWhenNotFound() {
-        when(traineeDAO.deleteTrainee("missing"))
-                .thenReturn(Optional.empty());
-
-        Optional<Trainee> result = service.deleteTrainee("missing");
-
-        assertThat(result).isEmpty();
-    }
-
-    @Test
-    void getTraineeDelegatesToDao() {
-        Trainee t = sample();
-        t.setUsername("Jack.Black");
+    @Order(201)
+    void getTrainee_withExistingUsername_shouldReturnTrainee() {
+        Trainee trainee = sample();
+        trainee.setUsername("Jack.Black");
 
         when(traineeDAO.getTrainee("Jack.Black"))
-                .thenReturn(Optional.of(t));
+                .thenReturn(Optional.of(trainee));
 
         Optional<Trainee> result = service.getTrainee("Jack.Black");
 
-        assertThat(result).contains(t);
+        assertThat(result)
+                .isPresent()
+                .contains(trainee);
         verify(traineeDAO).getTrainee("Jack.Black");
     }
 
     @Test
-    void getTraineeReturnsEmptyWhenMissing() {
-        when(traineeDAO.getTrainee("missing"))
+    @Order(202)
+    void getTrainee_withNonExistentUsername_shouldReturnEmpty() {
+        when(traineeDAO.getTrainee("non.existent"))
                 .thenReturn(Optional.empty());
 
-        assertThat(service.getTrainee("missing")).isEmpty();
+        Optional<Trainee> result = service.getTrainee("non.existent");
+
+        assertThat(result).isEmpty();
+        verify(traineeDAO).getTrainee("non.existent");
     }
 
     @Test
-    void getAllTraineesDelegatesToDao() {
-        Trainee t1 = sample();
-        Trainee t2 = sample();
+    @Order(203)
+    void getTrainee_withNullUsername_shouldDelegateToDAO() {
+        when(traineeDAO.getTrainee(null)).thenReturn(Optional.empty());
+
+        Optional<Trainee> result = service.getTrainee(null);
+
+        assertThat(result).isEmpty();
+        verify(traineeDAO).getTrainee(null);
+    }
+
+    @Test
+    @Order(204)
+    void getTrainee_withEmptyUsername_shouldDelegateToDAO() {
+        when(traineeDAO.getTrainee("")).thenReturn(Optional.empty());
+
+        Optional<Trainee> result = service.getTrainee("");
+
+        assertThat(result).isEmpty();
+        verify(traineeDAO).getTrainee("");
+    }
+
+    // === UPDATE TRAINEE TESTS ===
+
+    @Test
+    @Order(301)
+    void updateTrainee_withValidTrainee_shouldDelegateToDAO() {
+        Trainee trainee = sample();
+        trainee.setUsername("Jack.Black");
+
+        when(traineeDAO.updateTrainee(trainee)).thenReturn(trainee);
+
+        Trainee result = service.updateTrainee(trainee);
+
+        assertThat(result).isSameAs(trainee);
+        verify(traineeDAO).updateTrainee(trainee);
+    }
+
+    @Test
+    @Order(302)
+    void updateTrainee_withNonExistentTrainee_shouldThrowException() {
+        Trainee trainee = sample();
+        trainee.setUsername("non.existent");
+
+        when(traineeDAO.updateTrainee(trainee))
+                .thenThrow(new TraineeDoesNotExistException("Trainee does not exist"));
+
+        assertThatThrownBy(() -> service.updateTrainee(trainee))
+                .isInstanceOf(TraineeDoesNotExistException.class)
+                .hasMessageContaining("Trainee does not exist");
+
+        verify(traineeDAO).updateTrainee(trainee);
+    }
+
+    @Test
+    @Order(303)
+    void updateTrainee_shouldPreserveTraineeReference() {
+        Trainee originalTrainee = sample();
+        originalTrainee.setUsername("Jack.Black");
+        originalTrainee.setFirstName("UpdatedJack");
+
+        when(traineeDAO.updateTrainee(originalTrainee)).thenReturn(originalTrainee);
+
+        Trainee result = service.updateTrainee(originalTrainee);
+
+        assertThat(result).isSameAs(originalTrainee);
+        assertThat(result.getFirstName()).isEqualTo("UpdatedJack");
+    }
+
+    // === DELETE TRAINEE TESTS ===
+
+    @Test
+    @Order(401)
+    void deleteTrainee_withExistingUsername_shouldReturnDeletedTrainee() {
+        Trainee trainee = sample();
+        trainee.setUsername("Jack.Black");
+
+        when(traineeDAO.deleteTrainee("Jack.Black"))
+                .thenReturn(Optional.of(trainee));
+
+        Optional<Trainee> result = service.deleteTrainee("Jack.Black");
+
+        assertThat(result)
+                .isPresent()
+                .contains(trainee);
+        verify(traineeDAO).deleteTrainee("Jack.Black");
+    }
+
+    @Test
+    @Order(402)
+    void deleteTrainee_withNonExistentUsername_shouldReturnEmpty() {
+        when(traineeDAO.deleteTrainee("non.existent"))
+                .thenReturn(Optional.empty());
+
+        Optional<Trainee> result = service.deleteTrainee("non.existent");
+
+        assertThat(result).isEmpty();
+        verify(traineeDAO).deleteTrainee("non.existent");
+    }
+
+    @Test
+    @Order(403)
+    void deleteTrainee_withNullUsername_shouldDelegateToDAO() {
+        when(traineeDAO.deleteTrainee(null)).thenReturn(Optional.empty());
+
+        Optional<Trainee> result = service.deleteTrainee(null);
+
+        assertThat(result).isEmpty();
+        verify(traineeDAO).deleteTrainee(null);
+    }
+
+    @Test
+    @Order(404)
+    void deleteTrainee_withEmptyUsername_shouldDelegateToDAO() {
+        when(traineeDAO.deleteTrainee("")).thenReturn(Optional.empty());
+
+        Optional<Trainee> result = service.deleteTrainee("");
+
+        assertThat(result).isEmpty();
+        verify(traineeDAO).deleteTrainee("");
+    }
+
+    // === GET ALL TRAINEES TESTS ===
+
+    @Test
+    @Order(501)
+    void getAllTrainees_withExistingTrainees_shouldReturnAllTrainees() {
+        Trainee trainee1 = sample("John", "Doe");
+        Trainee trainee2 = sample("Jane", "Smith");
 
         when(traineeDAO.getAllTrainees())
-                .thenReturn(List.of(t1, t2));
+                .thenReturn(List.of(trainee1, trainee2));
 
         List<Trainee> result = service.getAllTrainees();
 
         assertThat(result)
                 .hasSize(2)
-                .containsExactly(t1, t2);
+                .containsExactly(trainee1, trainee2);
 
         verify(traineeDAO).getAllTrainees();
+    }
+
+
+    @Test
+    @Order(502)
+    void getAllTrainees_withEmptyRepository_shouldReturnEmptyList() {
+        when(traineeDAO.getAllTrainees()).thenReturn(List.of());
+
+        List<Trainee> result = service.getAllTrainees();
+
+        assertThat(result).isEmpty();
+        verify(traineeDAO).getAllTrainees();
+    }
+
+    @Test
+    @Order(503)
+    void getAllTrainees_shouldPreserveTraineeOrder() {
+        Trainee trainee1 = sample("Alpha", "Trainee");
+        Trainee trainee2 = sample("Beta", "Trainee");
+        Trainee trainee3 = sample("Gamma", "Trainee");
+
+        when(traineeDAO.getAllTrainees()).thenReturn(List.of(trainee1, trainee2, trainee3));
+
+        List<Trainee> result = service.getAllTrainees();
+
+        assertThat(result).containsExactly(trainee1, trainee2, trainee3);
+    }
+
+    // === INTEGRATION TESTS ===
+
+    @Test
+    @Order(601)
+    void createAndRetrieveTrainee_shouldMaintainDataConsistency() {
+        Trainee trainee = sample();
+
+        // Setup create operation
+        when(passwordService.generate(10)).thenReturn("secretPass");
+        when(traineeDAO.createTrainee(any(Trainee.class)))
+                .thenAnswer(invocation -> {
+                    Trainee t = invocation.getArgument(0);
+                    t.setUsername("Jack.Black");
+                    return t;
+                });
+
+        // Setup get operation
+        when(traineeDAO.getTrainee("Jack.Black")).thenReturn(Optional.of(trainee));
+
+        // Execute operations
+        Trainee created = service.createTrainee(trainee);
+        Optional<Trainee> retrieved = service.getTrainee("Jack.Black");
+
+        // Verify consistency
+        assertThat(created.getUsername()).isEqualTo("Jack.Black");
+        assertThat(created.getPassword()).isEqualTo("secretPass");
+        assertThat(retrieved).isPresent().contains(trainee);
+    }
+
+    @Test
+    @Order(602)
+    void createUpdateDeleteAndRetrieve_shouldMaintainDataConsistency() {
+        Trainee trainee = sample();
+
+        // Setup create
+        when(passwordService.generate(10)).thenReturn("password123");
+        when(traineeDAO.createTrainee(any(Trainee.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        // Setup update
+        when(traineeDAO.updateTrainee(any(Trainee.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        // Setup delete
+        when(traineeDAO.deleteTrainee("Jack.Black")).thenReturn(Optional.of(trainee));
+
+        // Execute full lifecycle
+        Trainee created = service.createTrainee(trainee);
+        created.setFirstName("UpdatedJack");
+        Trainee updated = service.updateTrainee(created);
+        Optional<Trainee> deleted = service.deleteTrainee("Jack.Black");
+
+        // Verify lifecycle
+        assertThat(created.getUsername()).isEqualTo("Jack.Black");
+        assertThat(updated.getFirstName()).isEqualTo("UpdatedJack");
+        assertThat(deleted).isPresent().contains(trainee);
+    }
+
+    @Test
+    @Order(603)
+    void dependencyInjection_shouldWorkCorrectly() {
+        TraineeService newService = new TraineeService();
+        TraineeDAO mockDAO = mock(TraineeDAO.class);
+        UserCreationService mockUserCreationService = mock(UserCreationService.class);
+
+        newService.setTraineeDAO(mockDAO);
+        newService.setUserCreationService(mockUserCreationService);
+
+        // Verify DAO injection
+        when(mockDAO.getAllTrainees()).thenReturn(List.of());
+        List<Trainee> result = newService.getAllTrainees();
+        assertThat(result).isEmpty();
+        verify(mockDAO).getAllTrainees();
+
+        // Verify UserCreationService injection
+        Trainee trainee = sample();
+        when(mockUserCreationService.createUser(any(), any(), any())).thenReturn(trainee);
+        newService.createTrainee(trainee);
+        verify(mockUserCreationService).createUser(eq(trainee), any(), eq("Trainee"));
     }
 }
