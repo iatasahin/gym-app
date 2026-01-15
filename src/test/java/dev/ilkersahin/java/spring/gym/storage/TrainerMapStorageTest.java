@@ -7,6 +7,8 @@ import dev.ilkersahin.java.spring.gym.model.TrainingType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.*;
@@ -30,18 +32,22 @@ public class TrainerMapStorageTest {
         return t;
     }
 
-    @Test
-    void createAndGetTrainer() {
-        Trainer t = sample("tom.smith");
-        storage.createTrainer(t);
+    // === CREATE TRAINER TESTS ===
 
+    @Test
+    void createTrainer_withValidTrainer_shouldStoreAndReturnTrainer() {
+        Trainer trainer = sample("tom.smith");
+
+        Trainer result = storage.createTrainer(trainer);
+
+        assertThat(result).isEqualTo(trainer);
         assertThat(storage.getTrainer("tom.smith"))
                 .isPresent()
-                .contains(t);
+                .contains(trainer);
     }
 
     @Test
-    void creatingDuplicateUsernameThrows() {
+    void createTrainer_withDuplicateUsername_shouldThrowUsernameExistsException() {
         storage.createTrainer(sample("tom.smith"));
 
         assertThatThrownBy(() -> storage.createTrainer(sample("tom.smith")))
@@ -49,32 +55,121 @@ public class TrainerMapStorageTest {
     }
 
     @Test
-    void updateExistingTrainer() {
-        Trainer t = sample("tom.smith");
-        storage.createTrainer(t);
+    void createTrainer_withNullUsername_shouldThrowException() {
+        Trainer trainer = sample(null);
 
-        t.setFirstName("Updated");
-        Trainer updated = storage.updateTrainer(t);
+        assertThatThrownBy(() -> storage.createTrainer(trainer))
+                .isInstanceOf(NullPointerException.class);
+    }
 
-        assertThat(updated.getFirstName()).isEqualTo("Updated");
+    // === GET TRAINER TESTS ===
+
+    @Test
+    void getTrainer_withExistingUsername_shouldReturnTrainer() {
+        Trainer trainer = sample("tom.smith");
+        storage.createTrainer(trainer);
+
+        Optional<Trainer> result = storage.getTrainer("tom.smith");
+
+        assertThat(result)
+                .isPresent()
+                .contains(trainer);
     }
 
     @Test
-    void updatingMissingTrainerThrows() {
-        assertThatThrownBy(() -> storage.updateTrainer(sample("missing")))
-                .isInstanceOf(TrainerDoesNotExistException.class);
+    void getTrainer_withNonExistentUsername_shouldReturnEmpty(){
+        assertThat(storage.getTrainer("non.existent")).isEmpty();
+    }
+
+    // === UPDATE TRAINER TESTS ===
+
+    @Test
+    void updateTrainer_withExistingTrainer_shouldUpdateAndReturnModifiedTrainer() {
+        Trainer originalTrainer = sample("tom.smith");
+        storage.createTrainer(originalTrainer);
+
+        originalTrainer.setFirstName("UpdatedTom");
+        originalTrainer.setLastName("UpdatedSmith");
+        originalTrainer.setActive(false);
+
+        Trainer result = storage.updateTrainer(originalTrainer);
+
+        assertThat(result.getFirstName()).isEqualTo("UpdatedTom");
+        assertThat(result.getLastName()).isEqualTo("UpdatedSmith");
+        assertThat(result.isActive()).isFalse();
+        assertThat(result.getUsername()).isEqualTo("tom.smith"); // Username should remain unchanged
+        assertThat(result.getSpecialization()).isEqualTo(TrainingType.FITNESS); // Specialization should remain unchanged
     }
 
     @Test
-    void gettingMissingTrainerReturnsEmpty(){
-        assertThat(storage.getTrainer("missing")).isEmpty();
+    void updateTrainer_withNonExistentTrainer_shouldThrowTrainerDoesNotExistException() {
+        assertThatThrownBy(() -> storage.updateTrainer(sample("non.existent")))
+                .isInstanceOf(TrainerDoesNotExistException.class)
+                .hasMessageContaining( "Trainer with Username 'non.existent' does not exist");
+    }
+
+    // === GET ALL TRAINERS TESTS ===
+
+    @Test
+    void getAllTrainers_withEmptyStorage_shouldReturnEmptyList() {
+        List<Trainer> result = storage.getAllTrainers();
+
+        assertThat(result).isEmpty();
     }
 
     @Test
-    void getAllTrainers() {
-        storage.createTrainer(sample("a"));
-        storage.createTrainer(sample("b"));
+    void getAllTrainers_withMultipleTrainers_shouldReturnAllTrainers() {
+        Trainer trainer1 = sample("trainer1");
+        Trainer trainer2 = sample("trainer2");
+        Trainer trainer3 = sample("trainer3");
 
-        assertThat(storage.getAllTrainers()).hasSize(2);
+        storage.createTrainer(trainer1);
+        storage.createTrainer(trainer2);
+        storage.createTrainer(trainer3);
+
+        List<Trainer> result = storage.getAllTrainers();
+
+        assertThat(result)
+                .hasSize(3)
+                .containsExactlyInAnyOrder(trainer1, trainer2, trainer3);
+    }
+
+    @Test
+    void getAllTrainers_afterUpdatingTrainer_shouldReturnUpdatedTrainer() {
+        Trainer trainer = sample("tom.smith");
+        storage.createTrainer(trainer);
+
+        trainer.setFirstName("Updated");
+        storage.updateTrainer(trainer);
+
+        List<Trainer> result = storage.getAllTrainers();
+
+        assertThat(result).hasSize(1);
+        assertThat(result.getFirst().getFirstName()).isEqualTo("Updated");
+    }
+
+    // === INTEGRATION TESTS ===
+
+    @Test
+    void createUpdateAndRetrieve_shouldMaintainDataConsistency() {
+        // Create
+        Trainer trainer = sample("integration.test");
+        storage.createTrainer(trainer);
+
+        // Update
+        trainer.setFirstName("IntegrationUpdated");
+        trainer.setActive(false);
+        storage.updateTrainer(trainer);
+
+        // Retrieve and verify
+        Optional<Trainer> retrieved = storage.getTrainer("integration.test");
+        assertThat(retrieved).isPresent();
+        assertThat(retrieved.get().getFirstName()).isEqualTo("IntegrationUpdated");
+        assertThat(retrieved.get().isActive()).isFalse();
+
+        // Verify in getAllTrainers
+        List<Trainer> allTrainers = storage.getAllTrainers();
+        assertThat(allTrainers).hasSize(1);
+        assertThat(allTrainers.getFirst().getFirstName()).isEqualTo("IntegrationUpdated");
     }
 }
