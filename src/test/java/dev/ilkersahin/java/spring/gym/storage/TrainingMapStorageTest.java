@@ -2,8 +2,7 @@ package dev.ilkersahin.java.spring.gym.storage;
 
 import dev.ilkersahin.java.spring.gym.model.Training;
 import dev.ilkersahin.java.spring.gym.model.TrainingType;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
 import java.time.Duration;
 import java.time.LocalDate;
@@ -12,6 +11,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.*;
 
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class TrainingMapStorageTest {
     private TrainingMapStorage storage;
 
@@ -63,6 +63,7 @@ public class TrainingMapStorageTest {
     // === CREATE TRAINING TESTS ===
 
     @Test
+    @Order(101)
     void createTraining_withValidTraining_shouldStoreAndReturnTraining() {
         Training training = sample();
 
@@ -76,6 +77,7 @@ public class TrainingMapStorageTest {
     }
 
     @Test
+    @Order(102)
     void createTraining_withMultipleTrainingsSameKey_shouldStoreAllTrainings() {
         Training training1 = sample("Morning Workout", TrainingType.FITNESS, Duration.ofMinutes(60));
         Training training2 = sample("Evening Workout", TrainingType.FITNESS, Duration.ofMinutes(45));
@@ -90,6 +92,7 @@ public class TrainingMapStorageTest {
     }
 
     @Test
+    @Order(103)
     void createTraining_withDifferentKeys_shouldStoreSeparately() {
         Training training1 = sample(traineeId, trainerId, trainingDate);
         Training training2 = sample(differentTraineeId, trainerId, trainingDate);
@@ -116,6 +119,7 @@ public class TrainingMapStorageTest {
     }
 
     @Test
+    @Order(104)
     void createTraining_withNullTraineeId_shouldThrowException() {
         assertThatThrownBy(() -> storage.createTraining(new Training(
                 null,
@@ -128,6 +132,7 @@ public class TrainingMapStorageTest {
     }
 
     @Test
+    @Order(105)
     void createTraining_withNullTrainerId_shouldThrowException() {
         assertThatThrownBy(() -> storage.createTraining(new Training(
                 traineeId,
@@ -140,6 +145,7 @@ public class TrainingMapStorageTest {
     }
 
     @Test
+    @Order(106)
     void createTraining_withNullTrainingDate_shouldThrowException() {
         assertThatThrownBy(() -> storage.createTraining(new Training(
                 traineeId,
@@ -154,6 +160,7 @@ public class TrainingMapStorageTest {
     // === GET TRAINING TESTS ===
 
     @Test
+    @Order(201)
     void getTraining_withExistingKey_shouldReturnAllTrainingsForKey() {
         Training training = sample();
         storage.createTraining(training);
@@ -166,6 +173,7 @@ public class TrainingMapStorageTest {
     }
 
     @Test
+    @Order(202)
     void getTraining_withNonExistentKey_shouldReturnEmptyList() {
         List<Training> result = storage.getTraining(
                 UUID.randomUUID(),
@@ -177,6 +185,7 @@ public class TrainingMapStorageTest {
     }
 
     @Test
+    @Order(203)
     void getTraining_withNullTraineeId_shouldReturnEmptyList() {
         storage.createTraining(sample());
 
@@ -186,6 +195,7 @@ public class TrainingMapStorageTest {
     }
 
     @Test
+    @Order(204)
     void getTraining_withNullTrainerId_shouldReturnEmptyList() {
         storage.createTraining(sample());
 
@@ -195,6 +205,7 @@ public class TrainingMapStorageTest {
     }
 
     @Test
+    @Order(205)
     void getTraining_withNullTrainingDate_shouldReturnEmptyList() {
         storage.createTraining(sample());
 
@@ -204,6 +215,7 @@ public class TrainingMapStorageTest {
     }
 
     @Test
+    @Order(206)
     void getTraining_withPartialKeyMatch_shouldReturnEmptyList() {
         storage.createTraining(sample(traineeId, trainerId, trainingDate));
 
@@ -220,6 +232,7 @@ public class TrainingMapStorageTest {
     // === GET ALL TRAININGS TESTS ===
 
     @Test
+    @Order(501)
     void getAllTrainings_withEmptyStorage_shouldReturnEmptyList() {
         List<Training> result = storage.getAllTrainings();
 
@@ -227,6 +240,7 @@ public class TrainingMapStorageTest {
     }
 
     @Test
+    @Order(502)
     void getAllTrainings_withSingleTraining_shouldReturnSingleTraining() {
         Training training = sample();
         storage.createTraining(training);
@@ -239,6 +253,7 @@ public class TrainingMapStorageTest {
     }
 
     @Test
+    @Order(503)
     void getAllTrainings_withMultipleTrainingsSameKey_shouldReturnAllTrainings() {
         Training training1 = sample("Morning Workout", TrainingType.FITNESS, Duration.ofMinutes(60));
         Training training2 = sample("Evening Workout", TrainingType.STRETCHING, Duration.ofMinutes(45));
@@ -254,6 +269,7 @@ public class TrainingMapStorageTest {
     }
 
     @Test
+    @Order(504)
     void getAllTrainings_withMultipleTrainingsDifferentKeys_shouldReturnAllTrainings() {
         Training training1 = sample(traineeId, trainerId, trainingDate);
         Training training2 = sample(differentTraineeId, trainerId, trainingDate);
@@ -271,6 +287,7 @@ public class TrainingMapStorageTest {
     }
 
     @Test
+    @Order(505)
     void getAllTrainings_withMixedKeysAndMultipleTrainings_shouldReturnAllTrainings() {
         // Same key, multiple trainings
         Training training1 = sample("Workout 1", TrainingType.FITNESS, Duration.ofMinutes(30));
@@ -293,6 +310,7 @@ public class TrainingMapStorageTest {
     // === INTEGRATION TESTS ===
 
     @Test
+    @Order(601)
     void createAndRetrieve_shouldMaintainDataConsistency() {
         // Create trainings with different keys
         Training training1 = sample(traineeId, trainerId, trainingDate);
@@ -322,6 +340,7 @@ public class TrainingMapStorageTest {
     }
 
     @Test
+    @Order(602)
     void trainingKeyEquality_shouldWorkCorrectly() {
         Training training1 = sample(traineeId, trainerId, trainingDate);
         Training training2 = sample(traineeId, trainerId, trainingDate);

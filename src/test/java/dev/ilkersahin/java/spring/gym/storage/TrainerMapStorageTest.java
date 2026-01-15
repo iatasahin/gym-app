@@ -4,8 +4,7 @@ import dev.ilkersahin.java.spring.gym.exception.TrainerDoesNotExistException;
 import dev.ilkersahin.java.spring.gym.exception.UsernameExistsException;
 import dev.ilkersahin.java.spring.gym.model.Trainer;
 import dev.ilkersahin.java.spring.gym.model.TrainingType;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
 import java.util.List;
 import java.util.Optional;
@@ -13,6 +12,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.*;
 
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class TrainerMapStorageTest {
     private TrainerMapStorage storage;
 
@@ -35,6 +35,7 @@ public class TrainerMapStorageTest {
     // === CREATE TRAINER TESTS ===
 
     @Test
+    @Order(101)
     void createTrainer_withValidTrainer_shouldStoreAndReturnTrainer() {
         Trainer trainer = sample("tom.smith");
 
@@ -47,6 +48,7 @@ public class TrainerMapStorageTest {
     }
 
     @Test
+    @Order(102)
     void createTrainer_withDuplicateUsername_shouldThrowUsernameExistsException() {
         storage.createTrainer(sample("tom.smith"));
 
@@ -55,6 +57,7 @@ public class TrainerMapStorageTest {
     }
 
     @Test
+    @Order(103)
     void createTrainer_withNullUsername_shouldThrowException() {
         Trainer trainer = sample(null);
 
@@ -65,6 +68,7 @@ public class TrainerMapStorageTest {
     // === GET TRAINER TESTS ===
 
     @Test
+    @Order(201)
     void getTrainer_withExistingUsername_shouldReturnTrainer() {
         Trainer trainer = sample("tom.smith");
         storage.createTrainer(trainer);
@@ -77,6 +81,7 @@ public class TrainerMapStorageTest {
     }
 
     @Test
+    @Order(202)
     void getTrainer_withNonExistentUsername_shouldReturnEmpty(){
         assertThat(storage.getTrainer("non.existent")).isEmpty();
     }
@@ -84,6 +89,7 @@ public class TrainerMapStorageTest {
     // === UPDATE TRAINER TESTS ===
 
     @Test
+    @Order(301)
     void updateTrainer_withExistingTrainer_shouldUpdateAndReturnModifiedTrainer() {
         Trainer originalTrainer = sample("tom.smith");
         storage.createTrainer(originalTrainer);
@@ -102,6 +108,7 @@ public class TrainerMapStorageTest {
     }
 
     @Test
+    @Order(302)
     void updateTrainer_withNonExistentTrainer_shouldThrowTrainerDoesNotExistException() {
         assertThatThrownBy(() -> storage.updateTrainer(sample("non.existent")))
                 .isInstanceOf(TrainerDoesNotExistException.class)
@@ -111,6 +118,7 @@ public class TrainerMapStorageTest {
     // === GET ALL TRAINERS TESTS ===
 
     @Test
+    @Order(501)
     void getAllTrainers_withEmptyStorage_shouldReturnEmptyList() {
         List<Trainer> result = storage.getAllTrainers();
 
@@ -118,6 +126,7 @@ public class TrainerMapStorageTest {
     }
 
     @Test
+    @Order(502)
     void getAllTrainers_withMultipleTrainers_shouldReturnAllTrainers() {
         Trainer trainer1 = sample("trainer1");
         Trainer trainer2 = sample("trainer2");
@@ -135,6 +144,7 @@ public class TrainerMapStorageTest {
     }
 
     @Test
+    @Order(503)
     void getAllTrainers_afterUpdatingTrainer_shouldReturnUpdatedTrainer() {
         Trainer trainer = sample("tom.smith");
         storage.createTrainer(trainer);
@@ -151,6 +161,7 @@ public class TrainerMapStorageTest {
     // === INTEGRATION TESTS ===
 
     @Test
+    @Order(601)
     void createUpdateAndRetrieve_shouldMaintainDataConsistency() {
         // Create
         Trainer trainer = sample("integration.test");

@@ -3,8 +3,7 @@ package dev.ilkersahin.java.spring.gym.storage;
 import dev.ilkersahin.java.spring.gym.exception.TraineeDoesNotExistException;
 import dev.ilkersahin.java.spring.gym.exception.UsernameExistsException;
 import dev.ilkersahin.java.spring.gym.model.Trainee;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -13,6 +12,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.*;
 
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class TraineeMapStorageTest {
     private TraineeMapStorage storage;
 
@@ -36,6 +36,7 @@ public class TraineeMapStorageTest {
     // === CREATE TRAINEE TESTS ===
 
     @Test
+    @Order(101)
     void createTrainee_withValidTrainee_shouldStoreAndReturnTrainee() {
         Trainee trainee = sample("jack.black");
 
@@ -48,6 +49,7 @@ public class TraineeMapStorageTest {
     }
 
     @Test
+    @Order(102)
     void createTrainee_withDuplicateUsername_shouldThrowUsernameExistsException() {
         storage.createTrainee(sample("jack.black"));
 
@@ -57,6 +59,7 @@ public class TraineeMapStorageTest {
     }
 
     @Test
+    @Order(103)
     void createTrainee_withNullUsername_shouldThrowException() {
         Trainee trainee = sample(null);
 
@@ -67,6 +70,7 @@ public class TraineeMapStorageTest {
     // === GET TRAINEE TESTS ===
 
     @Test
+    @Order(201)
     void getTrainee_withExistingUsername_shouldReturnTrainee() {
         Trainee trainee = sample("jack.black");
         storage.createTrainee(trainee);
@@ -79,6 +83,7 @@ public class TraineeMapStorageTest {
     }
 
     @Test
+    @Order(202)
     void getTrainee_withNonExistentUsername_shouldReturnEmpty() {
         Optional<Trainee> result = storage.getTrainee("non.existent");
 
@@ -88,6 +93,7 @@ public class TraineeMapStorageTest {
     // === UPDATE TRAINEE TESTS ===
 
     @Test
+    @Order(301)
     void updateTrainee_withExistingTrainee_shouldUpdateAndReturnModifiedTrainee() {
         Trainee originalTrainee = sample("jack.black");
         storage.createTrainee(originalTrainee);
@@ -109,6 +115,7 @@ public class TraineeMapStorageTest {
     }
 
     @Test
+    @Order(302)
     void updateTrainee_withNonExistentTrainee_shouldThrowTraineeDoesNotExistException() {
         Trainee nonExistentTrainee = sample("non.existent");
 
@@ -120,6 +127,7 @@ public class TraineeMapStorageTest {
     // === DELETE TRAINEE TESTS ===
 
     @Test
+    @Order(401)
     void deleteTrainee_withExistingTrainee_shouldRemoveAndReturnTrainee() {
         Trainee trainee = sample("jack.black");
         storage.createTrainee(trainee);
@@ -132,6 +140,7 @@ public class TraineeMapStorageTest {
     }
 
     @Test
+    @Order(402)
     void deleteTrainee_withNonExistentTrainee_shouldReturnEmptyWithoutException() {
         Optional<Trainee> result = storage.deleteTrainee("non.existent");
 
@@ -140,6 +149,7 @@ public class TraineeMapStorageTest {
     }
 
     @Test
+    @Order(403)
     void deleteTrainee_afterDeletion_shouldNotAffectOtherTrainees() {
         Trainee trainee1 = sample("trainee1");
         Trainee trainee2 = sample("trainee2");
@@ -158,6 +168,7 @@ public class TraineeMapStorageTest {
     // === GET ALL TRAINEES TESTS ===
 
     @Test
+    @Order(501)
     void getAllTrainees_withEmptyStorage_shouldReturnEmptyList() {
         List<Trainee> result = storage.getAllTrainees();
 
@@ -165,6 +176,7 @@ public class TraineeMapStorageTest {
     }
 
     @Test
+    @Order(502)
     void getAllTrainees_withMultipleTrainees_shouldReturnAllTrainees() {
         Trainee trainee1 = sample("trainee1");
         Trainee trainee2 = sample("trainee2");
@@ -183,6 +195,7 @@ public class TraineeMapStorageTest {
 
 
     @Test
+    @Order(503)
     void getAllTrainees_afterUpdatingTrainee_shouldReturnUpdatedTrainee() {
         Trainee trainee = sample("jack.black");
         storage.createTrainee(trainee);
@@ -198,6 +211,7 @@ public class TraineeMapStorageTest {
 
 
     @Test
+    @Order(504)
     void getAllTrainees_afterDeletingTrainee_shouldNotIncludeDeletedTrainee() {
         Trainee trainee1 = sample("trainee1");
         Trainee trainee2 = sample("trainee2");
@@ -215,6 +229,7 @@ public class TraineeMapStorageTest {
     // === INTEGRATION TESTS ===
 
     @Test
+    @Order(601)
     void createUpdateDeleteAndRetrieve_shouldMaintainDataConsistency() {
         // Create
         Trainee trainee = sample("integration.test");
