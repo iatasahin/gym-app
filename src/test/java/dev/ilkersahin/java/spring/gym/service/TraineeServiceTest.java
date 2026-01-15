@@ -3,6 +3,8 @@ package dev.ilkersahin.java.spring.gym.service;
 import dev.ilkersahin.java.spring.gym.dao.TraineeDAO;
 import dev.ilkersahin.java.spring.gym.exception.UsernameExistsException;
 import dev.ilkersahin.java.spring.gym.model.Trainee;
+import dev.ilkersahin.java.spring.gym.service.util.PasswordGeneratorService;
+import dev.ilkersahin.java.spring.gym.service.util.UserCreationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -18,15 +20,19 @@ public class TraineeServiceTest {
     private TraineeService service;
     private TraineeDAO traineeDAO;
     private PasswordGeneratorService passwordService;
+    private UserCreationService userCreationService;
 
     @BeforeEach
     void setUp() {
         traineeDAO = mock(TraineeDAO.class);
         passwordService = mock(PasswordGeneratorService.class);
 
+        userCreationService = new UserCreationService(passwordService);
+        userCreationService.setMaxSuffixRetriesForUsername(1000); // default value in application.properties
+
         service = new TraineeService();
         service.setTraineeDAO(traineeDAO);
-        service.setPasswordGeneratorService(passwordService);
+        service.setUserCreationService(userCreationService);
     }
 
     private Trainee sample() {

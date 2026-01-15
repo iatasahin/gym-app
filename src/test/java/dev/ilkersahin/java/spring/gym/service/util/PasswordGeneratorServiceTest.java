@@ -1,4 +1,4 @@
-package dev.ilkersahin.java.spring.gym.service;
+package dev.ilkersahin.java.spring.gym.service.util;
 
 import org.junit.jupiter.api.Test;
 

@@ -1,4 +1,4 @@
-package dev.ilkersahin.java.spring.gym.service;
+package dev.ilkersahin.java.spring.gym.service.util;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
