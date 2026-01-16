@@ -18,6 +18,11 @@ public class PasswordGeneratorService {
     private SecureRandom secureRandom = new SecureRandom();
 
     public String generate(int length) {
+        if (length < 0) {
+            log.warn("PasswordGeneratorService::generate called with negative length: {}", length);
+            throw new IllegalArgumentException("Password length cannot be negative");
+        }
+
         log.debug("Generating password of length {}", length);
 
         StringBuilder sb = new StringBuilder(length);
