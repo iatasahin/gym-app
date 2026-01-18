@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface TraineeDAO {
-    Optional<Trainee> getTrainee(String userName);
+    Optional<Trainee> getTrainee(String username);
     List<Trainee> getAllTrainees();
     Trainee createTrainee(Trainee trainee);
     Trainee updateTrainee(Trainee trainee);

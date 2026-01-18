@@ -20,9 +20,9 @@ public class TraineeMapStorage implements TraineeDAO {
     private final ConcurrentMap<String, Trainee> traineesByUsername = new ConcurrentHashMap<>();
 
     @Override
-    public Optional<Trainee> getTrainee(String userName) {
-        Trainee trainee = traineesByUsername.get(userName);
-        log.debug("Lookup trainee '{}': {}", userName, trainee != null ? "FOUND" : "NOT FOUND");
+    public Optional<Trainee> getTrainee(String username) {
+        Trainee trainee = traineesByUsername.get(username);
+        log.debug("Lookup trainee '{}': {}", username, trainee != null ? "FOUND" : "NOT FOUND");
         return Optional.ofNullable(trainee);
     }
 
