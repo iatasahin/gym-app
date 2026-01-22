@@ -1,0 +1,20 @@
+services:
+  db:
+    image: mysql:9.5
+    container_name: gymappMySqlContainer
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=rootPassword
+      - MYSQL_DATABASE=gymappDatabase
+      - MYSQL_USER=gymapp_user
+      - MYSQL_PASSWORD=gymapp_password
+      - TZ=UTC
+    volumes:
+      - ~/code/db/mysql/gymapp:/var/lib/mysql
+    networks:
+      - gymapp-network
+
+networks:
+  gymapp-network:
+    driver: bridge
