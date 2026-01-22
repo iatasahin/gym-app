@@ -21,6 +21,18 @@ public class TrainingMapStorage implements TrainingDAO {
 
     @Override
     public Training createTraining(Training training) {
+        if (training.getTrainerId() == null ||
+                training.getTraineeId() == null ||
+                training.getTrainingDate() == null
+        ) {
+            log.warn("Attempt to Create Training with null parameters: traineeId={}, trainerId={}, trainingDate={}",
+                    training.getTrainerId(), training.getTraineeId(), training.getTrainingDate());
+            throw new NullPointerException(
+                    "Attempt to Create Training with null parameters: traineeId=%s, trainerId=%s, trainingDate=%s"
+                            .formatted(training.getTrainerId(), training.getTraineeId(), training.getTrainingDate())
+            );
+        }
+
         Training.TrainingKey key = new Training.TrainingKey(
                 training.getTrainerId(),
                 training.getTraineeId(),
@@ -51,12 +63,15 @@ public class TrainingMapStorage implements TrainingDAO {
 
     @Override
     public List<Training> getTraining(UUID traineeId, UUID trainerId, LocalDate trainingDate) {
+        if (traineeId == null || trainerId == null || trainingDate == null) {
+            log.debug("Lookup trainings with null parameters: traineeId={}, trainerId={}, trainingDate={}",
+                    traineeId, trainerId, trainingDate);
+            return List.of();
+        }
+
         Training.TrainingKey key = new Training.TrainingKey(trainerId, traineeId, trainingDate);
-
         List<Training> result = trainingsByTrainingKey.getOrDefault(key, List.of());
-
         log.debug("Lookup trainings for key {} → {} found", key, result.size());
-
         return result;
     }
 }

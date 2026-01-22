@@ -1,8 +1,8 @@
 package dev.ilkersahin.java.spring.gym.service;
 
 import dev.ilkersahin.java.spring.gym.dao.TrainerDAO;
-import dev.ilkersahin.java.spring.gym.exception.UsernameExistsException;
 import dev.ilkersahin.java.spring.gym.model.Trainer;
+import dev.ilkersahin.java.spring.gym.service.util.UserCreationService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,7 +16,7 @@ public class TrainerService {
     private static final Logger log = LoggerFactory.getLogger(TrainerService.class);
 
     private TrainerDAO trainerDAO;
-    private PasswordGeneratorService passwordGeneratorService;
+    private UserCreationService userCreationService;
 
     @Autowired
     public void setTrainerDAO(TrainerDAO trainerDAO) {
@@ -24,32 +24,13 @@ public class TrainerService {
     }
 
     @Autowired
-    public void setPasswordGeneratorService(PasswordGeneratorService passwordGeneratorService) {
-        this.passwordGeneratorService = passwordGeneratorService;
+    public void setUserCreationService(UserCreationService userCreationService) {
+        this.userCreationService = userCreationService;
     }
 
     public Trainer createTrainer(Trainer trainer) {
-        log.info("Creating trainer {} {}", trainer.getFirstName(), trainer.getLastName());
-
-        trainer.setPassword(passwordGeneratorService.generate(10));
-
-        String defaultUsername = trainer.getFirstName() + "." + trainer.getLastName();
-        trainer.setUsername(defaultUsername);
-        int usernameSerialSuffix = 2;
-
-        while (true) {
-            try {
-                Trainer saved = trainerDAO.createTrainer(trainer);
-                log.info("Trainer created with username '{}'", saved.getUsername());
-                return saved;
-            } catch (UsernameExistsException e) {
-                log.warn("Trainer with Username '{}' already exists — trying '{}{}'",
-                        trainer.getUsername(), defaultUsername, usernameSerialSuffix
-                );
-                trainer.setUsername(defaultUsername + usernameSerialSuffix);
-                usernameSerialSuffix++;
-            }
-        }
+        log.debug("TrainerService::createTrainer delegating to userCreationService::crateUser");
+        return userCreationService.createUser(trainer, trainerDAO::createTrainer, "Trainer");
     }
 
     public Trainer updateTrainer(Trainer trainer) {
