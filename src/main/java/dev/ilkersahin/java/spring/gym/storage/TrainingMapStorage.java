@@ -21,21 +21,21 @@ public class TrainingMapStorage implements TrainingDAO {
 
     @Override
     public Training createTraining(Training training) {
-        if (training.getTrainerId() == null ||
-                training.getTraineeId() == null ||
+        if (training.getTrainer() == null || training.getTrainer().getTrainerId() == null ||
+                training.getTrainee() == null || training.getTrainee().getTraineeId() == null ||
                 training.getTrainingDate() == null
         ) {
-            log.warn("Attempt to Create Training with null parameters: traineeId={}, trainerId={}, trainingDate={}",
-                    training.getTrainerId(), training.getTraineeId(), training.getTrainingDate());
+            log.warn("Attempt to Create Training with null parameters: trainee={}, trainer={}, trainingDate={}",
+                    training.getTrainer(), training.getTrainee(), training.getTrainingDate());
             throw new NullPointerException(
-                    "Attempt to Create Training with null parameters: traineeId=%s, trainerId=%s, trainingDate=%s"
-                            .formatted(training.getTrainerId(), training.getTraineeId(), training.getTrainingDate())
+                    "Attempt to Create Training with null parameters: trainee=%s, trainer=%s, trainingDate=%s"
+                            .formatted(training.getTrainer(), training.getTrainee(), training.getTrainingDate())
             );
         }
 
         Training.TrainingKey key = new Training.TrainingKey(
-                training.getTrainerId(),
-                training.getTraineeId(),
+                training.getTrainer().getTrainerId(),
+                training.getTrainee().getTraineeId(),
                 training.getTrainingDate()
         );
 

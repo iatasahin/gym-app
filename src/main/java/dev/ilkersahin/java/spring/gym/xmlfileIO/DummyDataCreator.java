@@ -47,12 +47,12 @@ public class DummyDataCreator {
         Trainer trainer1 = new Trainer(
                 "Tom", "Smith",
                 null, null,
-                true, TrainingType.RESISTANCE, UUID.randomUUID()
+                true, TrainingType.Type.RESISTANCE, UUID.randomUUID()
         );
         Trainer trainer2 = new Trainer(
                 "Tom", "Smith",
                 null, null,
-                true, TrainingType.FITNESS, UUID.randomUUID()
+                true, TrainingType.Type.FITNESS, UUID.randomUUID()
         );
 
         Trainee trainee1 = new Trainee(
@@ -71,20 +71,20 @@ public class DummyDataCreator {
         );
 
         Training training1 = new Training(
-                trainee1.getUserId(), trainer1.getUserId(),
-                "aTrainingName", TrainingType.RESISTANCE,
+                trainee1.getTraineeId(), trainer1.getTrainerId(),
+                "aTrainingName", TrainingType.Type.RESISTANCE,
                 LocalDate.of(2025,8,24),
                 Duration.ofMinutes(49)
         );
         Training training2 = new Training(
-                trainee1.getUserId(), trainer2.getUserId(),
-                "aTrainingName", TrainingType.FITNESS,
+                trainee1.getTraineeId(), trainer2.getTrainerId(),
+                "aTrainingName", TrainingType.Type.FITNESS,
                 LocalDate.of(2024,7,15),
                 Duration.ofMinutes(58)
         );
         Training training3 = new Training(
-                trainee2.getUserId(), trainer2.getUserId(),
-                "anotherTrainingName", TrainingType.FITNESS,
+                trainee2.getTraineeId(), trainer2.getTrainerId(),
+                "anotherTrainingName", TrainingType.Type.FITNESS,
                 LocalDate.of(2023,3,28),
                 Duration.ofMinutes(85)
         );

@@ -8,8 +8,8 @@ public class TrainingXmlMapper {
     public static TrainingXml toXml(Training t) {
         TrainingXml x = new TrainingXml();
 
-        x.setTraineeId(t.getTraineeId());
-        x.setTrainerId(t.getTrainerId());
+        x.setTraineeId(t.getTrainee().getTraineeId());
+        x.setTrainerId(t.getTrainer().getTrainerId());
         x.setTrainingName(t.getTrainingName());
         x.setTrainingType(t.getTrainingType());
         x.setTrainingDate(t.getTrainingDate());
@@ -21,8 +21,8 @@ public class TrainingXmlMapper {
     public static Training toDomain(TrainingXml x) {
         Training t = new Training();
 
-        t.setTraineeId(x.getTraineeId());
-        t.setTrainerId(x.getTrainerId());
+        t.getTrainee().setTraineeId(x.getTraineeId());
+        t.getTrainer().setTrainerId(x.getTrainerId());
         t.setTrainingName(x.getTrainingName());
         t.setTrainingType(x.getTrainingType());
         t.setTrainingDate(x.getTrainingDate());
