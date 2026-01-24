@@ -2,10 +2,9 @@ package dev.ilkersahin.java.spring.gym.service;
 
 import dev.ilkersahin.java.spring.gym.dao.TraineeDAO;
 import dev.ilkersahin.java.spring.gym.exception.TraineeDoesNotExistException;
-import dev.ilkersahin.java.spring.gym.exception.UsernameExistsException;
 import dev.ilkersahin.java.spring.gym.model.Trainee;
 import dev.ilkersahin.java.spring.gym.service.util.PasswordGeneratorService;
-import dev.ilkersahin.java.spring.gym.service.util.UserCreationService;
+import dev.ilkersahin.java.spring.gym.service.util.UsernameGeneratorService;
 import org.junit.jupiter.api.*;
 
 import java.time.LocalDate;
@@ -20,42 +19,30 @@ import static org.mockito.Mockito.*;
 public class TraineeServiceTest {
     private TraineeService service;
     private TraineeDAO traineeDAO;
-    private PasswordGeneratorService passwordService;
-    private UserCreationService userCreationService;
+    private PasswordGeneratorService passwordGeneratorService;
+    private UsernameGeneratorService usernameGeneratorService;
 
     @BeforeEach
     void setUp() {
         traineeDAO = mock(TraineeDAO.class);
-        passwordService = mock(PasswordGeneratorService.class);
-
-        userCreationService = new UserCreationService(passwordService);
-        userCreationService.setMaxSuffixRetriesForUsername(1000); // default value in application.properties
+        passwordGeneratorService = mock(PasswordGeneratorService.class);
+        usernameGeneratorService = mock(UsernameGeneratorService.class);
 
         service = new TraineeService();
         service.setTraineeDAO(traineeDAO);
-        service.setUserCreationService(userCreationService);
+        service.setPasswordGeneratorService(passwordGeneratorService);
+        service.setUsernameGeneratorService(usernameGeneratorService);
     }
 
     private Trainee sample() {
-        Trainee t = new Trainee();
-        t.setFirstName("Jack");
-        t.setLastName("Black");
-        t.setDateOfBirth(LocalDate.of(1990, 1, 1));
-        t.setUserId(UUID.randomUUID());
-        t.setAddress("123 Main Street");
-        t.setActive(true);
-        return t;
+        return sample("Jack", "Black");
     }
 
     private Trainee sample(String firstName, String lastName) {
-        Trainee t = new Trainee();
-        t.setFirstName(firstName);
-        t.setLastName(lastName);
-        t.setDateOfBirth(LocalDate.of(1990, 1, 1));
-        t.setAddress("123 Main Street");
-        t.setUserId(UUID.randomUUID());
-        t.setActive(true);
-        return t;
+        return new Trainee(
+                firstName, lastName, null, " ", true,
+                LocalDate.of(1990, 1, 1), "123 Main Street", UUID.randomUUID()
+        );
     }
 
     // === CREATE TRAINEE TESTS ===
@@ -65,7 +52,8 @@ public class TraineeServiceTest {
     void createTrainee_withValidTrainee_shouldGeneratePasswordAndDefaultUsername() {
         Trainee trainee = sample();
 
-        when(passwordService.generate(10)).thenReturn("secretPass");
+        when(usernameGeneratorService.generateUniqueUsername("Jack", "Black")).thenReturn("Jack.Black");
+        when(passwordGeneratorService.generate(10)).thenReturn("secretPass");
         when(traineeDAO.createTrainee(any(Trainee.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
 
@@ -73,7 +61,7 @@ public class TraineeServiceTest {
 
         assertThat(result.getPassword()).isEqualTo("secretPass");
         assertThat(result.getUsername()).isEqualTo("Jack.Black");
-        verify(passwordService).generate(10);
+        verify(passwordGeneratorService).generate(10);
         verify(traineeDAO).createTrainee(trainee);
     }
 
@@ -82,43 +70,24 @@ public class TraineeServiceTest {
     void createTrainee_withDuplicateUsername_shouldGenerateUniqueUsername() {
         Trainee trainee = sample();
 
-        when(passwordService.generate(10)).thenReturn("secretPass");
-
+        when(passwordGeneratorService.generate(10)).thenReturn("secretPass");
+        when(usernameGeneratorService.generateUniqueUsername("Jack", "Black")).thenReturn("Jack.Black2");
         when(traineeDAO.createTrainee(any(Trainee.class)))
-                .thenThrow(new UsernameExistsException("Username already exists"))
                 .thenAnswer(inv -> inv.getArgument(0));
 
         Trainee result = service.createTrainee(trainee);
 
         assertThat(result.getUsername()).isEqualTo("Jack.Black2");
         assertThat(result.getPassword()).isEqualTo("secretPass");
-        verify(traineeDAO, times(2)).createTrainee(any(Trainee.class));
-    }
-
-    @Test
-    @Order(103)
-    void createTrainee_withMultipleDuplicateUsernames_shouldIncrementUsernameSerially() {
-        Trainee trainee = sample();
-
-        when(passwordService.generate(10)).thenReturn("pw");
-
-        when(traineeDAO.createTrainee(any()))
-                .thenThrow(new UsernameExistsException("Username already exists"))
-                .thenThrow(new UsernameExistsException("Username already exists"))
-                .thenAnswer(inv -> inv.getArgument(0));
-
-        Trainee result = service.createTrainee(trainee);
-
-        assertThat(result.getUsername()).isEqualTo("Jack.Black3");
-        verify(traineeDAO, times(3)).createTrainee(any(Trainee.class));
+        verify(traineeDAO, times(1)).createTrainee(any(Trainee.class));
     }
 
     @Test
     @Order(104)
     void createTrainee_withSpecialCharactersInName_shouldGenerateValidUsername() {
         Trainee trainee = sample("Jack-John", "O'Black");
-
-        when(passwordService.generate(10)).thenReturn("secretPass");
+        when(usernameGeneratorService.generateUniqueUsername("Jack-John", "O'Black")).thenReturn("Jack-John.O'Black");
+        when(passwordGeneratorService.generate(10)).thenReturn("secretPass");
         when(traineeDAO.createTrainee(any(Trainee.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -335,7 +304,7 @@ public class TraineeServiceTest {
         Trainee trainee = sample();
 
         // Setup create operation
-        when(passwordService.generate(10)).thenReturn("secretPass");
+        when(passwordGeneratorService.generate(10)).thenReturn("secretPass");
         when(traineeDAO.createTrainee(any(Trainee.class)))
                 .thenAnswer(invocation -> {
                     Trainee t = invocation.getArgument(0);
@@ -362,7 +331,8 @@ public class TraineeServiceTest {
         Trainee trainee = sample();
 
         // Setup create
-        when(passwordService.generate(10)).thenReturn("password123");
+        when(passwordGeneratorService.generate(10)).thenReturn("password123");
+        when(usernameGeneratorService.generateUniqueUsername("Jack", "Black")).thenReturn("Jack.Black");
         when(traineeDAO.createTrainee(any(Trainee.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -390,10 +360,12 @@ public class TraineeServiceTest {
     void dependencyInjection_shouldWorkCorrectly() {
         TraineeService newService = new TraineeService();
         TraineeDAO mockDAO = mock(TraineeDAO.class);
-        UserCreationService mockUserCreationService = mock(UserCreationService.class);
+        PasswordGeneratorService mockPasswordGeneratorService = mock(PasswordGeneratorService.class);
+        UsernameGeneratorService mockUsernameGeneratorService = mock(UsernameGeneratorService.class);
 
         newService.setTraineeDAO(mockDAO);
-        newService.setUserCreationService(mockUserCreationService);
+        newService.setPasswordGeneratorService(mockPasswordGeneratorService);
+        newService.setUsernameGeneratorService(mockUsernameGeneratorService);
 
         // Verify DAO injection
         when(mockDAO.getAllTrainees()).thenReturn(List.of());
@@ -401,10 +373,18 @@ public class TraineeServiceTest {
         assertThat(result).isEmpty();
         verify(mockDAO).getAllTrainees();
 
-        // Verify UserCreationService injection
+        // Verify UsernameGeneratorService and PasswordGeneratorService injection
         Trainee trainee = sample();
-        when(mockUserCreationService.createUser(any(), any(), any())).thenReturn(trainee);
-        newService.createTrainee(trainee);
-        verify(mockUserCreationService).createUser(eq(trainee), any(), eq("Trainee"));
+        when(mockUsernameGeneratorService.generateUniqueUsername("Jack", "Black")).thenReturn("Jack.Black3");
+        when(mockPasswordGeneratorService.generate(10)).thenReturn("secretPass");
+        when(mockDAO.createTrainee(any(Trainee.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        Trainee saved = newService.createTrainee(trainee);
+
+        assertThat(saved.getPassword()).isEqualTo("secretPass");
+        assertThat(saved.getUsername()).isEqualTo("Jack.Black3");
+        verify(mockUsernameGeneratorService).generateUniqueUsername("Jack", "Black");
+        verify(mockPasswordGeneratorService).generate(10);
     }
 }

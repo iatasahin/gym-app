@@ -5,13 +5,16 @@ CREATE TABLE trainees
     trainee_id    BINARY(16) NOT NULL,
     date_of_birth DATE,
     address       VARCHAR(255),
+    user_id       BINARY(16) NOT NULL,
 
     CONSTRAINT pk_trainees PRIMARY KEY (trainee_id),
 
-    CONSTRAINT fk_trainees_user
-        FOREIGN KEY (trainee_id)
+    CONSTRAINT uk_trainees_user_id
+        UNIQUE (user_id),
+
+    CONSTRAINT fk_trainees_users
+        FOREIGN KEY (user_id)
             REFERENCES users (user_id)
-            ON DELETE CASCADE
 )
     ENGINE = InnoDB
     DEFAULT CHARSET = utf8mb4

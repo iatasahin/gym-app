@@ -9,11 +9,10 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "users")
-@Inheritance(strategy = InheritanceType.JOINED)
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@NoArgsConstructor
 @Getter
 @Setter
-public abstract class User {
+public class User {
     @Id
     @GeneratedValue
     @UuidGenerator
@@ -34,6 +33,22 @@ public abstract class User {
 
     @Column(name = "is_active", nullable = false)
     private boolean isActive;
+
+    @OneToOne(mappedBy = "user")
+    private Trainer trainer;
+
+    @OneToOne(mappedBy = "user")
+    private Trainee trainee;
+
+    // Helper methods
+    public boolean isTrainer() { return trainer != null; }
+    public boolean isTrainee() { return trainee != null; }
+    public boolean isBothTrainerAndTrainee() {
+        return trainer != null && trainee != null;
+    }
+    public boolean isNeitherTrainerNorTrainee() {
+        return trainer == null && trainee == null;
+    }
 
     public User(String firstName, String lastName, String username, String password, boolean isActive) {
         this.firstName = firstName;

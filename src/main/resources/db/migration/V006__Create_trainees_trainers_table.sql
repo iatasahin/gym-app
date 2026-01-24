@@ -8,12 +8,12 @@ CREATE TABLE trainees_trainers
     CONSTRAINT pk_trainees_trainers
         PRIMARY KEY (trainee_id, trainer_id),
 
-    CONSTRAINT fk_tt_trainee
+    CONSTRAINT fk_tt_trainees
         FOREIGN KEY (trainee_id)
             REFERENCES trainees (trainee_id)
             ON DELETE CASCADE,
 
-    CONSTRAINT fk_tt_trainer
+    CONSTRAINT fk_tt_trainers
         FOREIGN KEY (trainer_id)
             REFERENCES trainers (trainer_id)
 )

@@ -4,11 +4,15 @@ CREATE TABLE trainers
 (
     trainer_id        BINARY(16) NOT NULL,
     specialization_id INT        NOT NULL,
+    user_id           BINARY(16) NOT NULL,
 
     CONSTRAINT pk_trainers PRIMARY KEY (trainer_id),
 
+    CONSTRAINT uk_trainers_user_id
+        UNIQUE (user_id),
+
     CONSTRAINT fk_trainers_users
-        FOREIGN KEY (trainer_id)
+        FOREIGN KEY (user_id)
             REFERENCES users (user_id),
 
     CONSTRAINT fk_trainers_training_types

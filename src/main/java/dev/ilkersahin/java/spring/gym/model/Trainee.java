@@ -2,6 +2,7 @@ package dev.ilkersahin.java.spring.gym.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.UuidGenerator;
 
 import java.time.LocalDate;
 import java.util.Objects;
@@ -10,12 +11,20 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "trainees")
-@PrimaryKeyJoinColumn(name = "trainee_id", referencedColumnName = "user_id")
 @Getter
 @Setter
 @NoArgsConstructor
 @ToString(callSuper = true)
-public class Trainee extends User {
+public class Trainee {
+    @Id
+    @GeneratedValue
+    @UuidGenerator
+    @Column(name = "trainee_id", updatable = false, nullable = false)
+    private UUID traineeId;
+
+    @OneToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "user_id", nullable = false, unique = true)
+    private User user;
 
     @Column(name = "date_of_birth")
     private LocalDate dateOfBirth;
@@ -42,18 +51,72 @@ public class Trainee extends User {
     private Set<Training> trainings;
 
     public Trainee(String firstName, String lastName, String username, String password, boolean isActive, LocalDate dateOfBirth, String address, UUID traineeId) {
-        super(firstName, lastName, username, password, isActive);
+        user = new User(firstName, lastName, username, password, isActive);
 
         this.dateOfBirth = dateOfBirth;
         this.address = address;
     }
 
-    public UUID getTraineeId() {
-        return getUserId();
+//    --------------------- Getters/Setters delegating to user --------------------- //
+
+    public UUID getUserId() {
+        if (user == null) return null;
+        return user.getUserId();
     }
 
-    public void setTraineeId(UUID id){
-        setUserId(id);
+    public void setUserId(UUID userId) {
+        if (user == null) return;
+        user.setUserId(userId);
+    }
+
+    public boolean isActive() {
+        if (user == null) return false;
+        return user.isActive();
+    }
+
+    public void setActive(boolean active) {
+        if (user == null) return;
+        user.setActive(active);
+    }
+
+    public String getPassword() {
+        if (user == null) return null;
+        return user.getPassword();
+    }
+
+    public void setPassword(String password) {
+        if (user == null) return;
+        user.setPassword(password);
+    }
+
+    public String getUsername() {
+        if (user == null) return null;
+        return user.getUsername();
+    }
+
+    public void setUsername(String username) {
+        if (user == null) return;
+        user.setUsername(username);
+    }
+
+    public String getLastName() {
+        if (user == null) return null;
+        return user.getLastName();
+    }
+
+    public void setLastName(String lastName) {
+        if (user == null) return;
+        user.setLastName(lastName);
+    }
+
+    public String getFirstName() {
+        if (user == null) return null;
+        return user.getFirstName();
+    }
+
+    public void setFirstName(String firstName) {
+        if (user == null) return;
+        user.setFirstName(firstName);
     }
 
     @Override
@@ -61,12 +124,12 @@ public class Trainee extends User {
         if (o == null || getClass() != o.getClass()) return false;
         if (!super.equals(o)) return false;
         Trainee trainee = (Trainee) o;
-        return Objects.equals(getUserId(), trainee.getUserId());
+        return Objects.equals(getTraineeId(), trainee.traineeId);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getUserId());
+        return Objects.hash(getTraineeId());
     }
 
 }

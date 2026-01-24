@@ -2,7 +2,9 @@ package dev.ilkersahin.java.spring.gym.service;
 
 import dev.ilkersahin.java.spring.gym.dao.TrainerDAO;
 import dev.ilkersahin.java.spring.gym.model.Trainer;
-import dev.ilkersahin.java.spring.gym.service.util.UserCreationService;
+import dev.ilkersahin.java.spring.gym.service.util.PasswordGeneratorService;
+import dev.ilkersahin.java.spring.gym.service.util.UsernameGeneratorService;
+import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,22 +17,26 @@ import java.util.Optional;
 public class TrainerService {
     private static final Logger log = LoggerFactory.getLogger(TrainerService.class);
 
+    @Setter(onMethod_ = {@Autowired})
     private TrainerDAO trainerDAO;
-    private UserCreationService userCreationService;
 
-    @Autowired
-    public void setTrainerDAO(TrainerDAO trainerDAO) {
-        this.trainerDAO = trainerDAO;
-    }
+    @Setter(onMethod_ = {@Autowired})
+    private PasswordGeneratorService passwordGeneratorService;
 
-    @Autowired
-    public void setUserCreationService(UserCreationService userCreationService) {
-        this.userCreationService = userCreationService;
-    }
+    @Setter(onMethod_ = {@Autowired})
+    private UsernameGeneratorService usernameGeneratorService;
 
     public Trainer createTrainer(Trainer trainer) {
-        log.debug("TrainerService::createTrainer delegating to userCreationService::crateUser");
-        return userCreationService.createUser(trainer, trainerDAO::createTrainer, "Trainer");
+        log.info("Creating Trainer: {} {}", trainer.getFirstName(), trainer.getLastName());
+
+        trainer.setPassword(passwordGeneratorService.generate(10));
+        trainer.setUsername(usernameGeneratorService.generateUniqueUsername(trainer.getFirstName(), trainer.getLastName()));
+
+        Trainer saved = trainerDAO.createTrainer(trainer);
+
+        log.info("Trainer created with username '{}'", saved.getUsername());
+
+        return saved;
     }
 
     public Trainer updateTrainer(Trainer trainer) {

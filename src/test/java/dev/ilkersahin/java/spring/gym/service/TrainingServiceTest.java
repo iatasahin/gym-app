@@ -26,6 +26,12 @@ class TrainingServiceTest {
     private final LocalDate trainingDate = LocalDate.of(2024, 8, 24);
     private final LocalDate differentDate = LocalDate.of(2024, 8, 25);
 
+    private final TrainingType fitnessType = new TrainingType(TrainingType.Type.FITNESS.getId(), TrainingType.Type.FITNESS.getName());
+    private final TrainingType yogaType = new TrainingType(TrainingType.Type.YOGA.getId(), TrainingType.Type.YOGA.getName());
+    private final TrainingType zumbaType = new TrainingType(TrainingType.Type.ZUMBA.getId(), TrainingType.Type.ZUMBA.getName());
+    private final TrainingType stretchingType = new TrainingType(TrainingType.Type.STRETCHING.getId(), TrainingType.Type.STRETCHING.getName());
+    private final TrainingType resistanceType = new TrainingType(TrainingType.Type.RESISTANCE.getId(), TrainingType.Type.RESISTANCE.getName());
+
 
     @BeforeEach
     void setUp() {
@@ -39,7 +45,7 @@ class TrainingServiceTest {
                 traineeId,
                 trainerId,
                 "Workout",
-                TrainingType.FITNESS,
+                TrainingType.Type.FITNESS,
                 trainingDate,
                 Duration.ofMinutes(60)
         );
@@ -50,13 +56,13 @@ class TrainingServiceTest {
                 traineeId,
                 trainerId,
                 "Custom Workout",
-                TrainingType.FITNESS,
+                TrainingType.Type.FITNESS,
                 date,
                 Duration.ofMinutes(45)
         );
     }
 
-    private Training sample(String name, TrainingType type, Duration duration) {
+    private Training sample(String name, TrainingType.Type type, Duration duration) {
         return new Training(
                 traineeId,
                 trainerId,
@@ -84,8 +90,8 @@ class TrainingServiceTest {
     @Test
     @Order(102)
     void createTraining_withDifferentTrainingTypes_shouldDelegateToDAO() {
-        Training fitnessTraining = sample("Fitness Session", TrainingType.FITNESS, Duration.ofMinutes(60));
-        Training resistanceTraining = sample("Cardio Session", TrainingType.RESISTANCE, Duration.ofMinutes(45));
+        Training fitnessTraining = sample("Fitness Session", TrainingType.Type.FITNESS, Duration.ofMinutes(60));
+        Training resistanceTraining = sample("Cardio Session", TrainingType.Type.RESISTANCE, Duration.ofMinutes(45));
 
         when(trainingDAO.createTraining(fitnessTraining)).thenReturn(fitnessTraining);
         when(trainingDAO.createTraining(resistanceTraining)).thenReturn(resistanceTraining);
@@ -93,8 +99,8 @@ class TrainingServiceTest {
         Training fitnessResult = service.createTraining(fitnessTraining);
         Training resistanceResult = service.createTraining(resistanceTraining);
 
-        assertThat(fitnessResult.getTrainingType()).isEqualTo(TrainingType.FITNESS);
-        assertThat(resistanceResult.getTrainingType()).isEqualTo(TrainingType.RESISTANCE);
+        assertThat(fitnessResult.getTrainingType()).isEqualTo(fitnessType);
+        assertThat(resistanceResult.getTrainingType()).isEqualTo(resistanceType);
         verify(trainingDAO).createTraining(fitnessTraining);
         verify(trainingDAO).createTraining(resistanceTraining);
     }
@@ -102,8 +108,8 @@ class TrainingServiceTest {
     @Test
     @Order(103)
     void createTraining_withDifferentDurations_shouldDelegateToDAO() {
-        Training shortTraining = sample("Short Workout", TrainingType.FITNESS, Duration.ofMinutes(30));
-        Training longTraining = sample("Long Workout", TrainingType.FITNESS, Duration.ofMinutes(120));
+        Training shortTraining = sample("Short Workout", TrainingType.Type.FITNESS, Duration.ofMinutes(30));
+        Training longTraining = sample("Long Workout", TrainingType.Type.FITNESS, Duration.ofMinutes(120));
 
         when(trainingDAO.createTraining(shortTraining)).thenReturn(shortTraining);
         when(trainingDAO.createTraining(longTraining)).thenReturn(longTraining);
@@ -146,8 +152,8 @@ class TrainingServiceTest {
     @Test
     @Order(202)
     void getTraining_withMultipleTrainingsSameKey_shouldReturnAllTrainings() {
-        Training training1 = sample("Morning Workout", TrainingType.FITNESS, Duration.ofMinutes(60));
-        Training training2 = sample("Evening Workout", TrainingType.STRETCHING, Duration.ofMinutes(45));
+        Training training1 = sample("Morning Workout", TrainingType.Type.FITNESS, Duration.ofMinutes(60));
+        Training training2 = sample("Evening Workout", TrainingType.Type.STRETCHING, Duration.ofMinutes(45));
 
         when(trainingDAO.getTraining(traineeId, trainerId, trainingDate))
                 .thenReturn(List.of(training1, training2));
@@ -239,9 +245,9 @@ class TrainingServiceTest {
     @Test
     @Order(503)
     void getAllTrainings_shouldPreserveTrainingOrder() {
-        Training training1 = sample("First Training", TrainingType.FITNESS, Duration.ofMinutes(30));
-        Training training2 = sample("Second Training", TrainingType.ZUMBA, Duration.ofMinutes(45));
-        Training training3 = sample("Third Training", TrainingType.YOGA, Duration.ofMinutes(60));
+        Training training1 = sample("First Training", TrainingType.Type.FITNESS, Duration.ofMinutes(30));
+        Training training2 = sample("Second Training", TrainingType.Type.ZUMBA, Duration.ofMinutes(45));
+        Training training3 = sample("Third Training", TrainingType.Type.YOGA, Duration.ofMinutes(60));
 
         when(trainingDAO.getAllTrainings()).thenReturn(List.of(training1, training2, training3));
 
@@ -253,9 +259,9 @@ class TrainingServiceTest {
     @Test
     @Order(504)
     void getAllTrainings_withDifferentTrainingTypes_shouldReturnAllTypes() {
-        Training fitnessTraining = sample("Fitness", TrainingType.FITNESS, Duration.ofMinutes(60));
-        Training cardioTraining = sample("Resistance", TrainingType.RESISTANCE, Duration.ofMinutes(45));
-        Training yogaTraining = sample("Yoga", TrainingType.YOGA, Duration.ofMinutes(90));
+        Training fitnessTraining = sample("Fitness", TrainingType.Type.FITNESS, Duration.ofMinutes(60));
+        Training cardioTraining = sample("Resistance", TrainingType.Type.RESISTANCE, Duration.ofMinutes(45));
+        Training yogaTraining = sample("Yoga", TrainingType.Type.YOGA, Duration.ofMinutes(90));
 
         when(trainingDAO.getAllTrainings()).thenReturn(List.of(fitnessTraining, cardioTraining, yogaTraining));
 
@@ -264,7 +270,7 @@ class TrainingServiceTest {
         assertThat(result)
                 .hasSize(3)
                 .extracting(Training::getTrainingType)
-                .containsExactly(TrainingType.FITNESS, TrainingType.RESISTANCE, TrainingType.YOGA);
+                .containsExactly(fitnessType, resistanceType, yogaType);
     }
 
     // === INTEGRATION TESTS ===
@@ -295,7 +301,7 @@ class TrainingServiceTest {
     @Test
     @Order(602)
     void createMultipleAndRetrieveAll_shouldMaintainDataConsistency() {
-        Training training1 = sample("Training 1", TrainingType.FITNESS, Duration.ofMinutes(60));
+        Training training1 = sample("Training 1", TrainingType.Type.FITNESS, Duration.ofMinutes(60));
         Training training2 = sample(differentTraineeId, trainerId, differentDate);
 
         // Setup create operations
@@ -322,8 +328,8 @@ class TrainingServiceTest {
     @Order(603)
     void serviceOperations_shouldHandleComplexScenarios() {
         // Create trainings with same key
-        Training morning = sample("Morning Session", TrainingType.FITNESS, Duration.ofMinutes(60));
-        Training evening = sample("Evening Session", TrainingType.RESISTANCE, Duration.ofMinutes(45));
+        Training morning = sample("Morning Session", TrainingType.Type.FITNESS, Duration.ofMinutes(60));
+        Training evening = sample("Evening Session", TrainingType.Type.RESISTANCE, Duration.ofMinutes(45));
 
         // Create training with different key
         Training differentDay = sample(traineeId, trainerId, differentDate);

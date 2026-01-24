@@ -3,11 +3,10 @@ package dev.ilkersahin.java.spring.gym.service;
 
 import dev.ilkersahin.java.spring.gym.dao.TrainerDAO;
 import dev.ilkersahin.java.spring.gym.exception.TrainerDoesNotExistException;
-import dev.ilkersahin.java.spring.gym.exception.UsernameExistsException;
 import dev.ilkersahin.java.spring.gym.model.Trainer;
 import dev.ilkersahin.java.spring.gym.model.TrainingType;
 import dev.ilkersahin.java.spring.gym.service.util.PasswordGeneratorService;
-import dev.ilkersahin.java.spring.gym.service.util.UserCreationService;
+import dev.ilkersahin.java.spring.gym.service.util.UsernameGeneratorService;
 import org.junit.jupiter.api.*;
 
 import java.util.List;
@@ -22,39 +21,32 @@ public class TrainerServiceTest {
 
     private TrainerService service;
     private TrainerDAO trainerDAO;
-    private PasswordGeneratorService passwordService;
-    private UserCreationService userCreationService;
+    private PasswordGeneratorService passwordGeneratorService;
+    private UsernameGeneratorService usernameGeneratorService;
 
     @BeforeEach
     void setUp() {
         trainerDAO = mock(TrainerDAO.class);
-        passwordService = mock(PasswordGeneratorService.class);
-
-        userCreationService = new UserCreationService(passwordService);
-        userCreationService.setMaxSuffixRetriesForUsername(1000); // default value in application.properties
+        passwordGeneratorService = mock(PasswordGeneratorService.class);
+        usernameGeneratorService = mock(UsernameGeneratorService.class);
 
         service = new TrainerService();
         service.setTrainerDAO(trainerDAO);
-        service.setUserCreationService(userCreationService);
+        service.setPasswordGeneratorService(passwordGeneratorService);
+        service.setUsernameGeneratorService(usernameGeneratorService);
     }
 
     private Trainer sample() {
-        Trainer t = new Trainer();
-        t.setFirstName("Tom");
-        t.setLastName("Smith");
-        t.setSpecialization(TrainingType.FITNESS);
-        t.setUserId(UUID.randomUUID());
-        return t;
+        return sample("Tom", "Smith");
     }
 
     private Trainer sample(String firstName, String lastName) {
-        Trainer t = new Trainer();
-        t.setFirstName(firstName);
-        t.setLastName(lastName);
-        t.setSpecialization(TrainingType.FITNESS);
-        t.setUserId(UUID.randomUUID());
-        t.setActive(true);
-        return t;
+        return new Trainer(
+                firstName, lastName,
+                null, null,
+                true, TrainingType.Type.FITNESS,
+                UUID.randomUUID()
+        );
     }
 
     // === CREATE TRAINER TESTS ===
@@ -64,7 +56,8 @@ public class TrainerServiceTest {
     void createTrainer_withValidTrainer_shouldGeneratePasswordAndDefaultUsername() {
         Trainer trainer = sample();
 
-        when(passwordService.generate(10)).thenReturn("secretPass");
+        when(passwordGeneratorService.generate(10)).thenReturn("secretPass");
+        when(usernameGeneratorService.generateUniqueUsername("Tom", "Smith")).thenReturn("Tom.Smith");
         when(trainerDAO.createTrainer(any(Trainer.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
 
@@ -72,7 +65,7 @@ public class TrainerServiceTest {
 
         assertThat(result.getPassword()).isEqualTo("secretPass");
         assertThat(result.getUsername()).isEqualTo("Tom.Smith");
-        verify(passwordService).generate(10);
+        verify(passwordGeneratorService).generate(10);
         verify(trainerDAO).createTrainer(trainer);
     }
 
@@ -81,43 +74,26 @@ public class TrainerServiceTest {
     void createTrainer_withDuplicateUsername_shouldGenerateUniqueUsername() {
         Trainer trainer = sample();
 
-        when(passwordService.generate(10)).thenReturn("secretPass");
-
+        when(passwordGeneratorService.generate(10)).thenReturn("secretPass");
+        when(usernameGeneratorService.generateUniqueUsername("Tom", "Smith")).thenReturn("Tom.Smith2");
         when(trainerDAO.createTrainer(any(Trainer.class)))
-                .thenThrow(new UsernameExistsException("Username already exists"))
                 .thenAnswer(inv -> inv.getArgument(0));
 
         Trainer result = service.createTrainer(trainer);
 
         assertThat(result.getUsername()).isEqualTo("Tom.Smith2");
         assertThat(result.getPassword()).isEqualTo("secretPass");
-        verify(trainerDAO, times(2)).createTrainer(any(Trainer.class));
+        verify(trainerDAO, times(1)).createTrainer(any(Trainer.class));
     }
 
-    @Test
-    @Order(103)
-    void createTrainer_withMultipleDuplicateUsernames_shouldIncrementUsernameSerially() {
-        Trainer trainer = sample();
-
-        when(passwordService.generate(10)).thenReturn("secretPass");
-        when(trainerDAO.createTrainer(any(Trainer.class)))
-                .thenThrow(new UsernameExistsException("Username already exists"))
-                .thenThrow(new UsernameExistsException("Username already exists"))
-                .thenThrow(new UsernameExistsException("Username already exists"))
-                .thenAnswer(invocation -> invocation.getArgument(0));
-
-        Trainer result = service.createTrainer(trainer);
-
-        assertThat(result.getUsername()).isEqualTo("Tom.Smith4");
-        verify(trainerDAO, times(4)).createTrainer(any(Trainer.class));
-    }
 
     @Test
     @Order(104)
     void createTrainer_withSpecialCharactersInName_shouldGenerateValidUsername() {
         Trainer trainer = sample("Tom-John", "O'Smith");
 
-        when(passwordService.generate(10)).thenReturn("secretPass");
+        when(passwordGeneratorService.generate(10)).thenReturn("secretPass");
+        when(usernameGeneratorService.generateUniqueUsername("Tom-John", "O'Smith")).thenReturn("Tom-John.O'Smith");
         when(trainerDAO.createTrainer(any(Trainer.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -232,13 +208,15 @@ public class TrainerServiceTest {
     void updateTrainer_withUpdatedSpecialization_shouldDelegateToDAO() {
         Trainer trainer = sample();
         trainer.setUsername("Tom.Smith");
-        trainer.setSpecialization(TrainingType.YOGA);
+        trainer.setSpecializationType(TrainingType.Type.YOGA);
 
         when(trainerDAO.updateTrainer(trainer)).thenReturn(trainer);
 
         Trainer result = service.updateTrainer(trainer);
 
-        assertThat(result.getSpecialization()).isEqualTo(TrainingType.YOGA);
+        assertThat(result.getSpecialization()).isEqualTo(
+                TrainingType.fromEnum(TrainingType.Type.YOGA)
+        );
         verify(trainerDAO).updateTrainer(trainer);
     }
 
@@ -290,11 +268,14 @@ public class TrainerServiceTest {
     @Test
     @Order(504)
     void getAllTrainers_withDifferentSpecializations_shouldReturnAllTrainers() {
+        TrainingType fitnessType = TrainingType.fromEnum(TrainingType.Type.FITNESS);
+        TrainingType zumbaType = TrainingType.fromEnum(TrainingType.Type.ZUMBA);
+
         Trainer fitnessTrainer = sample("Fitness", "Trainer");
-        fitnessTrainer.setSpecialization(TrainingType.FITNESS);
+        fitnessTrainer.setSpecializationType(TrainingType.Type.FITNESS);
 
         Trainer zumbaTrainer = sample("Zumba", "Trainer");
-        zumbaTrainer.setSpecialization(TrainingType.ZUMBA);
+        zumbaTrainer.setSpecializationType(TrainingType.Type.ZUMBA);
 
         when(trainerDAO.getAllTrainers())
                 .thenReturn(List.of(fitnessTrainer, zumbaTrainer));
@@ -304,7 +285,7 @@ public class TrainerServiceTest {
         assertThat(result)
                 .hasSize(2)
                 .extracting(Trainer::getSpecialization)
-                .containsExactly(TrainingType.FITNESS, TrainingType.ZUMBA);
+                .containsExactly(fitnessType, zumbaType);
     }
 
     // === INTEGRATION TESTS ===
@@ -315,7 +296,7 @@ public class TrainerServiceTest {
         Trainer trainer = sample();
 
         // Setup create operation
-        when(passwordService.generate(10)).thenReturn("secretPass");
+        when(passwordGeneratorService.generate(10)).thenReturn("secretPass");
         when(trainerDAO.createTrainer(any(Trainer.class)))
                 .thenAnswer(invocation -> {
                     Trainer t = invocation.getArgument(0);
@@ -343,7 +324,8 @@ public class TrainerServiceTest {
         Trainer trainer = sample();
 
         // Setup create
-        when(passwordService.generate(10)).thenReturn("secretPass");
+        when(usernameGeneratorService.generateUniqueUsername("Tom", "Smith")).thenReturn("Tom.Smith");
+        when(passwordGeneratorService.generate(10)).thenReturn("secretPass");
         when(trainerDAO.createTrainer(any(Trainer.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -351,16 +333,18 @@ public class TrainerServiceTest {
         when(trainerDAO.updateTrainer(any(Trainer.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
+        TrainingType resistanceType = TrainingType.fromEnum(TrainingType.Type.RESISTANCE);
+
         // Execute lifecycle
         Trainer created = service.createTrainer(trainer);
         created.setFirstName("UpdatedTom");
-        created.setSpecialization(TrainingType.RESISTANCE);
+        created.setSpecialization(resistanceType);
         Trainer updated = service.updateTrainer(created);
 
         // Verify lifecycle
         assertThat(created.getUsername()).isEqualTo("Tom.Smith");
         assertThat(updated.getFirstName()).isEqualTo("UpdatedTom");
-        assertThat(updated.getSpecialization()).isEqualTo(TrainingType.RESISTANCE);
+        assertThat(updated.getSpecialization()).isEqualTo(resistanceType);
     }
 
     @Test
@@ -368,10 +352,12 @@ public class TrainerServiceTest {
     void dependencyInjection_shouldWorkCorrectly() {
         TrainerService newService = new TrainerService();
         TrainerDAO mockDAO = mock(TrainerDAO.class);
-        UserCreationService mockUserCreationService = mock(UserCreationService.class);
+        PasswordGeneratorService mockPasswordGeneratorService = mock(PasswordGeneratorService.class);
+        UsernameGeneratorService mockUsernameGeneratorService = mock(UsernameGeneratorService.class);
 
         newService.setTrainerDAO(mockDAO);
-        newService.setUserCreationService(mockUserCreationService);
+        newService.setPasswordGeneratorService(mockPasswordGeneratorService);
+        newService.setUsernameGeneratorService(mockUsernameGeneratorService);
 
         // Verify DAO injection
         when(mockDAO.getAllTrainers()).thenReturn(List.of());
@@ -379,10 +365,18 @@ public class TrainerServiceTest {
         assertThat(result).isEmpty();
         verify(mockDAO).getAllTrainers();
 
-        // Verify UserCreationService injection
+        // Verify UsernameGeneratorService and PasswordGeneratorService injection
         Trainer trainer = sample();
-        when(mockUserCreationService.createUser(any(), any(), any())).thenReturn(trainer);
-        newService.createTrainer(trainer);
-        verify(mockUserCreationService).createUser(eq(trainer), any(), eq("Trainer"));
+        when(mockUsernameGeneratorService.generateUniqueUsername("Tom", "Smith")).thenReturn("Tom.Smith21");
+        when(mockPasswordGeneratorService.generate(10)).thenReturn("secretPass");
+        when(mockDAO.createTrainer(any(Trainer.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        Trainer saved = newService.createTrainer(trainer);
+
+        assertThat(saved.getUsername()).isEqualTo("Tom.Smith21");
+        assertThat(saved.getPassword()).isEqualTo("secretPass");
+        verify(mockUsernameGeneratorService).generateUniqueUsername("Tom", "Smith");
+        verify(mockPasswordGeneratorService).generate(10);
     }
 }
