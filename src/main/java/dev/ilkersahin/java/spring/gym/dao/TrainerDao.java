@@ -5,9 +5,11 @@ import dev.ilkersahin.java.spring.gym.model.Trainer;
 import java.util.List;
 import java.util.Optional;
 
-public interface TrainerDAO {
+public interface TrainerDao {
     Optional<Trainer> getTrainer(String username);
     List<Trainer> getAllTrainers();
     Trainer createTrainer(Trainer trainer);
     Trainer updateTrainer(Trainer trainer);
+    List<Trainer> findTrainersNotAssignedToTrainee(String traineeUsername);
+    List<Trainer> findByUsernames(List<String> usernames);
 }
