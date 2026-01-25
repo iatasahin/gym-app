@@ -9,6 +9,6 @@ public record TrainingSearchRequestForTrainer(
         @Valid Credentials credentials,
         LocalDate fromDate,
         LocalDate toDate,
-        String traineeName
+        String traineeUsername
 ) {
 }

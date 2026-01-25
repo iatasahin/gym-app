@@ -201,7 +201,7 @@ public class TraineeServiceImpl implements TraineeService {
                 request.credentials().username(),
                 request.fromDate(),
                 request.toDate(),
-                request.trainerName(),
+                request.trainerUsername(),
                 request.trainingType()
         );
 

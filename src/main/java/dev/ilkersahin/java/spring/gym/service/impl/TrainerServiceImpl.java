@@ -145,7 +145,7 @@ public class TrainerServiceImpl implements TrainerService {
                         request.credentials().username(),
                         request.fromDate(),
                         request.toDate(),
-                        request.traineeName()
+                        request.traineeUsername()
                 );
 
         List<TrainingView> views = trainings.stream()

@@ -15,13 +15,13 @@ public interface TrainingDao {
             String traineeUsername,
             LocalDate fromDate,
             LocalDate toDate,
-            String trainerName,
+            String trainerUsername,
             TrainingType.Type trainingType
     );
     List<Training> findForTrainer(
             String trainerUsername,
             LocalDate fromDate,
             LocalDate toDate,
-            String traineeName
+            String traineeUsername
     );
 }

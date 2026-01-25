@@ -10,7 +10,7 @@ public record TrainingSearchRequestForTrainee(
         @Valid Credentials credentials,
         LocalDate fromDate,
         LocalDate toDate,
-        String trainerName,
+        String trainerUsername,
         TrainingType.Type trainingType
 ) {
 }
