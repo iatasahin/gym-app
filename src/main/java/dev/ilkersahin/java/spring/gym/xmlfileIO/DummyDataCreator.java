@@ -1,8 +1,11 @@
 package dev.ilkersahin.java.spring.gym.xmlfileIO;
 
-import dev.ilkersahin.java.spring.gym.model.Trainee;
-import dev.ilkersahin.java.spring.gym.model.Trainer;
-import dev.ilkersahin.java.spring.gym.model.Training;
+import dev.ilkersahin.java.spring.gym.dto.auth.Credentials;
+import dev.ilkersahin.java.spring.gym.dto.request.TraineeCreateRequest;
+import dev.ilkersahin.java.spring.gym.dto.request.TrainerCreateRequest;
+import dev.ilkersahin.java.spring.gym.dto.request.TrainingCreateRequest;
+import dev.ilkersahin.java.spring.gym.dto.response.TraineeCreateResponse;
+import dev.ilkersahin.java.spring.gym.dto.response.TrainerCreateResponse;
 import dev.ilkersahin.java.spring.gym.model.TrainingType;
 import dev.ilkersahin.java.spring.gym.service.TraineeService;
 import dev.ilkersahin.java.spring.gym.service.TrainerService;
@@ -14,12 +17,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
-import java.time.Duration;
 import java.time.LocalDate;
-import java.util.UUID;
+import java.util.List;
 
 @Component
 @Profile("xml-write")
+// NOTE: Passwords are written in plain text for demo/import purposes only
 public class DummyDataCreator {
     private static final Logger log = LoggerFactory.getLogger(DummyDataCreator.class);
 
@@ -40,74 +43,83 @@ public class DummyDataCreator {
     }
 
     @PostConstruct
-    public void initializeTheExternalDataFile(){
+    public void initializeTheExternalDataFile() {
 
         log.info("xml-write profile active → generating dummy data");
 
-        Trainer trainer1 = new Trainer(
-                "Tom", "Smith",
-                null, null,
-                true, TrainingType.Type.RESISTANCE, UUID.randomUUID()
-        );
-        Trainer trainer2 = new Trainer(
-                "Tom", "Smith",
-                null, null,
-                true, TrainingType.Type.FITNESS, UUID.randomUUID()
+        // --- Trainers ---
+        TrainerCreateResponse trainer1 =
+                trainerService.createTrainer(
+                        new TrainerCreateRequest("Tom", "Smith", TrainingType.Type.RESISTANCE)
+                );
+
+        TrainerCreateResponse trainer2 =
+                trainerService.createTrainer(
+                        new TrainerCreateRequest("Tom", "Smith", TrainingType.Type.FITNESS)
+                );
+
+        // --- Trainees ---
+        TraineeCreateResponse trainee1 =
+                traineeService.createTrainee(
+                        new TraineeCreateRequest(
+                                "Jack", "Black",
+                                LocalDate.of(1980, 12, 27),
+                                "anAddress"
+                        )
+                );
+
+        TraineeCreateResponse trainee2 =
+                traineeService.createTrainee(
+                        new TraineeCreateRequest(
+                                "Tom", "Smith",
+                                LocalDate.of(1990, 5, 16),
+                                "anotherAddress"
+                        )
+                );
+
+        // --- Trainings ---
+        Credentials credentials1 = new Credentials(
+                trainee1.trainee().username(),
+                trainee1.password()
         );
 
-        Trainee trainee1 = new Trainee(
-                "Jack", "Black",
-                null, null,
-                true,
-                LocalDate.of(1980, 12, 27),
-                "anAddress", UUID.randomUUID()
+        TrainingCreateRequest training1 = new TrainingCreateRequest(
+                credentials1,
+                trainer1.trainer().username(),
+                "Resistance Training",
+                TrainingType.Type.RESISTANCE,
+                LocalDate.of(2025, 8, 24),
+                49
         );
-        Trainee trainee2 = new Trainee(
-                "Tom", "Smith",
-                null, null,
-                true,
-                LocalDate.of(1990, 5, 16),
-                "anAddress", UUID.randomUUID()
-        );
+        TrainingCreateRequest training2 = new TrainingCreateRequest(
+                credentials1,
+                trainer2.trainer().username(),
+                "Fitness Training",
+                TrainingType.Type.FITNESS,
+                LocalDate.of(2024, 7, 15),
+                58
 
-        Training training1 = new Training(
-                trainee1.getTraineeId(), trainer1.getTrainerId(),
-                "aTrainingName", TrainingType.Type.RESISTANCE,
-                LocalDate.of(2025,8,24),
-                Duration.ofMinutes(49)
         );
-        Training training2 = new Training(
-                trainee1.getTraineeId(), trainer2.getTrainerId(),
-                "aTrainingName", TrainingType.Type.FITNESS,
-                LocalDate.of(2024,7,15),
-                Duration.ofMinutes(58)
+        TrainingCreateRequest training3 = new TrainingCreateRequest(
+                new Credentials(
+                        trainee2.trainee().username(),
+                        trainee2.password()
+                ),
+                trainer2.trainer().username(),
+                "Another Training",
+                TrainingType.Type.FITNESS,
+                LocalDate.of(2023, 3, 28),
+                85
         );
-        Training training3 = new Training(
-                trainee2.getTraineeId(), trainer2.getTrainerId(),
-                "anotherTrainingName", TrainingType.Type.FITNESS,
-                LocalDate.of(2023,3,28),
-                Duration.ofMinutes(85)
-        );
-
-        trainerService.createTrainer(trainer1);
-        trainerService.createTrainer(trainer2);
-
-        traineeService.createTrainee(trainee1);
-        traineeService.createTrainee(trainee2);
 
         trainingService.createTraining(training1);
         trainingService.createTraining(training2);
         trainingService.createTraining(training3);
 
-        log.info("Dummy data created");
-        log.debug("Trainers: {}", trainerService.getAllTrainers().stream().map(Trainer::getUsername).toList());
-        log.debug("Trainees: {}", traineeService.getAllTrainees().stream().map(Trainee::getUsername).toList());
-        log.debug("Trainings: {}", trainingService.getAllTrainings());
-
         xmlExternalFileWriter.writeToXml(
-                trainerService.getAllTrainers(),
-                traineeService.getAllTrainees(),
-                trainingService.getAllTrainings()
+                List.of(trainer1, trainer2),
+                List.of(trainee1, trainee2),
+                List.of(training1, training2, training3)
         );
 
         log.info("XML generation finished");

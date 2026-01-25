@@ -1,34 +1,35 @@
 package dev.ilkersahin.java.spring.gym.xmlfileIO.mapper;
 
-import dev.ilkersahin.java.spring.gym.model.Training;
+import dev.ilkersahin.java.spring.gym.dto.auth.Credentials;
+import dev.ilkersahin.java.spring.gym.dto.request.TrainingCreateRequest;
 import dev.ilkersahin.java.spring.gym.xmlfileIO.dto.TrainingXml;
 
+import java.time.Duration;
+
 public class TrainingXmlMapper {
-
-    public static TrainingXml toXml(Training t) {
+    public static TrainingXml toXml(TrainingCreateRequest t) {
         TrainingXml x = new TrainingXml();
-
-        x.setTraineeId(t.getTrainee().getTraineeId());
-        x.setTrainerId(t.getTrainer().getTrainerId());
-        x.setTrainingName(t.getTrainingName());
-        x.setTrainingType(t.getTrainingType());
-        x.setTrainingDate(t.getTrainingDate());
-        x.setTrainingDuration(t.getTrainingDuration());
-
+        x.setTraineeUsername(t.credentials().username());
+        x.setTraineePassword(t.credentials().password());
+        x.setTrainerUsername(t.trainerUsername());
+        x.setTrainingName(t.trainingName());
+        x.setTrainingType(t.trainingType());
+        x.setTrainingDate(t.trainingDate());
+        x.setTrainingDuration(Duration.ofMinutes(t.durationMinutes()));
         return x;
     }
 
-    public static Training toDomain(TrainingXml x) {
-        Training t = new Training();
-
-        t.getTrainee().setTraineeId(x.getTraineeId());
-        t.getTrainer().setTrainerId(x.getTrainerId());
-        t.setTrainingName(x.getTrainingName());
-        t.setTrainingType(x.getTrainingType());
-        t.setTrainingDate(x.getTrainingDate());
-        t.setTrainingDuration(x.getTrainingDuration());
-
-        return t;
+    public static TrainingCreateRequest toDomain(TrainingXml x) {
+        return new TrainingCreateRequest(
+                new Credentials(
+                        x.getTraineeUsername(),
+                        x.getTraineePassword()
+                ),
+                x.getTrainerUsername(),
+                x.getTrainingName(),
+                x.getTrainingType(),
+                x.getTrainingDate(),
+                (int) x.getTrainingDuration().toMinutes()
+        );
     }
-
 }

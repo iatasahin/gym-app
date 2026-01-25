@@ -23,6 +23,7 @@ import java.io.InputStream;
 
 @Component
 @Profile("xml-read")
+// NOTE: Passwords are written in plain text for demo/import purposes only
 public class XmlExternalFileReader {
 
     private static final Logger log = LoggerFactory.getLogger(XmlExternalFileReader.class);
@@ -73,9 +74,9 @@ public class XmlExternalFileReader {
                 .forEach(trainingService::createTraining);
 
         log.info("Loaded {} trainers, {} trainees, {} trainings",
-                trainerService.getAllTrainers().size(),
-                traineeService.getAllTrainees().size(),
-                trainingService.getAllTrainings().size()
+                root.getTrainers().size(),
+                root.getTrainees().size(),
+                root.getTrainings().size()
         );
     }
 }
