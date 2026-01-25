@@ -48,6 +48,7 @@ public class TrainerServiceImpl implements TrainerService {
         String password = passwordGeneratorService.generate(10);
 
         User user = new User(request.firstName(), request.lastName(), username, password, true);
+        userDao.persist(user);
 
         Trainer trainer = new Trainer();
         trainer.setUser(user);
@@ -57,7 +58,7 @@ public class TrainerServiceImpl implements TrainerService {
 
         log.info("Trainer created with username '{}'", saved.getUsername());
 
-        return new TrainerCreateResponse(toView(saved));
+        return new TrainerCreateResponse(toView(saved), password);
     }
 
     // -------------------------------------------------------------------------

@@ -29,6 +29,7 @@ public class UsernameCounterRepositoryImpl implements UsernameCounterDao {
     @Transactional(propagation = Propagation.MANDATORY)
     public void persist(UsernameCounter counter) {
         entityManager.persist(counter);
+        entityManager.flush();
     }
 
     @Transactional(propagation = Propagation.MANDATORY)

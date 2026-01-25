@@ -54,6 +54,7 @@ public class TraineeServiceImpl implements TraineeService {
         String password = passwordGeneratorService.generate(10);
 
         User user = new User(request.firstName(), request.lastName(), username, password, true);
+        userDao.persist(user);
 
         Trainee trainee = new Trainee();
         trainee.setUser(user);
@@ -64,7 +65,7 @@ public class TraineeServiceImpl implements TraineeService {
 
         log.info("Trainee created with username '{}'", saved.getUsername());
 
-        return new TraineeCreateResponse(toView(saved));
+        return new TraineeCreateResponse(toView(saved), password);
     }
 
     // -------------------------------------------------------------------------
