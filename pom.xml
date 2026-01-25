@@ -159,8 +159,8 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.14.1</version>
                 <configuration>
-                    <source>${java.version}</source>
-                    <target>${java.version}</target>
+                    <source>${maven.compiler.source}</source>
+                    <target>${maven.compiler.target}</target>
                     <annotationProcessorPaths>
                         <path>
                             <groupId>org.projectlombok</groupId>
@@ -237,6 +237,7 @@
                                 <exclude>dev/ilkersahin/java/spring/gym/xmlfileIO/**</exclude>
                                 <exclude>dev/ilkersahin/java/spring/gym/config/**</exclude>
                                 <exclude>dev/ilkersahin/java/spring/gym/model/**</exclude>
+                                <exclude>dev/ilkersahin/java/spring/gym/dto/**</exclude>
                                 <exclude>dev/ilkersahin/java/spring/gym/SpringGymApplication.class</exclude>
                             </excludes>
                         </configuration>
