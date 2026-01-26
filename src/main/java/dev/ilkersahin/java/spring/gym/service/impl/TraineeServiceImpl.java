@@ -225,9 +225,6 @@ public class TraineeServiceImpl implements TraineeService {
         if (!trainee.getUser().getPassword().equals(credentials.password())) {
             throw new IllegalArgumentException("Invalid credentials");
         }
-        if (!trainee.getUser().isActive()) {
-            throw new IllegalStateException("Trainee is inactive");
-        }
         return trainee;
     }
 

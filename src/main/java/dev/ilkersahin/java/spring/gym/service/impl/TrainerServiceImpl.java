@@ -167,9 +167,6 @@ public class TrainerServiceImpl implements TrainerService {
         if (!trainer.getUser().getPassword().equals(credentials.password())) {
             throw new IllegalArgumentException("Invalid credentials");
         }
-        if (!trainer.getUser().isActive()) {
-            throw new IllegalStateException("Trainer is inactive");
-        }
         return trainer;
     }
 
