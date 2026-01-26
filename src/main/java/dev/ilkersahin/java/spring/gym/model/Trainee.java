@@ -5,6 +5,7 @@ import lombok.*;
 import org.hibernate.annotations.UuidGenerator;
 
 import java.time.LocalDate;
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
@@ -39,7 +40,7 @@ public class Trainee {
             inverseJoinColumns = @JoinColumn(name = "trainer_id", referencedColumnName = "trainer_id")
     )
     @ToString.Exclude
-    private Set<Trainer> trainers;
+    private Set<Trainer> trainers = new HashSet<>();
 
     @OneToMany(
             mappedBy = "trainee",
@@ -48,7 +49,7 @@ public class Trainee {
             fetch = FetchType.LAZY
     )
     @ToString.Exclude
-    private Set<Training> trainings;
+    private Set<Training> trainings = new HashSet<>();
 
     public Trainee(String firstName, String lastName, String username, String password, boolean isActive, LocalDate dateOfBirth, String address, UUID traineeId) {
         user = new User(firstName, lastName, username, password, isActive);

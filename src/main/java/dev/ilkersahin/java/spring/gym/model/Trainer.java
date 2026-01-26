@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.UuidGenerator;
 
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
@@ -36,11 +37,11 @@ public class Trainer {
 
     @ManyToMany(mappedBy = "trainers", fetch = FetchType.LAZY)
     @ToString.Exclude
-    private Set<Trainee> trainees;
+    private Set<Trainee> trainees = new HashSet<>();
 
     @OneToMany(mappedBy = "trainer", fetch = FetchType.LAZY)
     @ToString.Exclude
-    private Set<Training> trainings;
+    private Set<Training> trainings = new HashSet<>();
 
 
     public TrainingType.Type getSpecializationType() {
