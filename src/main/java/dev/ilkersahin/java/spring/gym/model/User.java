@@ -8,7 +8,15 @@ import java.util.Objects;
 import java.util.UUID;
 
 @Entity
-@Table(name = "users")
+@Table(name = "users",
+        indexes = {
+                @Index(name = "idx_users_username", columnList = "username"),
+                @Index(name = "idx_users_last_name", columnList = "last_name"),
+                @Index(name = "idx_users_first_name", columnList = "first_name"),
+                @Index(name = "idx_users_last_name_first_name", columnList = "last_name, first_name"),
+                @Index(name = "idx_users_active", columnList = "is_active")
+        }
+)
 @NoArgsConstructor
 @Getter
 @Setter

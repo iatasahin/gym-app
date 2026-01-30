@@ -6,7 +6,11 @@ import lombok.*;
 import java.util.Objects;
 
 @Entity
-@Table(name = "training_types")
+@Table(name = "training_types",
+        indexes = {
+                @Index(name = "idx_training_type_name", columnList = "training_type_name")
+        }
+)
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
