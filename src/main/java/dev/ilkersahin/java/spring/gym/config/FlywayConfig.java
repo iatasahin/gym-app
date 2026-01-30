@@ -5,7 +5,6 @@ import org.flywaydb.core.Flyway;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.DependsOn;
 import org.springframework.core.env.Environment;
 
 import javax.sql.DataSource;
@@ -16,7 +15,6 @@ public class FlywayConfig {
     private Environment env;
 
     @Bean(initMethod = "migrate")
-    @DependsOn("dataSource")
     public Flyway flyway(DataSource dataSource) {
         boolean flywayEnabled = env.getProperty("flyway.enabled", Boolean.class, true);
 

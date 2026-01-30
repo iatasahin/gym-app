@@ -67,8 +67,8 @@ The application supports three profiles:
 | (none)     | Default DB-backed runtime (MySQL + Flyway)  |
 | xml-read   | Reads data from an external XML file        | 
 | xml-write  | Writes data to an external XML file         | 
-Profiles are activated using:
 
+Profiles are activated using:
 ```
 -Dspring.profiles.active=<profile>
 ```

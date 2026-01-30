@@ -7,10 +7,8 @@ import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Root;
-import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,7 +21,6 @@ public class TrainerRepositoryImpl implements TrainerDao {
     private static final Logger log = LoggerFactory.getLogger(TrainerRepositoryImpl.class);
 
     @PersistenceContext
-    @Setter(onMethod_ = {@Autowired})
     private EntityManager entityManager;
 
     // -------------------------------------------------------------------------

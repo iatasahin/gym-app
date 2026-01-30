@@ -3,14 +3,14 @@ package dev.ilkersahin.java.spring.gym.repository;
 import dev.ilkersahin.java.spring.gym.dao.UserDao;
 import dev.ilkersahin.java.spring.gym.model.*;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.NamedQueries;
+import jakarta.persistence.NamedQuery;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Root;
-import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,11 +20,16 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Repository
+@NamedQueries(
+        @NamedQuery(
+                name = "User.getAll",
+                query = "select u from User u order by u.username"
+        )
+)
 public class UserRepositoryImpl implements UserDao {
     private static final Logger log = LoggerFactory.getLogger(UserRepositoryImpl.class);
 
     @PersistenceContext
-    @Setter(onMethod_ = {@Autowired})
     private EntityManager entityManager;
 
     // -------------------------------------------------------------------------
@@ -90,9 +95,8 @@ public class UserRepositoryImpl implements UserDao {
     @Override
     @Transactional(readOnly = true)
     public List<User> getAll() {
-        return entityManager.createQuery(
-                        "select u from User u order by u.username",
-                        User.class)
+        return entityManager
+                .createNamedQuery("User.getAll", User.class)
                 .getResultList();
     }
 }

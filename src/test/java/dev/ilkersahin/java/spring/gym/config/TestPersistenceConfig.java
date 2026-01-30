@@ -31,7 +31,7 @@ public class TestPersistenceConfig {
 
     @Bean
     public DataSource dataSource() {
-        HikariConfig hikariConfig = new HikariConfig();
+        var hikariConfig = new HikariConfig();
         hikariConfig.setDriverClassName(env.getProperty("db.driver"));
         hikariConfig.setJdbcUrl(env.getProperty("db.url"));
         hikariConfig.setUsername(env.getProperty("db.username"));
@@ -42,7 +42,7 @@ public class TestPersistenceConfig {
 
     @Bean
     public LocalContainerEntityManagerFactoryBean entityManagerFactory(DataSource dataSource) {
-        LocalContainerEntityManagerFactoryBean emf = new LocalContainerEntityManagerFactoryBean();
+        var emf = new LocalContainerEntityManagerFactoryBean();
         emf.setDataSource(dataSource);
         emf.setPackagesToScan("dev.ilkersahin.java.spring.gym.model");
         emf.setPersistenceProviderClass(HibernatePersistenceProvider.class);
@@ -57,7 +57,7 @@ public class TestPersistenceConfig {
     }
 
     private Properties hibernateProperties() {
-        Properties props = new Properties();
+        var props = new Properties();
         props.setProperty("hibernate.dialect", env.getProperty("hibernate.dialect"));
         props.setProperty("hibernate.hbm2ddl.auto", env.getProperty("hibernate.hbm2ddl.auto"));
         props.setProperty("hibernate.show_sql", env.getProperty("hibernate.show_sql", "true"));
@@ -67,7 +67,7 @@ public class TestPersistenceConfig {
 
     @Bean
     public PlatformTransactionManager transactionManager(EntityManagerFactory entityManagerFactory) {
-        JpaTransactionManager txManager = new JpaTransactionManager();
+        var txManager = new JpaTransactionManager();
         txManager.setEntityManagerFactory(entityManagerFactory);
         return txManager;
     }
