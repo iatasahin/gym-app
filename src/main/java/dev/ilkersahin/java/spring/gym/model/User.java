@@ -12,6 +12,12 @@ import java.util.UUID;
 @NoArgsConstructor
 @Getter
 @Setter
+@NamedQueries(
+        @NamedQuery(
+                name = "User.getAll",
+                query = "select u from User u order by u.username"
+        )
+)
 public class User {
     @Id
     @GeneratedValue

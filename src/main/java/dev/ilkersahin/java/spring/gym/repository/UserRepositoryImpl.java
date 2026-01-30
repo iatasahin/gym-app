@@ -3,8 +3,6 @@ package dev.ilkersahin.java.spring.gym.repository;
 import dev.ilkersahin.java.spring.gym.dao.UserDao;
 import dev.ilkersahin.java.spring.gym.model.*;
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.NamedQueries;
-import jakarta.persistence.NamedQuery;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
@@ -20,12 +18,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Repository
-@NamedQueries(
-        @NamedQuery(
-                name = "User.getAll",
-                query = "select u from User u order by u.username"
-        )
-)
 public class UserRepositoryImpl implements UserDao {
     private static final Logger log = LoggerFactory.getLogger(UserRepositoryImpl.class);
 
