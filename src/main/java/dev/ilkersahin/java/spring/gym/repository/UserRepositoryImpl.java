@@ -7,10 +7,8 @@ import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Root;
-import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,7 +22,6 @@ public class UserRepositoryImpl implements UserDao {
     private static final Logger log = LoggerFactory.getLogger(UserRepositoryImpl.class);
 
     @PersistenceContext
-    @Setter(onMethod_ = {@Autowired})
     private EntityManager entityManager;
 
     // -------------------------------------------------------------------------
@@ -90,9 +87,8 @@ public class UserRepositoryImpl implements UserDao {
     @Override
     @Transactional(readOnly = true)
     public List<User> getAll() {
-        return entityManager.createQuery(
-                        "select u from User u order by u.username",
-                        User.class)
+        return entityManager
+                .createNamedQuery("User.getAll", User.class)
                 .getResultList();
     }
 }

@@ -11,7 +11,16 @@ import java.util.Objects;
 import java.util.UUID;
 
 @Entity
-@Table(name = "trainings")
+@Table(name = "trainings",
+        indexes = {
+                @Index(name = "idx_training_date", columnList = "training_date"),
+                @Index(name = "idx_training_trainer", columnList = "trainer_id"),
+                @Index(name = "idx_training_trainee", columnList = "trainee_id"),
+                @Index(name = "idx_training_trainer_trainee", columnList = "trainer_id, trainee_id"),
+                @Index(name = "idx_training_trainee_trainer", columnList = "trainee_id, trainer_id"),
+                @Index(name = "idx_training_training_type", columnList = "training_type_id")
+        }
+)
 @Setter
 @Getter
 @ToString

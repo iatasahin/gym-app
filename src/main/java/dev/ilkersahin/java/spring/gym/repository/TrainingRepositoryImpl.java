@@ -6,10 +6,8 @@ import dev.ilkersahin.java.spring.gym.model.TrainingType;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.criteria.*;
-import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,7 +22,6 @@ public class TrainingRepositoryImpl implements TrainingDao {
     private static final Logger log = LoggerFactory.getLogger(TrainingRepositoryImpl.class);
 
     @PersistenceContext
-    @Setter(onMethod_ = {@Autowired})
     private EntityManager entityManager;
 
     // -------------------------------------------------------------------------

@@ -8,10 +8,24 @@ import java.util.Objects;
 import java.util.UUID;
 
 @Entity
-@Table(name = "users")
+@Table(name = "users",
+        indexes = {
+                @Index(name = "idx_users_username", columnList = "username"),
+                @Index(name = "idx_users_last_name", columnList = "last_name"),
+                @Index(name = "idx_users_first_name", columnList = "first_name"),
+                @Index(name = "idx_users_last_name_first_name", columnList = "last_name, first_name"),
+                @Index(name = "idx_users_active", columnList = "is_active")
+        }
+)
 @NoArgsConstructor
 @Getter
 @Setter
+@NamedQueries(
+        @NamedQuery(
+                name = "User.getAll",
+                query = "select u from User u order by u.username"
+        )
+)
 public class User {
     @Id
     @GeneratedValue
@@ -34,10 +48,10 @@ public class User {
     @Column(name = "is_active", nullable = false)
     private boolean isActive;
 
-    @OneToOne(mappedBy = "user")
+    @OneToOne(mappedBy = "user", fetch = FetchType.LAZY)
     private Trainer trainer;
 
-    @OneToOne(mappedBy = "user")
+    @OneToOne(mappedBy = "user", fetch = FetchType.LAZY)
     private Trainee trainee;
 
     // Helper methods
