@@ -53,7 +53,7 @@ public class TrainingServiceImpl implements TrainingService {
                 request.trainingName(),
                 TrainingType.fromEnum(request.trainingType()),
                 request.trainingDate(),
-                Duration.ofMinutes(request.durationMinutes())
+                request.durationMinutes()
         );
 
         trainingDao.createTraining(training);
