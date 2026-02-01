@@ -15,7 +15,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.Duration;
 import java.time.LocalDate;
 import java.util.Optional;
 
@@ -113,7 +112,7 @@ class TrainingServiceImplTest {
         assertThat(captured.getTrainer()).isEqualTo(trainer);
         assertThat(captured.getTrainingName()).isEqualTo("Evening Yoga");
         assertThat(captured.getTrainingDate()).isEqualTo(LocalDate.of(2024, 7, 20));
-        assertThat(captured.getTrainingDuration()).isEqualTo(Duration.ofMinutes(90));
+        assertThat(captured.getTrainingDuration()).isEqualTo(90);
     }
 
     @Test
@@ -136,7 +135,7 @@ class TrainingServiceImplTest {
         trainingService.createTraining(request);
 
         verify(trainingDao).createTraining(trainingCaptor.capture());
-        assertThat(trainingCaptor.getValue().getTrainingDuration()).isEqualTo(Duration.ofMinutes(30));
+        assertThat(trainingCaptor.getValue().getTrainingDuration()).isEqualTo(30);
     }
 
     // =========================================================================

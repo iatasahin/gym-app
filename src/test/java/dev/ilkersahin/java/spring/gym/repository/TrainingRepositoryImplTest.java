@@ -15,7 +15,6 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Duration;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
@@ -75,7 +74,7 @@ public class TrainingRepositoryImplTest {
                 "Morning Fitness",
                 trainingType,
                 LocalDate.of(2024, 6, 15),
-                Duration.ofMinutes(60)
+                60
         );
     }
 
@@ -192,7 +191,7 @@ public class TrainingRepositoryImplTest {
 
         Training training2 = new Training(
                 trainee, trainer, "Evening Session", trainingType,
-                LocalDate.of(2024, 6, 20), Duration.ofMinutes(45)
+                LocalDate.of(2024, 6, 20), 45
         );
         trainingRepository.createTraining(training2);
 
@@ -226,7 +225,7 @@ public class TrainingRepositoryImplTest {
 
         Training earlier = new Training(
                 trainee, trainer, "Earlier", trainingType,
-                LocalDate.of(2024, 5, 1), Duration.ofMinutes(30)
+                LocalDate.of(2024, 5, 1), 30
         );
         trainingRepository.createTraining(earlier);
 
@@ -245,7 +244,7 @@ public class TrainingRepositoryImplTest {
 
         Training later = new Training(
                 trainee, trainer, "Later", trainingType,
-                LocalDate.of(2024, 7, 1), Duration.ofMinutes(30)
+                LocalDate.of(2024, 7, 1), 30
         );
         trainingRepository.createTraining(later);
 
@@ -272,7 +271,7 @@ public class TrainingRepositoryImplTest {
 
         Training otherTraining = new Training(
                 trainee, otherTrainer, "Other Training", trainingType,
-                LocalDate.of(2024, 6, 15), Duration.ofMinutes(30)
+                LocalDate.of(2024, 6, 15), 30
         );
         trainingRepository.createTraining(otherTraining);
 
@@ -295,7 +294,7 @@ public class TrainingRepositoryImplTest {
 
         Training yogaTraining = new Training(
                 trainee, trainer, "Yoga Session", yoga,
-                LocalDate.of(2024, 6, 15), Duration.ofMinutes(45)
+                LocalDate.of(2024, 6, 15), 45
         );
         trainingRepository.createTraining(yogaTraining);
 
@@ -358,7 +357,7 @@ public class TrainingRepositoryImplTest {
 
         Training earlier = new Training(
                 trainee, trainer, "Earlier", trainingType,
-                LocalDate.of(2024, 5, 1), Duration.ofMinutes(30)
+                LocalDate.of(2024, 5, 1), 30
         );
         trainingRepository.createTraining(earlier);
 
@@ -377,7 +376,7 @@ public class TrainingRepositoryImplTest {
 
         Training later = new Training(
                 trainee, trainer, "Later", trainingType,
-                LocalDate.of(2024, 7, 1), Duration.ofMinutes(30)
+                LocalDate.of(2024, 7, 1), 30
         );
         trainingRepository.createTraining(later);
 
@@ -403,7 +402,7 @@ public class TrainingRepositoryImplTest {
 
         Training otherTraining = new Training(
                 otherTrainee, trainer, "Other Training", trainingType,
-                LocalDate.of(2024, 6, 15), Duration.ofMinutes(30)
+                LocalDate.of(2024, 6, 15), 30
         );
         trainingRepository.createTraining(otherTraining);
 

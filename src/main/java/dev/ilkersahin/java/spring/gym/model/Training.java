@@ -1,11 +1,9 @@
 package dev.ilkersahin.java.spring.gym.model;
 
-import dev.ilkersahin.java.spring.gym.model.converter.DurationConverter;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.UuidGenerator;
 
-import java.time.Duration;
 import java.time.LocalDate;
 import java.util.Objects;
 import java.util.UUID;
@@ -70,12 +68,11 @@ public class Training {
     @Column(name = "training_date", nullable = false)
     private LocalDate trainingDate;
 
-    @Convert(converter = DurationConverter.class)
     @Column(name = "training_duration_minutes", nullable = false)
-    private Duration trainingDuration;
+    private Integer trainingDuration;
 
     public Training(Trainee trainee, Trainer trainer, String trainingName,
-                    TrainingType trainingType, LocalDate trainingDate, Duration trainingDuration
+                    TrainingType trainingType, LocalDate trainingDate, int trainingDuration
     ) {
         this.trainee = trainee;
         this.trainer = trainer;
@@ -83,15 +80,6 @@ public class Training {
         this.trainingType = trainingType;
         this.trainingDate = trainingDate;
         this.trainingDuration = trainingDuration;
-    }
-
-    // Legacy Constructor
-    public Training(UUID traineeId, UUID trainerId, String trainingName,
-                    TrainingType.Type trainingType, LocalDate trainingDate, Duration trainingDuration
-    ) {
-        this(new Trainee(), new Trainer(), trainingName, TrainingType.fromEnum(trainingType), trainingDate, trainingDuration);
-        trainee.setTraineeId(traineeId);
-        trainer.setTrainerId(trainerId);
     }
 
     @Override
