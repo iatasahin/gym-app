@@ -82,7 +82,7 @@ public class TrainerRepositoryImplTest {
         Optional<Trainer> found = trainerRepository.getTrainer("Tom.Trainer");
 
         assertThat(found).isPresent();
-        assertThat(found.get().getSpecialization().getTrainingTypeName())
+        assertThat(found.get().getSpecialization().getType().getName())
                 .isEqualTo(TrainingType.Type.FITNESS.getName());
     }
 
@@ -101,7 +101,7 @@ public class TrainerRepositoryImplTest {
         trainer.setSpecialization(yoga);
         Trainer updated = trainerRepository.updateTrainer(trainer);
 
-        assertThat(updated.getSpecialization().getTrainingTypeName())
+        assertThat(updated.getSpecialization().getType().getName())
                 .isEqualTo(TrainingType.Type.YOGA.getName());
     }
 
