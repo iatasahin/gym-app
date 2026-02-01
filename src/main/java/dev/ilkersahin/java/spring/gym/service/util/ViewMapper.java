@@ -35,7 +35,7 @@ public class ViewMapper {
         return new TrainingView(
                 training.getTrainingName(),
                 training.getTrainingDate(),
-                (int) training.getTrainingDuration().toMinutes(),
+                training.getTrainingDuration(),
                 training.getTrainingType().toEnum(),
                 training.getTrainee().getUser().getUsername(),
                 training.getTrainer().getUser().getUsername()
