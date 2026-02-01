@@ -6,7 +6,6 @@ import dev.ilkersahin.java.spring.gym.dto.view.TrainingView;
 import dev.ilkersahin.java.spring.gym.model.*;
 import org.junit.jupiter.api.*;
 
-import java.time.Duration;
 import java.time.LocalDate;
 
 import static org.assertj.core.api.Assertions.*;
@@ -89,7 +88,7 @@ public class ViewMapperTest {
                 "Morning Yoga",
                 trainingType,
                 LocalDate.of(2024, 6, 15),
-                Duration.ofMinutes(60)
+                60
         );
 
         TrainingView view = viewMapper.toView(training);

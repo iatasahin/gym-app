@@ -8,7 +8,7 @@ CREATE TABLE trainings
     training_name             VARCHAR(100) NOT NULL,
     training_type_id          INT          NOT NULL,
     training_date             DATE         NOT NULL,
-    training_duration_minutes BIGINT       NOT NULL,
+    training_duration_minutes INT       NOT NULL,
 
     CONSTRAINT pk_trainings PRIMARY KEY (training_id),
 
