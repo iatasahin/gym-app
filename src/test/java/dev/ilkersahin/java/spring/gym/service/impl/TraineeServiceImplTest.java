@@ -408,7 +408,7 @@ public class TraineeServiceImplTest {
         Training training = new Training();
         TrainingView trainingView = new TrainingView(
                 "Morning Session", LocalDate.now(), 60,
-                TrainingType.Type.FITNESS, "Jack.Black", "Tom.Smith"
+                TrainingType.Type.FITNESS.getName(), "Jack.Black", "Tom.Smith"
         );
 
         when(traineeDao.getTrainee("Jack.Black")).thenReturn(Optional.of(activeTrainee));

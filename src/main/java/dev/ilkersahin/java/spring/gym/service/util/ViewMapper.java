@@ -27,7 +27,7 @@ public class ViewMapper {
                 trainer.getUser().getFirstName(),
                 trainer.getUser().getLastName(),
                 trainer.getUser().isActive(),
-                trainer.getSpecialization().getTrainingTypeName()
+                trainer.getSpecialization().getType().getName()
         );
     }
 
@@ -36,7 +36,7 @@ public class ViewMapper {
                 training.getTrainingName(),
                 training.getTrainingDate(),
                 (int) training.getTrainingDuration().toMinutes(),
-                training.getTrainingType().toEnum(),
+                training.getTrainingType().getType().getName(),
                 training.getTrainee().getUser().getUsername(),
                 training.getTrainer().getUser().getUsername()
         );

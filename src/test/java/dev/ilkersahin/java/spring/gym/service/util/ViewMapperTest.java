@@ -97,7 +97,7 @@ public class ViewMapperTest {
         assertThat(view.trainingName()).isEqualTo("Morning Yoga");
         assertThat(view.trainingDate()).isEqualTo(LocalDate.of(2024, 6, 15));
         assertThat(view.durationMinutes()).isEqualTo(60);
-        assertThat(view.trainingType()).isEqualTo(TrainingType.Type.YOGA);
+        assertThat(view.trainingType()).isEqualTo(TrainingType.Type.YOGA.getName());
         assertThat(view.traineeUsername()).isEqualTo("Jack.Black");
         assertThat(view.trainerUsername()).isEqualTo("Tom.Trainer");
     }
