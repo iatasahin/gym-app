@@ -20,7 +20,7 @@ public class TrainingType {
     private Integer trainingTypeId;
 
     @Column(name = "training_type_name", unique = true, nullable = false, length = 50)
-    private String trainingTypeName;
+    private Type type;
 
     @Getter
     public enum Type {
@@ -31,6 +31,7 @@ public class TrainingType {
         RESISTANCE(5, "Resistance");
 
         private final int id;
+        @EnumeratedValue
         private final String name;
 
         Type(int id, String name) {
@@ -54,7 +55,7 @@ public class TrainingType {
     }
 
     public static TrainingType fromEnum(Type type) {
-        return new TrainingType(type.getId(), type.getName());
+        return new TrainingType(type.getId(), type);
     }
 
     public Type toEnum() {
@@ -77,8 +78,8 @@ public class TrainingType {
     @Override
     public String toString() {
         return "TrainingType{" +
-                "trainingTypeId=" + trainingTypeId +
-                ", trainingTypeName='" + trainingTypeName + '\'' +
+                "trainingTypeId=" + type.id +
+                ", trainingTypeName='" + type.name + '\'' +
                 '}';
     }
 }

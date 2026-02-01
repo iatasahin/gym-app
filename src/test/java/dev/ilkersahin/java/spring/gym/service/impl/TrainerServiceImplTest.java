@@ -159,7 +159,7 @@ class TrainerServiceImplTest {
         assertThat(response.successful()).isTrue();
         assertThat(trainer.getUser().getFirstName()).isEqualTo("John");
         assertThat(trainer.getUser().getLastName()).isEqualTo("Doe");
-        assertThat(trainer.getSpecialization().getTrainingTypeName())
+        assertThat(trainer.getSpecialization().getType().getName())
                 .isEqualTo(TrainingType.Type.YOGA.getName());
     }
 
@@ -208,7 +208,7 @@ class TrainerServiceImplTest {
         trainerService.updateTrainer(request);
 
         assertThat(trainer.getUser().getFirstName()).isEqualTo("Tom"); // unchanged
-        assertThat(trainer.getSpecialization().getTrainingTypeName())
+        assertThat(trainer.getSpecialization().getType().getName())
                 .isEqualTo(TrainingType.Type.STRETCHING.getName());
     }
 
@@ -294,7 +294,7 @@ class TrainerServiceImplTest {
         Training training = new Training();
         TrainingView trainingView = new TrainingView(
                 "Morning Session", LocalDate.now(), 60,
-                TrainingType.Type.FITNESS, "Jack.Black", "Tom.Smith"
+                TrainingType.Type.FITNESS.getName(), "Jack.Black", "Tom.Smith"
         );
 
         when(trainerDao.getTrainer("Tom.Smith")).thenReturn(Optional.of(trainer));
