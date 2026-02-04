@@ -1,13 +1,68 @@
 package dev.ilkersahin.java.spring.gym.model;
 
-import java.util.Objects;
+import jakarta.persistence.*;
+import lombok.*;
+import org.hibernate.annotations.UuidGenerator;
 
-public abstract class User {
+import java.util.Objects;
+import java.util.UUID;
+
+@Entity
+@Table(name = "users",
+        indexes = {
+                @Index(name = "idx_users_username", columnList = "username"),
+                @Index(name = "idx_users_last_name", columnList = "last_name"),
+                @Index(name = "idx_users_first_name", columnList = "first_name"),
+                @Index(name = "idx_users_last_name_first_name", columnList = "last_name, first_name"),
+                @Index(name = "idx_users_active", columnList = "is_active")
+        }
+)
+@NoArgsConstructor
+@Getter
+@Setter
+@NamedQueries(
+        @NamedQuery(
+                name = "User.getAll",
+                query = "select u from User u order by u.username"
+        )
+)
+public class User {
+    @Id
+    @GeneratedValue
+    @UuidGenerator
+    @Column(name = "user_id", updatable = false, nullable = false)
+    private UUID userId;
+
+    @Column(name = "first_name", nullable = false, length = 100)
     private String firstName;
+
+    @Column(name = "last_name", nullable = false, length = 100)
     private String lastName;
+
+    @Column(name = "username", unique = true, nullable = false)
     private String username;
+
+    @Column(name = "password", nullable = false)
     private String password;
+
+    @Column(name = "is_active", nullable = false)
     private boolean isActive;
+
+    @OneToOne(mappedBy = "user", fetch = FetchType.LAZY)
+    private Trainer trainer;
+
+    @OneToOne(mappedBy = "user", fetch = FetchType.LAZY)
+    private Trainee trainee;
+
+    // Helper methods
+    public boolean isTrainer() { return trainer != null; }
+    public boolean isTrainee() { return trainee != null; }
+    public boolean isBothTrainerAndTrainee() {
+        return trainer != null && trainee != null;
+    }
+    public boolean isNeitherTrainerNorTrainee() {
+        return trainer == null && trainee == null;
+    }
 
     public User(String firstName, String lastName, String username, String password, boolean isActive) {
         this.firstName = firstName;
@@ -17,55 +72,13 @@ public abstract class User {
         this.isActive = isActive;
     }
 
-    public User() {
-    }
-
-    public String getFirstName() {
-        return firstName;
-    }
-
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
-    }
-
-    public String getLastName() {
-        return lastName;
-    }
-
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
-    }
-
-    public String getUsername() {
-        return username;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public boolean isActive() {
-        return isActive;
-    }
-
-    public void setActive(boolean active) {
-        isActive = active;
-    }
-
     @Override
     public String toString() {
         return "User{" +
                 "username='" + username + '\'' +
                 ", firstName='" + firstName + '\'' +
                 ", lastName='" + lastName + '\'' +
+                ", userId='" + userId + '\'' +
                 ", isActive=" + isActive +
                 '}';
     }

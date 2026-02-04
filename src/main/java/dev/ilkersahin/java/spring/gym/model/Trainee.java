@@ -1,56 +1,127 @@
 package dev.ilkersahin.java.spring.gym.model;
 
+import jakarta.persistence.*;
+import lombok.*;
+import org.hibernate.annotations.UuidGenerator;
+
 import java.time.LocalDate;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 
-public class Trainee extends User {
+@Entity
+@Table(name = "trainees",
+        indexes = {
+                @Index(name = "idx_trainees_date_of_birth", columnList = "date_of_birth"),
+        }
+)
+@Getter
+@Setter
+@NoArgsConstructor
+@ToString(callSuper = true)
+public class Trainee {
+    @Id
+    @GeneratedValue
+    @UuidGenerator
+    @Column(name = "trainee_id", updatable = false, nullable = false)
+    private UUID traineeId;
+
+    @OneToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "user_id", nullable = false, unique = true)
+    private User user;
+
+    @Column(name = "date_of_birth")
     private LocalDate dateOfBirth;
+
+    @Column(name = "address", length = 255)
     private String address;
-    private UUID userId;
 
-    public Trainee(String firstName, String lastName, String username, String password, boolean isActive, LocalDate dateOfBirth, String address, UUID userId) {
-        super(firstName, lastName, username, password, isActive);
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "trainees_trainers",
+            joinColumns = @JoinColumn(name = "trainee_id", referencedColumnName = "trainee_id"),
+            inverseJoinColumns = @JoinColumn(name = "trainer_id", referencedColumnName = "trainer_id")
+    )
+    @ToString.Exclude
+    private Set<Trainer> trainers = new HashSet<>();
+
+    @OneToMany(
+            mappedBy = "trainee",
+            cascade = CascadeType.REMOVE,
+            orphanRemoval = true,
+            fetch = FetchType.LAZY
+    )
+    @ToString.Exclude
+    private Set<Training> trainings = new HashSet<>();
+
+    public Trainee(String firstName, String lastName, String username, String password, boolean isActive, LocalDate dateOfBirth, String address, UUID traineeId) {
+        user = new User(firstName, lastName, username, password, isActive);
+
         this.dateOfBirth = dateOfBirth;
         this.address = address;
-        this.userId = userId;
     }
 
-    public Trainee() {
-        super();
-    }
-
-    public LocalDate getDateOfBirth() {
-        return dateOfBirth;
-    }
-
-    public void setDateOfBirth(LocalDate dateOfBirth) {
-        this.dateOfBirth = dateOfBirth;
-    }
-
-    public String getAddress() {
-        return address;
-    }
-
-    public void setAddress(String address) {
-        this.address = address;
-    }
+//    --------------------- Getters/Setters delegating to user --------------------- //
 
     public UUID getUserId() {
-        return userId;
+        if (user == null) return null;
+        return user.getUserId();
     }
 
     public void setUserId(UUID userId) {
-        this.userId = userId;
+        if (user == null) return;
+        user.setUserId(userId);
     }
 
-    @Override
-    public String toString() {
-        return "Trainee{" +
-                "dateOfBirth=" + dateOfBirth +
-                ", address='" + address + '\'' +
-                ", userId=" + userId +
-                "} " + super.toString();
+    public boolean isActive() {
+        if (user == null) return false;
+        return user.isActive();
+    }
+
+    public void setActive(boolean active) {
+        if (user == null) return;
+        user.setActive(active);
+    }
+
+    public String getPassword() {
+        if (user == null) return null;
+        return user.getPassword();
+    }
+
+    public void setPassword(String password) {
+        if (user == null) return;
+        user.setPassword(password);
+    }
+
+    public String getUsername() {
+        if (user == null) return null;
+        return user.getUsername();
+    }
+
+    public void setUsername(String username) {
+        if (user == null) return;
+        user.setUsername(username);
+    }
+
+    public String getLastName() {
+        if (user == null) return null;
+        return user.getLastName();
+    }
+
+    public void setLastName(String lastName) {
+        if (user == null) return;
+        user.setLastName(lastName);
+    }
+
+    public String getFirstName() {
+        if (user == null) return null;
+        return user.getFirstName();
+    }
+
+    public void setFirstName(String firstName) {
+        if (user == null) return;
+        user.setFirstName(firstName);
     }
 
     @Override
@@ -58,12 +129,12 @@ public class Trainee extends User {
         if (o == null || getClass() != o.getClass()) return false;
         if (!super.equals(o)) return false;
         Trainee trainee = (Trainee) o;
-        return Objects.equals(userId, trainee.userId);
+        return Objects.equals(getTraineeId(), trainee.traineeId);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), userId);
+        return Objects.hash(getTraineeId());
     }
 
 }

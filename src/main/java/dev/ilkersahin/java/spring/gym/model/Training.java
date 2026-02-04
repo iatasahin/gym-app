@@ -1,10 +1,28 @@
 package dev.ilkersahin.java.spring.gym.model;
 
-import java.time.Duration;
+import jakarta.persistence.*;
+import lombok.*;
+import org.hibernate.annotations.UuidGenerator;
+
 import java.time.LocalDate;
 import java.util.Objects;
 import java.util.UUID;
 
+@Entity
+@Table(name = "trainings",
+        indexes = {
+                @Index(name = "idx_training_date", columnList = "training_date"),
+                @Index(name = "idx_training_trainer", columnList = "trainer_id"),
+                @Index(name = "idx_training_trainee", columnList = "trainee_id"),
+                @Index(name = "idx_training_trainer_trainee", columnList = "trainer_id, trainee_id"),
+                @Index(name = "idx_training_trainee_trainer", columnList = "trainee_id, trainer_id"),
+                @Index(name = "idx_training_training_type", columnList = "training_type_id")
+        }
+)
+@Setter
+@Getter
+@ToString
+@NoArgsConstructor
 public class Training {
 
     public static record TrainingKey(
@@ -14,91 +32,62 @@ public class Training {
     ) {
     }
 
-    private UUID traineeId;
-    private UUID trainerId;
+    @Id
+    @GeneratedValue
+    @UuidGenerator
+    @Column(name = "training_id", updatable = false, nullable = false)
+    private UUID trainingId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(
+            name = "trainee_id",
+            referencedColumnName = "trainee_id",
+            nullable = false
+    )
+    private Trainee trainee;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(
+            name = "trainer_id",
+            referencedColumnName = "trainer_id",
+            nullable = false
+    )
+    private Trainer trainer;
+
+    @Column(name = "training_name", nullable = false, length = 100)
     private String trainingName;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(
+            name = "training_type_id",
+            referencedColumnName = "training_type_id",
+            nullable = false
+    )
     private TrainingType trainingType;
+
+    @Column(name = "training_date", nullable = false)
     private LocalDate trainingDate;
-    private Duration trainingDuration;
 
-    public Training(UUID traineeId, UUID trainerId, String trainingName, TrainingType trainingType, LocalDate trainingDate, Duration trainingDuration) {
-        this.traineeId = traineeId;
-        this.trainerId = trainerId;
+    @Column(name = "training_duration_minutes", nullable = false)
+    private Integer trainingDuration;
+
+    public Training(Trainee trainee, Trainer trainer, String trainingName,
+                    TrainingType trainingType, LocalDate trainingDate, int trainingDuration
+    ) {
+        this.trainee = trainee;
+        this.trainer = trainer;
         this.trainingName = trainingName;
         this.trainingType = trainingType;
         this.trainingDate = trainingDate;
         this.trainingDuration = trainingDuration;
-    }
-
-    public Training() {
-    }
-
-    public UUID getTraineeId() {
-        return traineeId;
-    }
-
-    public void setTraineeId(UUID traineeId) {
-        this.traineeId = traineeId;
-    }
-
-    public UUID getTrainerId() {
-        return trainerId;
-    }
-
-    public void setTrainerId(UUID trainerId) {
-        this.trainerId = trainerId;
-    }
-
-    public String getTrainingName() {
-        return trainingName;
-    }
-
-    public void setTrainingName(String trainingName) {
-        this.trainingName = trainingName;
-    }
-
-    public TrainingType getTrainingType() {
-        return trainingType;
-    }
-
-    public void setTrainingType(TrainingType trainingType) {
-        this.trainingType = trainingType;
-    }
-
-    public LocalDate getTrainingDate() {
-        return trainingDate;
-    }
-
-    public void setTrainingDate(LocalDate trainingDate) {
-        this.trainingDate = trainingDate;
-    }
-
-    public Duration getTrainingDuration() {
-        return trainingDuration;
-    }
-
-    public void setTrainingDuration(Duration trainingDuration) {
-        this.trainingDuration = trainingDuration;
-    }
-
-    @Override
-    public String toString() {
-        return "Training{" +
-                "traineeId=" + traineeId +
-                ", trainerId=" + trainerId +
-                ", trainingName='" + trainingName + '\'' +
-                ", trainingType=" + trainingType +
-                ", trainingDate=" + trainingDate +
-                ", trainingDuration=" + trainingDuration +
-                '}';
     }
 
     @Override
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
         Training training = (Training) o;
-        return Objects.equals(traineeId, training.traineeId) &&
-                Objects.equals(trainerId, training.trainerId) &&
+        return Objects.equals(trainee, training.trainee) &&
+                Objects.equals(trainer, training.trainer) &&
                 Objects.equals(trainingName, training.trainingName) &&
                 Objects.equals(trainingType, training.trainingType) &&
                 Objects.equals(trainingDate, training.trainingDate) &&
@@ -107,6 +96,6 @@ public class Training {
 
     @Override
     public int hashCode() {
-        return Objects.hash(traineeId, trainerId, trainingName, trainingType, trainingDate, trainingDuration);
+        return Objects.hash(trainee, trainer, trainingName, trainingType, trainingDate, trainingDuration);
     }
 }

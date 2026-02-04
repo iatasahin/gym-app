@@ -1,8 +1,10 @@
 package dev.ilkersahin.java.spring.gym.xmlfileIO;
 
-import dev.ilkersahin.java.spring.gym.model.Trainee;
-import dev.ilkersahin.java.spring.gym.model.Trainer;
-import dev.ilkersahin.java.spring.gym.model.Training;
+import dev.ilkersahin.java.spring.gym.dto.request.TrainingCreateRequest;
+import dev.ilkersahin.java.spring.gym.dto.response.TraineeCreateResponse;
+import dev.ilkersahin.java.spring.gym.dto.response.TrainerCreateResponse;
+import dev.ilkersahin.java.spring.gym.dto.view.TraineeView;
+import dev.ilkersahin.java.spring.gym.dto.view.TrainerView;
 import dev.ilkersahin.java.spring.gym.xmlfileIO.dto.FileContentXml;
 import dev.ilkersahin.java.spring.gym.xmlfileIO.dto.TraineeXml;
 import dev.ilkersahin.java.spring.gym.xmlfileIO.dto.TrainerXml;
@@ -27,6 +29,7 @@ import java.util.List;
 
 @Component
 @Profile("xml-write")
+// NOTE: Passwords are written in plain text for demo/import purposes only
 public class XmlExternalFileWriter {
 
     private static final Logger log = LoggerFactory.getLogger(XmlExternalFileWriter.class);
@@ -42,12 +45,24 @@ public class XmlExternalFileWriter {
         this.resourceLoader = resourceLoader;
     }
 
-    void writeToXml(List<Trainer> trainers, List<Trainee> trainees, List<Training> trainings) {
-
+    void writeToXml(
+            List<TrainerCreateResponse> trainers,
+            List<TraineeCreateResponse> trainees,
+            List<TrainingCreateRequest> trainings
+    ) {
         log.info("Writing XML to {}", path);
-        log.debug("Trainers: {}", trainers.stream().map(Trainer::getUsername).toList());
-        log.debug("Trainees: {}", trainees.stream().map(Trainee::getUsername).toList());
-        log.debug("Trainings: {}", trainings);
+        log.debug("Trainers: {}", trainers.stream()
+                .map(TrainerCreateResponse::trainer)
+                .map(TrainerView::username)
+                .toList());
+        log.debug("Trainees: {}", trainees.stream()
+                .map(TraineeCreateResponse::trainee)
+                .map(TraineeView::username)
+                .toList());
+        log.debug("Trainings: {}", trainings.stream()
+                .map(t ->
+                        t.trainingName() + " " + t.trainingDate() + " " + t.credentials().username())
+                .toList());
 
         List<TrainerXml> trainerXmls = trainers.stream().map(TrainerXmlMapper::toXml).toList();
         List<TraineeXml> traineeXmls = trainees.stream().map(TraineeXmlMapper::toXml).toList();
@@ -60,14 +75,12 @@ public class XmlExternalFileWriter {
 
         Resource resource = resourceLoader.getResource(path);
 
-        if(!(resource instanceof WritableResource writable)){
+        if (!(resource instanceof WritableResource writable)) {
             log.error("File at {} is not writable", path);
-            throw new IllegalStateException(
-                    "Resource is not writable: " + path
-            );
+            throw new IllegalStateException("Resource is not writable: " + path);
         }
 
-        try(OutputStream outputStream = writable.getOutputStream()) {
+        try (OutputStream outputStream = writable.getOutputStream()) {
             marshaller.marshal(root, new StreamResult(outputStream));
         } catch (IOException e) {
             log.error("Failed to write XML at {}", path);
