@@ -20,6 +20,7 @@ public class TrainingType {
     private Integer trainingTypeId;
 
     @Column(name = "training_type_name", unique = true, nullable = false, length = 50)
+    @Enumerated(EnumType.STRING)
     private Type type;
 
     @Getter
