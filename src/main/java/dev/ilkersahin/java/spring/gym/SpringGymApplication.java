@@ -41,6 +41,7 @@ public class SpringGymApplication {
             tomcat.addServlet(tomcatContext, "dispatcher", dispatcherServlet).setLoadOnStartup(1);
             tomcatContext.addServletMappingDecoded("/*", "dispatcher");
 
+            registerFilter(tomcatContext, "transactionIdFilter", "/*");
             registerFilter(tomcatContext, "jwtAuthenticationFilter", "/*");
 
             tomcat.getConnector();
