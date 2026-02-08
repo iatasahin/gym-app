@@ -1,14 +1,15 @@
 package dev.ilkersahin.java.spring.gym.dto.request;
 
-import dev.ilkersahin.java.spring.gym.dto.auth.Credentials;
-import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 import java.time.LocalDate;
 
 public record TraineeUpdateRequest(
-        @Valid Credentials credentials,
-        String firstName,
-        String lastName,
+        @NotBlank String username,
+        @NotBlank String firstName,
+        @NotBlank String lastName,
+        @NotNull Boolean active,
         LocalDate dateOfBirth,
         String address
 ) {

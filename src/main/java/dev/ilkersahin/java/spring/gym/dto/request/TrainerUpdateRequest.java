@@ -1,13 +1,13 @@
 package dev.ilkersahin.java.spring.gym.dto.request;
 
-import dev.ilkersahin.java.spring.gym.dto.auth.Credentials;
-import dev.ilkersahin.java.spring.gym.model.TrainingType;
-import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 public record TrainerUpdateRequest(
-        @Valid Credentials credentials,
-        String firstName,
-        String lastName,
-        TrainingType.Type specialization
+        @NotBlank String username,
+        @NotBlank String firstName,
+        @NotBlank String lastName,
+        @NotNull Boolean active,
+        String specialization
 ) {
 }
