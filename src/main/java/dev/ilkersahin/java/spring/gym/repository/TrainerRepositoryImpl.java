@@ -1,6 +1,7 @@
 package dev.ilkersahin.java.spring.gym.repository;
 
 import dev.ilkersahin.java.spring.gym.dao.TrainerDao;
+import dev.ilkersahin.java.spring.gym.model.Trainee;
 import dev.ilkersahin.java.spring.gym.model.Trainer;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -85,6 +86,26 @@ public class TrainerRepositoryImpl implements TrainerDao {
     // -------------------------------------------------------------------------
     // RELATION QUERIES
     // -------------------------------------------------------------------------
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Trainee> findAssignedTrainees(String trainerUsername) {
+        log.debug("Finding trainees assigned to trainer '{}'", trainerUsername);
+
+        return entityManager.createQuery(
+                        """
+                        select t
+                        from Trainer tr
+                            join tr.trainees t
+                            join tr.user u
+                        where u.username = :username
+                        order by t.user.username
+                        """,
+                        Trainee.class
+                )
+                .setParameter("username", trainerUsername)
+                .getResultList();
+    }
 
     @Override
     @Transactional(readOnly = true)
