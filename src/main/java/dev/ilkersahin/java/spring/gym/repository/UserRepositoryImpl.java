@@ -91,4 +91,13 @@ public class UserRepositoryImpl implements UserDao {
                 .createNamedQuery("User.getAll", User.class)
                 .getResultList();
     }
+
+    @Override
+    public Optional<User> deleteUser(String username) {
+        log.warn("Deleting user with username'{}'", username);
+
+        Optional<User> userOpt = findByUsername(username);
+        userOpt.ifPresent(entityManager::remove);
+        return userOpt;
+    }
 }

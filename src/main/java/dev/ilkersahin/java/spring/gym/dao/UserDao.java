@@ -13,4 +13,5 @@ public interface UserDao {
     Optional<User> findByUsername(String username);
     boolean existsByUsername(String username);
     List<User> getAll();
+    Optional<User> deleteUser(String username);
 }
