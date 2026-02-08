@@ -2,16 +2,21 @@ package dev.ilkersahin.java.spring.gym.service;
 
 import dev.ilkersahin.java.spring.gym.dto.request.*;
 import dev.ilkersahin.java.spring.gym.dto.response.*;
+import dev.ilkersahin.java.spring.gym.dto.view.TraineeWithListView;
+import dev.ilkersahin.java.spring.gym.dto.view.TrainerInfo;
+import dev.ilkersahin.java.spring.gym.dto.view.TrainingView;
+
+import java.util.List;
 
 public interface TraineeService {
-    TraineeCreateResponse createTrainee(TraineeCreateRequest request);
-    TraineeGetResponse getTrainee(TraineeGetRequest request);
-    TraineeUpdateResponse updateTrainee(TraineeUpdateRequest request);
-    TraineePasswordChangeResponse changePassword(TraineePasswordChangeRequest request);
+    UserCreateResponse createTrainee(TraineeCreateRequest request);
+    TraineeWithListView getTrainee(String username);
+    TraineeWithListView updateTrainee(TraineeUpdateRequest request);
+    Boolean changePassword(PasswordChangeRequest request);
     ActivationResponse activate(ActivationRequest request);
     ActivationResponse deactivate(ActivationRequest request);
-    TraineeDeleteResponse deleteTrainee(TraineeDeleteRequest request);
-    TrainerListResponse getUnassignedTrainers(TraineeGetRequest request);
-    TraineeUpdateResponse updateTrainers(TraineeTrainerUpdateRequest request);
-    TrainingSearchResponse getTrainings(TrainingSearchRequestForTrainee request);
+    Boolean deleteTrainee(String username);
+    List<TrainerInfo> getUnassignedTrainers(String username);
+    List<TrainerInfo> updateTrainers(TraineeTrainerListUpdateRequest request);
+    List<TrainingView> getTrainings(TrainingSearchRequestForTrainee request);
 }

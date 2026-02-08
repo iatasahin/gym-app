@@ -3,22 +3,20 @@ package dev.ilkersahin.java.spring.gym.service.impl;
 import dev.ilkersahin.java.spring.gym.dao.TraineeDao;
 import dev.ilkersahin.java.spring.gym.dao.TrainerDao;
 import dev.ilkersahin.java.spring.gym.dao.TrainingDao;
-import dev.ilkersahin.java.spring.gym.dto.auth.Credentials;
 import dev.ilkersahin.java.spring.gym.dto.request.TrainingCreateRequest;
+import dev.ilkersahin.java.spring.gym.exception.TraineeDoesNotExistException;
+import dev.ilkersahin.java.spring.gym.exception.TrainerDoesNotExistException;
 import dev.ilkersahin.java.spring.gym.model.Trainee;
 import dev.ilkersahin.java.spring.gym.model.Trainer;
 import dev.ilkersahin.java.spring.gym.model.Training;
 import dev.ilkersahin.java.spring.gym.model.TrainingType;
 import dev.ilkersahin.java.spring.gym.service.TrainingService;
-import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.Duration;
 
 @Service
 @Transactional
@@ -33,10 +31,10 @@ public class TrainingServiceImpl implements TrainingService {
     @Override
     public void createTraining(@Valid TrainingCreateRequest request) {
 
-        Trainee trainee = authenticateTrainee(request.credentials());
+        Trainee trainee = findTraineeOrThrow(request.traineeUsername());
 
         Trainer trainer = trainerDao.getTrainer(request.trainerUsername())
-                .orElseThrow(() -> new EntityNotFoundException("Trainer not found"));
+                .orElseThrow(() -> new TrainerDoesNotExistException("Trainer not found"));
 
         log.info(
                 "Creating training '{}' for trainee '{}' with trainer '{}' on date '{}' for '{}' minutes",
@@ -51,7 +49,7 @@ public class TrainingServiceImpl implements TrainingService {
                 trainee,
                 trainer,
                 request.trainingName(),
-                TrainingType.fromEnum(request.trainingType()),
+                TrainingType.fromEnum(TrainingType.Type.fromName(request.trainingType())),
                 request.trainingDate(),
                 request.durationMinutes()
         );
@@ -63,13 +61,9 @@ public class TrainingServiceImpl implements TrainingService {
     // HELPERS
     // -------------------------------------------------------------------------
 
-    private Trainee authenticateTrainee(Credentials credentials) {
-        Trainee trainee = traineeDao.getTrainee(credentials.username())
-                .orElseThrow(() -> new EntityNotFoundException("Trainee not found"));
-
-        if (!trainee.getUser().getPassword().equals(credentials.password())) {
-            throw new IllegalArgumentException("Invalid credentials");
-        }
+    private Trainee findTraineeOrThrow(String username) {
+        Trainee trainee = traineeDao.getTrainee(username)
+                .orElseThrow(() -> new TraineeDoesNotExistException("Trainee not found"));
         return trainee;
     }
 }
