@@ -1,13 +1,22 @@
 package dev.ilkersahin.java.spring.gym.controller;
 
 import dev.ilkersahin.java.spring.gym.dto.request.*;
-import dev.ilkersahin.java.spring.gym.dto.response.TrainerCreateResponse;
+import dev.ilkersahin.java.spring.gym.dto.response.ErrorResponse;
 import dev.ilkersahin.java.spring.gym.dto.response.UserCreateResponse;
 import dev.ilkersahin.java.spring.gym.dto.view.TrainerWithListView;
 import dev.ilkersahin.java.spring.gym.dto.view.TrainingView;
 import dev.ilkersahin.java.spring.gym.exception.UserAlreadyActiveException;
 import dev.ilkersahin.java.spring.gym.exception.UserAlreadyInactiveException;
 import dev.ilkersahin.java.spring.gym.service.TrainerService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +33,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/trainers")
 @RequiredArgsConstructor
+@Tag(name = "Trainers", description = "Trainer registration and profile management")
 public class TrainerController extends BaseController {
     public static final Logger log = LoggerFactory.getLogger(TrainerController.class);
 
@@ -35,6 +45,13 @@ public class TrainerController extends BaseController {
     // =========================================================================
 
     @PostMapping
+    @Operation(summary = "Register new trainer", description = "Public endpoint - no authentication required")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Trainer created successfully",
+                    content = @Content(schema = @Schema(implementation = UserCreateResponse.class))),
+            @ApiResponse(responseCode = "400", description = "Validation error",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     public ResponseEntity<UserCreateResponse> registerTrainer(
             @Valid @RequestBody TrainerCreateRequest request) {
 
@@ -51,8 +68,20 @@ public class TrainerController extends BaseController {
     // =========================================================================
 
     @GetMapping("/{username}")
+    @Operation(summary = "Get trainer profile", description = "Requires authentication - user can only access own profile")
+    @SecurityRequirement(name = "bearerAuth")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Trainer profile",
+                    content = @Content(schema = @Schema(implementation = TrainerWithListView.class))),
+            @ApiResponse(responseCode = "401", description = "Missing or invalid JWT token",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "403", description = "Access denied",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Trainer not found",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     public ResponseEntity<TrainerWithListView> getTrainerProfile(
-            @PathVariable String username,
+            @Parameter(description = "Trainer username") @PathVariable String username,
             HttpServletRequest request) {
 
         verifyUserAccess(request, username);
@@ -67,8 +96,22 @@ public class TrainerController extends BaseController {
     // =========================================================================
 
     @PutMapping("/{username}")
+    @Operation(summary = "Update trainer profile")
+    @SecurityRequirement(name = "bearerAuth")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Updated trainer profile",
+                    content = @Content(schema = @Schema(implementation = TrainerWithListView.class))),
+            @ApiResponse(responseCode = "400", description = "Validation error",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Missing or invalid JWT token",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "403", description = "Access denied",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Trainer not found",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     public ResponseEntity<TrainerWithListView> updateTrainerProfile(
-            @PathVariable String username,
+            @Parameter(description = "Trainer username") @PathVariable String username,
             @Valid @RequestBody TrainerUpdateRequest request,
             HttpServletRequest httpRequest) {
 
@@ -84,8 +127,19 @@ public class TrainerController extends BaseController {
     // =========================================================================
 
     @PutMapping("/{username}/password")
+    @Operation(summary = "Change trainer password")
+    @SecurityRequirement(name = "bearerAuth")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Password changed successfully"),
+            @ApiResponse(responseCode = "400", description = "Validation error",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Missing or invalid JWT token",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "403", description = "Access denied",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     public ResponseEntity<Void> changePassword(
-            @PathVariable String username,
+            @Parameter(description = "Trainer username") @PathVariable String username,
             @Valid @RequestBody PasswordChangeRequest request,
             HttpServletRequest httpRequest) {
 
@@ -101,8 +155,20 @@ public class TrainerController extends BaseController {
     // =========================================================================
 
     @PatchMapping("/{username}/status")
+    @Operation(summary = "Activate or deactivate trainer",
+            description = "Non-idempotent operation. Returns 409 if already in requested state.")
+    @SecurityRequirement(name = "bearerAuth")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Status updated successfully"),
+            @ApiResponse(responseCode = "401", description = "Missing or invalid JWT token",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "403", description = "Access denied",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "409", description = "User already in requested state",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     public ResponseEntity<Void> updateActivationStatus(
-            @PathVariable String username,
+            @Parameter(description = "Trainer username") @PathVariable String username,
             @Valid @RequestBody ActivationRequest request,
             HttpServletRequest httpRequest) {
 
@@ -133,10 +199,24 @@ public class TrainerController extends BaseController {
     // =========================================================================
 
     @GetMapping("/{username}/trainings")
+    @Operation(summary = "Get trainer's trainings", description = "Returns training sessions with optional filters")
+    @SecurityRequirement(name = "bearerAuth")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "List of trainings",
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = TrainingView.class)))),
+            @ApiResponse(responseCode = "401", description = "Missing or invalid JWT token",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "403", description = "Access denied",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     public ResponseEntity<List<TrainingView>> getTrainings(
+            @Parameter(description = "Trainer username")
             @PathVariable String username,
+            @Parameter(description = "Filter: start date (inclusive)")
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+            @Parameter(description = "Filter: end date (inclusive)")
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
+            @Parameter(description = "Filter: trainee name")
             @RequestParam(required = false) String traineeName,
             HttpServletRequest request) {
 
