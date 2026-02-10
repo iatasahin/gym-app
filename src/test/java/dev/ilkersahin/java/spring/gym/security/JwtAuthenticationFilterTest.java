@@ -5,6 +5,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -39,93 +41,26 @@ public class JwtAuthenticationFilterTest {
     // PUBLIC ENDPOINT TESTS (100s)
     // =========================================================================
 
-    @Test
+    @ParameterizedTest(name = "[{index}] {0} {1} should pass through without authentication")
+    @CsvSource({
+            "POST, /api/v1/auth/login",
+            "GET,  /health",
+            "GET,  /api/v1/training-types",
+            "GET,  /swagger-ui/index.html",
+            "GET,  /webjars/swagger-ui/swagger-ui.css",
+            "GET,  /api-docs",
+            "POST, /api/v1/trainees",
+            "POST, /api/v1/trainers"
+    })
     @Order(101)
-    void doFilter_loginEndpoint_shouldPassThrough() throws Exception {
-        when(request.getRequestURI()).thenReturn("/api/v1/auth/login");
-        when(request.getMethod()).thenReturn("POST");
+    void doFilter_publicEndpoints_shouldPassThrough(String method, String uri) throws Exception {
+        when(request.getRequestURI()).thenReturn(uri);
+        when(request.getMethod()).thenReturn(method);
 
         filter.doFilterInternal(request, response, filterChain);
 
         verify(filterChain).doFilter(request, response);
         verifyNoInteractions(jwtService);
-    }
-
-    @Test
-    @Order(102)
-    void doFilter_healthEndpoint_shouldPassThrough() throws Exception {
-        when(request.getRequestURI()).thenReturn("/health");
-        when(request.getMethod()).thenReturn("GET");
-
-        filter.doFilterInternal(request, response, filterChain);
-
-        verify(filterChain).doFilter(request, response);
-    }
-
-    @Test
-    @Order(103)
-    void doFilter_trainingTypesEndpoint_shouldPassThrough() throws Exception {
-        when(request.getRequestURI()).thenReturn("/api/v1/training-types");
-        when(request.getMethod()).thenReturn("GET");
-
-        filter.doFilterInternal(request, response, filterChain);
-
-        verify(filterChain).doFilter(request, response);
-    }
-
-    @Test
-    @Order(104)
-    void doFilter_swaggerEndpoint_shouldPassThrough() throws Exception {
-        when(request.getRequestURI()).thenReturn("/swagger-ui/index.html");
-        when(request.getMethod()).thenReturn("GET");
-
-        filter.doFilterInternal(request, response, filterChain);
-
-        verify(filterChain).doFilter(request, response);
-    }
-
-    @Test
-    @Order(105)
-    void doFilter_webjarsEndpoint_shouldPassThrough() throws Exception {
-        when(request.getRequestURI()).thenReturn("/webjars/swagger-ui/swagger-ui.css");
-        when(request.getMethod()).thenReturn("GET");
-
-        filter.doFilterInternal(request, response, filterChain);
-
-        verify(filterChain).doFilter(request, response);
-    }
-
-    @Test
-    @Order(106)
-    void doFilter_apiDocsEndpoint_shouldPassThrough() throws Exception {
-        when(request.getRequestURI()).thenReturn("/api-docs");
-        when(request.getMethod()).thenReturn("GET");
-
-        filter.doFilterInternal(request, response, filterChain);
-
-        verify(filterChain).doFilter(request, response);
-    }
-
-    @Test
-    @Order(107)
-    void doFilter_traineeRegistrationPost_shouldPassThrough() throws Exception {
-        when(request.getRequestURI()).thenReturn("/api/v1/trainees");
-        when(request.getMethod()).thenReturn("POST");
-
-        filter.doFilterInternal(request, response, filterChain);
-
-        verify(filterChain).doFilter(request, response);
-    }
-
-    @Test
-    @Order(108)
-    void doFilter_trainerRegistrationPost_shouldPassThrough() throws Exception {
-        when(request.getRequestURI()).thenReturn("/api/v1/trainers");
-        when(request.getMethod()).thenReturn("POST");
-
-        filter.doFilterInternal(request, response, filterChain);
-
-        verify(filterChain).doFilter(request, response);
     }
 
     // =========================================================================
