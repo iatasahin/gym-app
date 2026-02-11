@@ -4,22 +4,17 @@ import dev.ilkersahin.java.spring.gym.dao.TraineeDao;
 import dev.ilkersahin.java.spring.gym.dao.TrainerDao;
 import dev.ilkersahin.java.spring.gym.dao.TrainingDao;
 import dev.ilkersahin.java.spring.gym.dao.UserDao;
-import dev.ilkersahin.java.spring.gym.dto.auth.Credentials;
 import dev.ilkersahin.java.spring.gym.dto.request.*;
 import dev.ilkersahin.java.spring.gym.dto.response.*;
-import dev.ilkersahin.java.spring.gym.dto.view.TraineeView;
-import dev.ilkersahin.java.spring.gym.dto.view.TrainerView;
-import dev.ilkersahin.java.spring.gym.dto.view.TrainingView;
-import dev.ilkersahin.java.spring.gym.model.Trainee;
-import dev.ilkersahin.java.spring.gym.model.Trainer;
-import dev.ilkersahin.java.spring.gym.model.Training;
-import dev.ilkersahin.java.spring.gym.model.User;
+import dev.ilkersahin.java.spring.gym.dto.view.*;
+import dev.ilkersahin.java.spring.gym.model.*;
 import dev.ilkersahin.java.spring.gym.service.TraineeService;
 import dev.ilkersahin.java.spring.gym.service.util.PasswordGeneratorService;
 import dev.ilkersahin.java.spring.gym.service.util.UsernameGeneratorService;
 import dev.ilkersahin.java.spring.gym.service.util.ViewMapper;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,7 +42,7 @@ public class TraineeServiceImpl implements TraineeService {
     // -------------------------------------------------------------------------
 
     @Override
-    public TraineeCreateResponse createTrainee(@Valid TraineeCreateRequest request) {
+    public UserCreateResponse createTrainee(@Valid TraineeCreateRequest request) {
         log.info("Creating Trainee: {} {}", request.firstName(), request.lastName());
 
         String username = usernameGeneratorService.generateUniqueUsername(request.firstName(), request.lastName());
@@ -65,7 +60,7 @@ public class TraineeServiceImpl implements TraineeService {
 
         log.info("Trainee created with username '{}'", saved.getUsername());
 
-        return new TraineeCreateResponse(toView(saved), password);
+        return new UserCreateResponse(saved.getUsername(), saved.getPassword());
     }
 
     // -------------------------------------------------------------------------
@@ -74,10 +69,11 @@ public class TraineeServiceImpl implements TraineeService {
 
     @Override
     @Transactional(readOnly = true)
-    public TraineeGetResponse getTrainee(@Valid TraineeGetRequest request) {
-        Trainee trainee = authenticate(request.credentials());
-        log.debug("Fetching trainee '{}'", request.credentials().username());
-        return new TraineeGetResponse(toView(trainee));
+    public TraineeWithListView getTrainee(@NotBlank String username) {
+        log.debug("Fetching trainee '{}'", username);
+        Trainee trainee = findTraineeOrThrow(username);
+        List<Trainer> trainers = traineeDao.findAssignedTrainers(username);
+        return toView(trainee, trainers);
     }
 
     // -------------------------------------------------------------------------
@@ -85,16 +81,19 @@ public class TraineeServiceImpl implements TraineeService {
     // -------------------------------------------------------------------------
 
     @Override
-    public TraineeUpdateResponse updateTrainee(@Valid TraineeUpdateRequest request) {
-        Trainee trainee = authenticate(request.credentials());
+    public TraineeWithListView updateTrainee(@Valid TraineeUpdateRequest request) {
+        Trainee trainee = findTraineeOrThrow(request.username());
 
-        log.info("Updating trainee '{}'", request.credentials().username());
+        log.info("Updating trainee '{}'", request.username());
 
         if (request.firstName() != null) {
             trainee.getUser().setFirstName(request.firstName());
         }
         if (request.lastName() != null) {
             trainee.getUser().setLastName(request.lastName());
+        }
+        if (request.active() != null) {
+            trainee.getUser().setActive(request.active());
         }
         if (request.dateOfBirth() != null) {
             trainee.setDateOfBirth(request.dateOfBirth());
@@ -104,7 +103,9 @@ public class TraineeServiceImpl implements TraineeService {
         }
 
         traineeDao.updateTrainee(trainee);
-        return new TraineeUpdateResponse(true);
+
+        List<Trainer> trainers = traineeDao.findAssignedTrainers(request.username());
+        return toView(trainee, trainers);
     }
 
     // -------------------------------------------------------------------------
@@ -112,12 +113,12 @@ public class TraineeServiceImpl implements TraineeService {
     // -------------------------------------------------------------------------
 
     @Override
-    public TraineePasswordChangeResponse changePassword(@Valid TraineePasswordChangeRequest request) {
-        Trainee trainee = authenticate(request.credentials());
-        log.warn("Changing password of trainee '{}'", request.credentials().username());
+    public Boolean changePassword(@Valid PasswordChangeRequest request) {
+        Trainee trainee = findTraineeOrThrow(request.username());
+        log.warn("Changing password of trainee '{}'", request.username());
         trainee.getUser().setPassword(request.newPassword());
         userDao.merge(trainee.getUser());
-        return new TraineePasswordChangeResponse(true);
+        return true;
     }
 
     // -------------------------------------------------------------------------
@@ -126,16 +127,16 @@ public class TraineeServiceImpl implements TraineeService {
 
     @Override
     public ActivationResponse activate(@Valid ActivationRequest request) {
-        Trainee trainee = authenticate(request.credentials());
-        log.info("Activating trainee '{}'", request.credentials().username());
+        Trainee trainee = findTraineeOrThrow(request.username());
+        log.info("Activating trainee '{}'", request.username());
         trainee.getUser().setActive(true);
         return new ActivationResponse(true);
     }
 
     @Override
     public ActivationResponse deactivate(@Valid ActivationRequest request) {
-        Trainee trainee = authenticate(request.credentials());
-        log.warn("Deactivating trainee '{}'", request.credentials().username());
+        Trainee trainee = findTraineeOrThrow(request.username());
+        log.warn("Deactivating trainee '{}'", request.username());
         trainee.getUser().setActive(false);
         return new ActivationResponse(false);
     }
@@ -145,11 +146,14 @@ public class TraineeServiceImpl implements TraineeService {
     // -------------------------------------------------------------------------
 
     @Override
-    public TraineeDeleteResponse deleteTrainee(@Valid TraineeDeleteRequest request) {
-        authenticate(request.credentials());
-        log.warn("Deleting trainee '{}'", request.credentials().username());
-        traineeDao.deleteTrainee(request.credentials().username());
-        return new TraineeDeleteResponse(true);
+    public Boolean deleteTrainee(String username) {
+        Trainee trainee = findTraineeOrThrow(username);
+        log.warn("Deleting trainee '{}'", username);
+
+        trainee.getUser().setTrainee(null);
+        traineeDao.deleteTrainee(username);
+        userDao.deleteUser(username);
+        return true;
     }
 
     // -------------------------------------------------------------------------
@@ -158,25 +162,21 @@ public class TraineeServiceImpl implements TraineeService {
 
     @Override
     @Transactional(readOnly = true)
-    public TrainerListResponse getUnassignedTrainers(@Valid TraineeGetRequest request) {
-        Trainee trainee = authenticate(request.credentials());
+    public List<TrainerInfo> getUnassignedTrainers(@NotBlank String username) {
+        Trainee trainee = findTraineeOrThrow(username);
 
-        log.info("Getting unassigned trainers for trainee '{}'", request.credentials().username());
+        log.info("Getting unassigned trainers for trainee '{}'", username);
 
         List<Trainer> trainers = trainerDAO.findTrainersNotAssignedToTrainee(trainee.getUser().getUsername());
 
-        List<TrainerView> views = trainers.stream()
-                .map(viewMapper::toView)
-                .toList();
-
-        return new TrainerListResponse(views);
+        return toTrainerInfoList(trainers);
     }
 
     @Override
-    public TraineeUpdateResponse updateTrainers(@Valid TraineeTrainerUpdateRequest request) {
-        Trainee trainee = authenticate(request.credentials());
+    public List<TrainerInfo> updateTrainers(@Valid TraineeTrainerListUpdateRequest request) {
+        Trainee trainee = findTraineeOrThrow(request.traineeUsername());
 
-        log.warn("Updating trainers for trainee '{}'", request.credentials().username());
+        log.warn("Updating trainers for trainee '{}'", request.traineeUsername());
 
         List<Trainer> trainers = trainerDAO.findByUsernames(request.trainerUsernames());
 
@@ -184,7 +184,7 @@ public class TraineeServiceImpl implements TraineeService {
 
         log.info("Updated trainers for trainee {}", trainee.getUser().getUsername());
 
-        return new TraineeUpdateResponse(true);
+        return toTrainerInfoList(trainers);
     }
 
     // -------------------------------------------------------------------------
@@ -193,24 +193,22 @@ public class TraineeServiceImpl implements TraineeService {
 
     @Override
     @Transactional(readOnly = true)
-    public TrainingSearchResponse getTrainings(@Valid TrainingSearchRequestForTrainee request) {
-        authenticate(request.credentials());
+    public List<TrainingView> getTrainings(@Valid TrainingSearchRequestForTrainee request) {
+        findTraineeOrThrow(request.traineeUsername());
 
-        log.info("Getting trainings for trainee '{}'", request.credentials().username());
+        log.info("Getting trainings for trainee '{}'", request.traineeUsername());
 
         List<Training> trainings = trainingDao.findForTrainee(
-                request.credentials().username(),
+                request.traineeUsername(),
                 request.fromDate(),
                 request.toDate(),
                 request.trainerUsername(),
-                request.trainingType()
+                request.trainingType() == null ? null : TrainingType.Type.fromName(request.trainingType())
         );
 
-        List<TrainingView> views = trainings.stream()
+        return trainings.stream()
                 .map(viewMapper::toView)
                 .toList();
-
-        return new TrainingSearchResponse(views);
     }
 
 
@@ -218,17 +216,32 @@ public class TraineeServiceImpl implements TraineeService {
     // HELPERS
     // -------------------------------------------------------------------------
 
-    private Trainee authenticate(Credentials credentials) {
-        Trainee trainee = traineeDao.getTrainee(credentials.username())
+    private Trainee findTraineeOrThrow(String username) {
+        Trainee trainee = traineeDao.getTrainee(username)
                 .orElseThrow(() -> new EntityNotFoundException("Trainee not found"));
-
-        if (!trainee.getUser().getPassword().equals(credentials.password())) {
-            throw new IllegalArgumentException("Invalid credentials");
-        }
         return trainee;
     }
 
     private TraineeView toView(Trainee trainee) {
         return viewMapper.toView(trainee);
+    }
+
+    private TraineeWithListView toView(Trainee trainee, List<Trainer> trainers) {
+        return new TraineeWithListView(
+                trainee.getUsername(), trainee.getFirstName(), trainee.getLastName(),
+                trainee.isActive(), trainee.getDateOfBirth(), trainee.getAddress(),
+                toTrainerInfoList(trainers)
+        );
+    }
+
+    private List<TrainerInfo> toTrainerInfoList(List<Trainer> trainers) {
+        return trainers.stream().map(this::toTrainerInfo).toList();
+    }
+
+    private TrainerInfo toTrainerInfo(Trainer trainer) {
+        return new TrainerInfo(
+                trainer.getUsername(), trainer.getFirstName(), trainer.getLastName(),
+                trainer.getSpecializationType().getName()
+        );
     }
 }

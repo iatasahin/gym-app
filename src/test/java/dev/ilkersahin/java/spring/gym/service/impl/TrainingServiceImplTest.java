@@ -6,8 +6,9 @@ import dev.ilkersahin.java.spring.gym.dao.TrainerDao;
 import dev.ilkersahin.java.spring.gym.dao.TrainingDao;
 import dev.ilkersahin.java.spring.gym.dto.auth.Credentials;
 import dev.ilkersahin.java.spring.gym.dto.request.TrainingCreateRequest;
+import dev.ilkersahin.java.spring.gym.exception.TraineeDoesNotExistException;
+import dev.ilkersahin.java.spring.gym.exception.TrainerDoesNotExistException;
 import dev.ilkersahin.java.spring.gym.model.*;
-import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -42,7 +43,6 @@ class TrainingServiceImplTest {
     private Trainee trainee;
     private Trainer trainer;
     private Credentials validCredentials;
-    private Credentials wrongPasswordCredentials;
     private Credentials nonExistentCredentials;
 
     @BeforeEach
@@ -58,7 +58,6 @@ class TrainingServiceImplTest {
         trainer.setSpecialization(TrainingType.fromEnum(TrainingType.Type.FITNESS));
 
         validCredentials = new Credentials("Jack.Black", "password123");
-        wrongPasswordCredentials = new Credentials("Jack.Black", "wrongPassword");
         nonExistentCredentials = new Credentials("Non.Existent", "password");
     }
 
@@ -70,10 +69,10 @@ class TrainingServiceImplTest {
     @Order(101)
     void createTraining_withValidRequest_shouldCreateTraining() {
         TrainingCreateRequest request = new TrainingCreateRequest(
-                validCredentials,
+                validCredentials.username(),
                 "Tom.Smith",
                 "Morning Fitness",
-                TrainingType.Type.FITNESS,
+                TrainingType.Type.FITNESS.getName(),
                 LocalDate.of(2024, 6, 15),
                 60
         );
@@ -90,10 +89,10 @@ class TrainingServiceImplTest {
     @Order(102)
     void createTraining_withValidRequest_shouldPassCorrectDataToDao() {
         TrainingCreateRequest request = new TrainingCreateRequest(
-                validCredentials,
+                validCredentials.username(),
                 "Tom.Smith",
                 "Evening Yoga",
-                TrainingType.Type.YOGA,
+                TrainingType.Type.YOGA.getName(),
                 LocalDate.of(2024, 7, 20),
                 90
         );
@@ -119,10 +118,10 @@ class TrainingServiceImplTest {
     @Order(103)
     void createTraining_withDifferentDurations_shouldSetCorrectDuration() {
         TrainingCreateRequest request = new TrainingCreateRequest(
-                validCredentials,
+                validCredentials.username(),
                 "Tom.Smith",
                 "Quick Session",
-                TrainingType.Type.STRETCHING,
+                TrainingType.Type.STRETCHING.getName(),
                 LocalDate.of(2024, 8, 1),
                 30
         );
@@ -144,12 +143,12 @@ class TrainingServiceImplTest {
 
     @Test
     @Order(201)
-    void createTraining_withNonExistentTrainee_shouldThrowEntityNotFoundException() {
+    void createTraining_withNonExistentTrainee_shouldThrowTraineeDoesNotExistException() {
         TrainingCreateRequest request = new TrainingCreateRequest(
-                nonExistentCredentials,
+                nonExistentCredentials.username(),
                 "Tom.Smith",
                 "Training",
-                TrainingType.Type.FITNESS,
+                TrainingType.Type.FITNESS.getName(),
                 LocalDate.now(),
                 60
         );
@@ -157,29 +156,8 @@ class TrainingServiceImplTest {
         when(traineeDao.getTrainee("Non.Existent")).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> trainingService.createTraining(request))
-                .isInstanceOf(EntityNotFoundException.class)
+                .isInstanceOf(TraineeDoesNotExistException.class)
                 .hasMessageContaining("Trainee not found");
-
-        verify(trainingDao, never()).createTraining(any());
-    }
-
-    @Test
-    @Order(202)
-    void createTraining_withWrongPassword_shouldThrowIllegalArgumentException() {
-        TrainingCreateRequest request = new TrainingCreateRequest(
-                wrongPasswordCredentials,
-                "Tom.Smith",
-                "Training",
-                TrainingType.Type.FITNESS,
-                LocalDate.now(),
-                60
-        );
-
-        when(traineeDao.getTrainee("Jack.Black")).thenReturn(Optional.of(trainee));
-
-        assertThatThrownBy(() -> trainingService.createTraining(request))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("Invalid credentials");
 
         verify(trainingDao, never()).createTraining(any());
     }
@@ -190,12 +168,12 @@ class TrainingServiceImplTest {
 
     @Test
     @Order(301)
-    void createTraining_withNonExistentTrainer_shouldThrowEntityNotFoundException() {
+    void createTraining_withNonExistentTrainer_shouldThrowTrainerDoesNotExistException() {
         TrainingCreateRequest request = new TrainingCreateRequest(
-                validCredentials,
+                validCredentials.username(),
                 "Non.Existent.Trainer",
                 "Training",
-                TrainingType.Type.FITNESS,
+                TrainingType.Type.FITNESS.getName(),
                 LocalDate.now(),
                 60
         );
@@ -204,7 +182,7 @@ class TrainingServiceImplTest {
         when(trainerDao.getTrainer("Non.Existent.Trainer")).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> trainingService.createTraining(request))
-                .isInstanceOf(EntityNotFoundException.class)
+                .isInstanceOf(TrainerDoesNotExistException.class)
                 .hasMessageContaining("Trainer not found");
 
         verify(trainingDao, never()).createTraining(any());

@@ -1,16 +1,14 @@
 package dev.ilkersahin.java.spring.gym.dto.request;
 
-import dev.ilkersahin.java.spring.gym.dto.auth.Credentials;
-import dev.ilkersahin.java.spring.gym.model.TrainingType;
-import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 
 import java.time.LocalDate;
 
 public record TrainingSearchRequestForTrainee(
-        @Valid Credentials credentials,
+        @NotBlank String traineeUsername,
         LocalDate fromDate,
         LocalDate toDate,
         String trainerUsername,
-        TrainingType.Type trainingType
+        String trainingType
 ) {
 }
