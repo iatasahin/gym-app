@@ -1,5 +1,6 @@
 package dev.ilkersahin.java.spring.gym.security;
 
+import dev.ilkersahin.java.spring.gym.exception.RoleDoesNotExistException;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
@@ -38,16 +39,16 @@ public class JwtService {
      * Generate JWT token for authenticated user.
      *
      * @param username the authenticated username
-     * @param role     user role: "TRAINEE" or "TRAINER"
+     * @param role     user role
      * @return signed JWT token
      */
-    public String generateToken(String username, String role) {
+    public String generateToken(String username, Role role) {
         Date now = new Date();
         Date expiry = new Date(now.getTime() + expirationMs);
 
         String token = Jwts.builder()
                 .subject(username)
-                .claim("role", role)
+                .claim("role", role.name())
                 .issuedAt(now)
                 .expiration(expiry)
                 .signWith(signingKey)
@@ -89,9 +90,9 @@ public class JwtService {
      * Extract role from token (assumes token is already validated).
      *
      * @param token JWT token
-     * @return role claim value
+     * @return role enum value, or empty if invalid/missing
      */
-    public Optional<String> getRole(String token) {
+    public Optional<Role> getRole(String token) {
         try {
             Claims claims = Jwts.parser()
                     .verifyWith(signingKey)
@@ -99,9 +100,9 @@ public class JwtService {
                     .parseSignedClaims(token)
                     .getPayload();
 
-            return Optional.ofNullable(claims.get("role", String.class));
-
-        } catch (JwtException e) {
+            String roleStr = claims.get("role", String.class);
+            return Optional.ofNullable(Role.fromString(roleStr));
+        } catch (JwtException | RoleDoesNotExistException e) {
             return Optional.empty();
         }
     }

@@ -2,7 +2,10 @@ package dev.ilkersahin.java.spring.gym.controller;
 
 import dev.ilkersahin.java.spring.gym.exception.UnauthorizedAccessException;
 import dev.ilkersahin.java.spring.gym.security.JwtAuthenticationFilter;
+import dev.ilkersahin.java.spring.gym.security.Role;
 import jakarta.servlet.http.HttpServletRequest;
+
+import java.util.Optional;
 
 public abstract class BaseController {
 
@@ -14,9 +17,12 @@ public abstract class BaseController {
         return (String) username;
     }
 
-    protected String getAuthenticatedRole(HttpServletRequest request) {
+    protected Optional<Role> getAuthenticatedRole(HttpServletRequest request) {
         Object role = request.getAttribute(JwtAuthenticationFilter.AUTHENTICATED_ROLE);
-        return role != null ? (String) role : "UNKNOWN";
+        if (role instanceof Role) {
+            return Optional.of((Role) role);
+        }
+        return Optional.empty();
     }
 
     protected void verifyUserAccess(HttpServletRequest request, String requestedUsername) {

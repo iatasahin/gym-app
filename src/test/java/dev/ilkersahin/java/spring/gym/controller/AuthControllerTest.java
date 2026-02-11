@@ -10,6 +10,7 @@ import dev.ilkersahin.java.spring.gym.model.Trainer;
 import dev.ilkersahin.java.spring.gym.model.TrainingType;
 import dev.ilkersahin.java.spring.gym.model.User;
 import dev.ilkersahin.java.spring.gym.security.JwtService;
+import dev.ilkersahin.java.spring.gym.security.Role;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -60,7 +61,7 @@ public class AuthControllerTest {
     void login_withValidTraineeCredentials_shouldReturnToken() {
         LoginRequest request = new LoginRequest("John.Doe", "password123");
         when(traineeDao.getTrainee("John.Doe")).thenReturn(Optional.of(trainee));
-        when(jwtService.generateToken("John.Doe", "TRAINEE")).thenReturn("traineeToken123");
+        when(jwtService.generateToken("John.Doe", Role.TRAINEE)).thenReturn("traineeToken123");
 
         ResponseEntity<LoginResponse> response = authController.login(request);
 
@@ -68,7 +69,7 @@ public class AuthControllerTest {
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().token()).isEqualTo("traineeToken123");
         assertThat(response.getBody().username()).isEqualTo("John.Doe");
-        assertThat(response.getBody().role()).isEqualTo("TRAINEE");
+        assertThat(response.getBody().role()).isEqualTo(Role.TRAINEE);
     }
 
     @Test
@@ -93,7 +94,7 @@ public class AuthControllerTest {
         LoginRequest request = new LoginRequest("Jane.Smith", "trainerPass");
         when(traineeDao.getTrainee("Jane.Smith")).thenReturn(Optional.empty());
         when(trainerDao.getTrainer("Jane.Smith")).thenReturn(Optional.of(trainer));
-        when(jwtService.generateToken("Jane.Smith", "TRAINER")).thenReturn("trainerToken456");
+        when(jwtService.generateToken("Jane.Smith", Role.TRAINER)).thenReturn("trainerToken456");
 
         ResponseEntity<LoginResponse> response = authController.login(request);
 
@@ -101,7 +102,7 @@ public class AuthControllerTest {
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().token()).isEqualTo("trainerToken456");
         assertThat(response.getBody().username()).isEqualTo("Jane.Smith");
-        assertThat(response.getBody().role()).isEqualTo("TRAINER");
+        assertThat(response.getBody().role()).isEqualTo(Role.TRAINER);
     }
 
     @Test
@@ -141,10 +142,10 @@ public class AuthControllerTest {
         // Same username exists as both trainee and trainer (edge case)
         LoginRequest request = new LoginRequest("John.Doe", "password123");
         when(traineeDao.getTrainee("John.Doe")).thenReturn(Optional.of(trainee));
-        when(jwtService.generateToken("John.Doe", "TRAINEE")).thenReturn("traineeToken");
+        when(jwtService.generateToken("John.Doe", Role.TRAINEE)).thenReturn("traineeToken");
 
         ResponseEntity<LoginResponse> response = authController.login(request);
 
-        assertThat(response.getBody().role()).isEqualTo("TRAINEE");
+        assertThat(response.getBody().role()).isEqualTo(Role.TRAINEE);
     }
 }

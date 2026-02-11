@@ -2,11 +2,14 @@ package dev.ilkersahin.java.spring.gym.controller;
 
 import dev.ilkersahin.java.spring.gym.exception.UnauthorizedAccessException;
 import dev.ilkersahin.java.spring.gym.security.JwtAuthenticationFilter;
+import dev.ilkersahin.java.spring.gym.security.Role;
 import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -83,22 +86,24 @@ public class BaseControllerTest {
     @Order(201)
     void getAuthenticatedRole_withTraineeRole_shouldReturnTrainee() {
         when(httpServletRequest.getAttribute(JwtAuthenticationFilter.AUTHENTICATED_ROLE))
-                .thenReturn("TRAINEE");
+                .thenReturn(Role.TRAINEE);
 
-        String role = baseController.getAuthenticatedRole(httpServletRequest);
+        Optional<Role> role = baseController.getAuthenticatedRole(httpServletRequest);
 
-        assertThat(role).isEqualTo("TRAINEE");
+        assertThat(role).isPresent();
+        assertThat(role.get()).isEqualTo(Role.TRAINEE);
     }
 
     @Test
     @Order(202)
     void getAuthenticatedRole_withTrainerRole_shouldReturnTrainer() {
         when(httpServletRequest.getAttribute(JwtAuthenticationFilter.AUTHENTICATED_ROLE))
-                .thenReturn("TRAINER");
+                .thenReturn(Role.TRAINER);
 
-        String role = baseController.getAuthenticatedRole(httpServletRequest);
+        Optional<Role> role = baseController.getAuthenticatedRole(httpServletRequest);
 
-        assertThat(role).isEqualTo("TRAINER");
+        assertThat(role).isPresent();
+        assertThat(role.get()).isEqualTo(Role.TRAINER);
     }
 
     @Test
@@ -107,31 +112,9 @@ public class BaseControllerTest {
         when(httpServletRequest.getAttribute(JwtAuthenticationFilter.AUTHENTICATED_ROLE))
                 .thenReturn(null);
 
-        String role = baseController.getAuthenticatedRole(httpServletRequest);
+        Optional<Role> role = baseController.getAuthenticatedRole(httpServletRequest);
 
-        assertThat(role).isEqualTo("UNKNOWN");
-    }
-
-    @Test
-    @Order(204)
-    void getAuthenticatedRole_withAdminRole_shouldReturnAdmin() {
-        when(httpServletRequest.getAttribute(JwtAuthenticationFilter.AUTHENTICATED_ROLE))
-                .thenReturn("ADMIN");
-
-        String role = baseController.getAuthenticatedRole(httpServletRequest);
-
-        assertThat(role).isEqualTo("ADMIN");
-    }
-
-    @Test
-    @Order(205)
-    void getAuthenticatedRole_withCustomRole_shouldReturnCustomRole() {
-        when(httpServletRequest.getAttribute(JwtAuthenticationFilter.AUTHENTICATED_ROLE))
-                .thenReturn("CUSTOM_ROLE");
-
-        String role = baseController.getAuthenticatedRole(httpServletRequest);
-
-        assertThat(role).isEqualTo("CUSTOM_ROLE");
+        assertThat(role).isEmpty();
     }
 
     // =========================================================================
@@ -234,28 +217,29 @@ public class BaseControllerTest {
         when(httpServletRequest.getAttribute(JwtAuthenticationFilter.AUTHENTICATED_USERNAME))
                 .thenReturn("John.Doe");
         when(httpServletRequest.getAttribute(JwtAuthenticationFilter.AUTHENTICATED_ROLE))
-                .thenReturn("TRAINEE");
+                .thenReturn(Role.TRAINEE);
 
         String username = baseController.getAuthenticatedUsername(httpServletRequest);
-        String role = baseController.getAuthenticatedRole(httpServletRequest);
+        Optional<Role> role = baseController.getAuthenticatedRole(httpServletRequest);
 
         assertThat(username).isEqualTo("John.Doe");
-        assertThat(role).isEqualTo("TRAINEE");
+        assertThat(role).isPresent();
+        assertThat(role.get()).isEqualTo(Role.TRAINEE);
     }
 
     @Test
     @Order(402)
-    void getAuthenticatedUsernameAndRole_onlyUsernameSet_shouldReturnUsernameAndUnknownRole() {
+    void getAuthenticatedUsernameAndRole_onlyUsernameSet_shouldReturnUsernameAndEmptyRole() {
         when(httpServletRequest.getAttribute(JwtAuthenticationFilter.AUTHENTICATED_USERNAME))
                 .thenReturn("John.Doe");
         when(httpServletRequest.getAttribute(JwtAuthenticationFilter.AUTHENTICATED_ROLE))
                 .thenReturn(null);
 
         String username = baseController.getAuthenticatedUsername(httpServletRequest);
-        String role = baseController.getAuthenticatedRole(httpServletRequest);
+        Optional<Role> role = baseController.getAuthenticatedRole(httpServletRequest);
 
         assertThat(username).isEqualTo("John.Doe");
-        assertThat(role).isEqualTo("UNKNOWN");
+        assertThat(role).isEmpty();
     }
 
     @Test
@@ -264,13 +248,14 @@ public class BaseControllerTest {
         when(httpServletRequest.getAttribute(JwtAuthenticationFilter.AUTHENTICATED_USERNAME))
                 .thenReturn("Jane.Smith");
         when(httpServletRequest.getAttribute(JwtAuthenticationFilter.AUTHENTICATED_ROLE))
-                .thenReturn("TRAINER");
+                .thenReturn(Role.TRAINER);
 
         // Verify access first
         baseController.verifyUserAccess(httpServletRequest, "Jane.Smith");
 
         // Then get role
-        String role = baseController.getAuthenticatedRole(httpServletRequest);
-        assertThat(role).isEqualTo("TRAINER");
+        Optional<Role> role = baseController.getAuthenticatedRole(httpServletRequest);
+        assertThat(role).isPresent();
+        assertThat(role.get()).isEqualTo(Role.TRAINER);
     }
 }

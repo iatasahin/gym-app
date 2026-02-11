@@ -10,6 +10,7 @@ import dev.ilkersahin.java.spring.gym.exception.InvalidCredentialsException;
 import dev.ilkersahin.java.spring.gym.model.Trainee;
 import dev.ilkersahin.java.spring.gym.model.Trainer;
 import dev.ilkersahin.java.spring.gym.security.JwtService;
+import dev.ilkersahin.java.spring.gym.security.Role;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -55,9 +56,9 @@ public class AuthController {
         if (traineeOpt.isPresent()) {
             Trainee trainee = traineeOpt.get();
             if (trainee.getUser().getPassword().equals(request.password())) {
-                String token = jwtService.generateToken(request.username(), "TRAINEE");
+                String token = jwtService.generateToken(request.username(), Role.TRAINEE);
                 log.info("Trainee '{}' logged in successfully", request.username());
-                return ResponseEntity.ok(new LoginResponse(token, request.username(), "TRAINEE"));
+                return ResponseEntity.ok(new LoginResponse(token, request.username(), Role.TRAINEE));
             }
         }
 
@@ -66,9 +67,9 @@ public class AuthController {
         if (trainerOpt.isPresent()) {
             Trainer trainer = trainerOpt.get();
             if (trainer.getUser().getPassword().equals(request.password())) {
-                String token = jwtService.generateToken(request.username(), "TRAINER");
+                String token = jwtService.generateToken(request.username(), Role.TRAINER);
                 log.info("Trainer '{}' logged in successfully", request.username());
-                return ResponseEntity.ok(new LoginResponse(token, request.username(), "TRAINER"));
+                return ResponseEntity.ok(new LoginResponse(token, request.username(), Role.TRAINER));
             }
         }
 

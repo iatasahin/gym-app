@@ -118,12 +118,12 @@ public class JwtAuthenticationFilterTest {
         when(request.getMethod()).thenReturn("GET");
         when(request.getHeader("Authorization")).thenReturn("Bearer validToken123");
         when(jwtService.validateAndGetUsername("validToken123")).thenReturn(Optional.of("John.Doe"));
-        when(jwtService.getRole("validToken123")).thenReturn(Optional.of("TRAINEE"));
+        when(jwtService.getRole("validToken123")).thenReturn(Optional.of(Role.TRAINEE));
 
         filter.doFilterInternal(request, response, filterChain);
 
         verify(request).setAttribute(JwtAuthenticationFilter.AUTHENTICATED_USERNAME, "John.Doe");
-        verify(request).setAttribute(JwtAuthenticationFilter.AUTHENTICATED_ROLE, "TRAINEE");
+        verify(request).setAttribute(JwtAuthenticationFilter.AUTHENTICATED_ROLE, Role.TRAINEE);
         verify(filterChain).doFilter(request, response);
     }
 
@@ -134,12 +134,12 @@ public class JwtAuthenticationFilterTest {
         when(request.getMethod()).thenReturn("GET");
         when(request.getHeader("Authorization")).thenReturn("Bearer validToken");
         when(jwtService.validateAndGetUsername("validToken")).thenReturn(Optional.of("Jane.Smith"));
-        when(jwtService.getRole("validToken")).thenReturn(Optional.of("TRAINER"));
+        when(jwtService.getRole("validToken")).thenReturn(Optional.of(Role.TRAINER));
 
         filter.doFilterInternal(request, response, filterChain);
 
         verify(request).setAttribute(JwtAuthenticationFilter.AUTHENTICATED_USERNAME, "Jane.Smith");
-        verify(request).setAttribute(JwtAuthenticationFilter.AUTHENTICATED_ROLE, "TRAINER");
+        verify(request).setAttribute(JwtAuthenticationFilter.AUTHENTICATED_ROLE, Role.TRAINER);
         verify(filterChain).doFilter(request, response);
     }
 

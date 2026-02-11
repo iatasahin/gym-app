@@ -31,7 +31,7 @@ public class JwtServiceTest {
     @Test
     @Order(101)
     void generateToken_withValidInput_shouldReturnNonNullToken() {
-        String token = jwtService.generateToken("testUser", "TRAINEE");
+        String token = jwtService.generateToken("testUser", Role.TRAINEE);
 
         assertThat(token).isNotNull().isNotEmpty();
     }
@@ -39,7 +39,7 @@ public class JwtServiceTest {
     @Test
     @Order(102)
     void generateToken_shouldReturnValidJwtFormat() {
-        String token = jwtService.generateToken("testUser", "TRAINEE");
+        String token = jwtService.generateToken("testUser", Role.TRAINEE);
 
         // JWT format: header.payload.signature
         String[] parts = token.split("\\.");
@@ -49,8 +49,8 @@ public class JwtServiceTest {
     @Test
     @Order(103)
     void generateToken_withDifferentUsers_shouldReturnDifferentTokens() {
-        String token1 = jwtService.generateToken("user1", "TRAINEE");
-        String token2 = jwtService.generateToken("user2", "TRAINER");
+        String token1 = jwtService.generateToken("user1", Role.TRAINEE);
+        String token2 = jwtService.generateToken("user2", Role.TRAINER);
 
         assertThat(token1).isNotEqualTo(token2);
     }
@@ -58,8 +58,8 @@ public class JwtServiceTest {
     @Test
     @Order(104)
     void generateToken_withSameUserDifferentRoles_shouldReturnDifferentTokens() {
-        String token1 = jwtService.generateToken("user1", "TRAINEE");
-        String token2 = jwtService.generateToken("user1", "TRAINER");
+        String token1 = jwtService.generateToken("user1", Role.TRAINEE);
+        String token2 = jwtService.generateToken("user1", Role.TRAINER);
 
         assertThat(token1).isNotEqualTo(token2);
     }
@@ -71,7 +71,7 @@ public class JwtServiceTest {
     @Test
     @Order(201)
     void validateAndGetUsername_withValidToken_shouldReturnUsername() {
-        String token = jwtService.generateToken("testUser", "TRAINEE");
+        String token = jwtService.generateToken("testUser", Role.TRAINEE);
 
         Optional<String> result = jwtService.validateAndGetUsername(token);
 
@@ -90,7 +90,7 @@ public class JwtServiceTest {
     @Test
     @Order(203)
     void validateAndGetUsername_withTamperedToken_shouldReturnEmpty() {
-        String token = jwtService.generateToken("testUser", "TRAINEE");
+        String token = jwtService.generateToken("testUser", Role.TRAINEE);
         String tamperedToken = token.substring(0, token.length() - 5) + "XXXXX";
 
         Optional<String> result = jwtService.validateAndGetUsername(tamperedToken);
@@ -107,7 +107,7 @@ public class JwtServiceTest {
         ReflectionTestUtils.setField(shortLivedService, "expirationMs", 1L);
         shortLivedService.init();
 
-        String token = shortLivedService.generateToken("testUser", "TRAINEE");
+        String token = shortLivedService.generateToken("testUser", Role.TRAINEE);
         Thread.sleep(50); // Wait for expiration
 
         Optional<String> result = shortLivedService.validateAndGetUsername(token);
@@ -122,29 +122,29 @@ public class JwtServiceTest {
     @Test
     @Order(301)
     void getRole_withTraineeToken_shouldReturnTrainee() {
-        String token = jwtService.generateToken("testUser", "TRAINEE");
+        String token = jwtService.generateToken("testUser", Role.TRAINEE);
 
-        Optional<String> result = jwtService.getRole(token);
+        Optional<Role> result = jwtService.getRole(token);
 
         assertThat(result).isPresent();
-        assertThat(result.get()).isEqualTo("TRAINEE");
+        assertThat(result.get()).isEqualTo(Role.TRAINEE);
     }
 
     @Test
     @Order(302)
     void getRole_withTrainerToken_shouldReturnTrainer() {
-        String token = jwtService.generateToken("testUser", "TRAINER");
+        String token = jwtService.generateToken("testUser", Role.TRAINER);
 
-        Optional<String> result = jwtService.getRole(token);
+        Optional<Role> result = jwtService.getRole(token);
 
         assertThat(result).isPresent();
-        assertThat(result.get()).isEqualTo("TRAINER");
+        assertThat(result.get()).isEqualTo(Role.TRAINER);
     }
 
     @Test
     @Order(303)
     void getRole_withInvalidToken_shouldReturnEmpty() {
-        Optional<String> result = jwtService.getRole("invalid.token.here");
+        Optional<Role> result = jwtService.getRole("invalid.token.here");
 
         assertThat(result).isEmpty();
     }
@@ -152,10 +152,10 @@ public class JwtServiceTest {
     @Test
     @Order(304)
     void getRole_withTamperedToken_shouldReturnEmpty() {
-        String token = jwtService.generateToken("testUser", "TRAINEE");
+        String token = jwtService.generateToken("testUser", Role.TRAINEE);
         String tamperedToken = token + "tampered";
 
-        Optional<String> result = jwtService.getRole(tamperedToken);
+        Optional<Role> result = jwtService.getRole(tamperedToken);
 
         assertThat(result).isEmpty();
     }
@@ -167,7 +167,7 @@ public class JwtServiceTest {
     @Test
     @Order(401)
     void extractUsernameUnsafe_withValidToken_shouldReturnUsername() {
-        String token = jwtService.generateToken("testUser", "TRAINEE");
+        String token = jwtService.generateToken("testUser", Role.TRAINEE);
 
         String result = jwtService.extractUsernameUnsafe(token);
 
