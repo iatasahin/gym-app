@@ -1,7 +1,32 @@
 openapi: 3.0.3
 info:
   title: Gym CRM API
-  description: REST API for Gym Customer Relationship Management system
+  description: |
+    REST API for Gym Customer Relationship Management system.
+    
+    ## Authentication
+    
+    This API uses **JWT (JSON Web Token)** Bearer authentication for protected endpoints.
+    
+    ### How to authenticate:
+    1. Register as a **Trainee** (`POST /api/v1/trainees`) or **Trainer** (`POST /api/v1/trainers`)
+    2. Login with your credentials (`POST /api/v1/auth/login`)
+    3. Copy the `token` from the response
+    4. Click the **Authorize** button (🔓) above
+    5. Enter: `Bearer <your-token>` (or just the token - Swagger UI adds "Bearer" prefix)
+    6. Click **Authorize** to save
+    
+    ### Public endpoints (no authentication required):
+    - `POST /api/v1/auth/login` - User login
+    - `POST /api/v1/trainees` - Register trainee
+    - `POST /api/v1/trainers` - Register trainer  
+    - `GET /api/v1/training-types` - List training types
+    - `GET /health` - Health check
+    
+    ### Token details:
+    - **Format**: JWT (JSON Web Token)
+    - **Expiration**: 24 hours
+    - **Claims**: `sub` (username), `role` (TRAINEE/TRAINER), `iat`, `exp`
   version: 1.0.0
   contact:
     name: Ilker Sahin
@@ -12,7 +37,10 @@ servers:
 
 tags:
   - name: Authentication
-    description: Login and token management
+    description: |
+      Login and token management.
+      
+      **Flow**: Register → Login → Use token for protected endpoints
   - name: Trainees
     description: Trainee registration and profile management
   - name: Trainers
@@ -20,9 +48,9 @@ tags:
   - name: Trainings
     description: Training session management
   - name: Training Types
-    description: Training type catalog
+    description: Training type catalog (public)
   - name: Health
-    description: Application health check
+    description: Application health check (public)
 
 security:
   - bearerAuth: []
@@ -35,6 +63,7 @@ paths:
     get:
       tags: [Health]
       summary: Health check
+      description: Returns application health status. **Public endpoint - no authentication required.**
       security: []
       responses:
         '200':
@@ -50,6 +79,9 @@ paths:
                   timestamp:
                     type: string
                     format: date-time
+              example:
+                status: UP
+                timestamp: "2024-01-15T10:30:00"
 
   # ==========================================================================
   # AUTHENTICATION
@@ -58,7 +90,15 @@ paths:
     post:
       tags: [Authentication]
       summary: User login
-      description: Authenticate user and receive JWT token
+      description: |
+        Authenticate user and receive JWT token.
+        
+        **Public endpoint - no authentication required.**
+        
+        The returned token should be used in the `Authorization` header for protected endpoints:
+        ```
+        Authorization: Bearer <token>
+        ```
       security: []
       requestBody:
         required: true
@@ -66,19 +106,40 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/LoginRequest'
+            examples:
+              trainee:
+                summary: Trainee login
+                value:
+                  username: John.Doe
+                  password: mySecretPass123
+              trainer:
+                summary: Trainer login
+                value:
+                  username: Jane.Smith
+                  password: trainerPass456
       responses:
         '200':
-          description: Login successful
+          description: Login successful - JWT token returned
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/LoginResponse'
+              example:
+                token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJKb2huLkRvZSIsInJvbGUiOiJUUkFJTkVFIiwiaWF0IjoxNzA1MzEyMjAwLCJleHAiOjE3MDUzOTg2MDB9.xxx
+                username: John.Doe
+                role: TRAINEE
         '401':
-          description: Invalid credentials
+          description: Invalid credentials - username or password incorrect
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+              example:
+                timestamp: "2024-01-15T10:30:00"
+                status: 401
+                error: Unauthorized
+                message: Invalid username or password
+                path: /api/v1/auth/login
 
   # ==========================================================================
   # TRAINEES
@@ -87,6 +148,12 @@ paths:
     post:
       tags: [Trainees]
       summary: Register new trainee
+      description: |
+        Create a new trainee account.
+        
+        **Public endpoint - no authentication required.**
+        
+        Returns auto-generated username and password. Save these credentials to login later.
       security: []
       requestBody:
         required: true
@@ -94,6 +161,11 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/TraineeCreateRequest'
+            example:
+              firstName: John
+              lastName: Doe
+              dateOfBirth: "1990-05-15"
+              address: "123 Main St, New York"
       responses:
         '201':
           description: Trainee created successfully
@@ -101,6 +173,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/UserCreateResponse'
+              example:
+                username: John.Doe
+                password: aB3dEf9xYz
         '400':
           description: Validation error
           content:
@@ -112,6 +187,10 @@ paths:
     get:
       tags: [Trainees]
       summary: Get trainee profile
+      description: |
+        Retrieve trainee profile information.
+        
+        **🔒 Requires authentication** - User can only access their own profile.
       parameters:
         - $ref: '#/components/parameters/username'
       responses:
@@ -131,6 +210,10 @@ paths:
     put:
       tags: [Trainees]
       summary: Update trainee profile
+      description: |
+        Update trainee profile information.
+        
+        **🔒 Requires authentication** - User can only update their own profile.
       parameters:
         - $ref: '#/components/parameters/username'
       requestBody:
@@ -158,6 +241,12 @@ paths:
     delete:
       tags: [Trainees]
       summary: Delete trainee
+      description: |
+        Permanently delete trainee and all associated data (trainings, trainer assignments).
+        
+        **🔒 Requires authentication** - User can only delete their own account.
+        
+        ⚠️ **This action is irreversible.**
       parameters:
         - $ref: '#/components/parameters/username'
       responses:
@@ -174,6 +263,10 @@ paths:
     put:
       tags: [Trainees]
       summary: Change trainee password
+      description: |
+        Change trainee's password.
+        
+        **🔒 Requires authentication** - User can only change their own password.
       parameters:
         - $ref: '#/components/parameters/username'
       requestBody:
@@ -182,6 +275,10 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/PasswordChangeRequest'
+            example:
+              username: John.Doe
+              oldPassword: currentPass123
+              newPassword: newSecurePass456
       responses:
         '200':
           description: Password changed successfully
@@ -196,7 +293,12 @@ paths:
     patch:
       tags: [Trainees]
       summary: Activate or deactivate trainee
-      description: Non-idempotent operation. Returns 409 if already in requested state.
+      description: |
+        Change trainee's active status.
+        
+        **🔒 Requires authentication** - User can only change their own status.
+        
+        **Non-idempotent operation**: Returns `409 Conflict` if user is already in the requested state.
       parameters:
         - $ref: '#/components/parameters/username'
       requestBody:
@@ -205,6 +307,17 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ActivationRequest'
+            examples:
+              activate:
+                summary: Activate user
+                value:
+                  username: John.Doe
+                  active: true
+              deactivate:
+                summary: Deactivate user
+                value:
+                  username: John.Doe
+                  active: false
       responses:
         '200':
           description: Status updated successfully
@@ -218,11 +331,32 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                alreadyActive:
+                  summary: Already active
+                  value:
+                    timestamp: "2024-01-15T10:30:00"
+                    status: 409
+                    error: Conflict
+                    message: User 'John.Doe' is already active
+                    path: /api/v1/trainees/John.Doe/status
+                alreadyInactive:
+                  summary: Already inactive
+                  value:
+                    timestamp: "2024-01-15T10:30:00"
+                    status: 409
+                    error: Conflict
+                    message: User 'John.Doe' is already inactive
+                    path: /api/v1/trainees/John.Doe/status
 
   /api/v1/trainees/{username}/trainers/unassigned:
     get:
       tags: [Trainees]
       summary: Get trainers not assigned to trainee
+      description: |
+        Returns list of active trainers not currently assigned to this trainee.
+        
+        **🔒 Requires authentication** - User can only access their own data.
       parameters:
         - $ref: '#/components/parameters/username'
       responses:
@@ -245,6 +379,10 @@ paths:
     put:
       tags: [Trainees]
       summary: Update trainee's trainer list
+      description: |
+        Replace trainee's assigned trainers with the provided list.
+        
+        **🔒 Requires authentication** - User can only modify their own trainer list.
       parameters:
         - $ref: '#/components/parameters/username'
       requestBody:
@@ -253,6 +391,11 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/TraineeTrainerListUpdateRequest'
+            example:
+              traineeUsername: John.Doe
+              trainerUsernames:
+                - Jane.Smith
+                - Bob.Wilson
       responses:
         '200':
           description: Updated trainer list
@@ -271,26 +414,38 @@ paths:
     get:
       tags: [Trainees]
       summary: Get trainee's training sessions
+      description: |
+        Returns training sessions for the trainee with optional filters.
+        
+        **🔒 Requires authentication** - User can only access their own trainings.
       parameters:
         - $ref: '#/components/parameters/username'
         - name: fromDate
           in: query
+          description: Filter trainings from this date (inclusive)
           schema:
             type: string
             format: date
+          example: "2024-01-01"
         - name: toDate
           in: query
+          description: Filter trainings until this date (inclusive)
           schema:
             type: string
             format: date
+          example: "2024-12-31"
         - name: trainerName
           in: query
+          description: Filter by trainer username
           schema:
             type: string
+          example: Jane.Smith
         - name: trainingType
           in: query
+          description: Filter by training type
           schema:
             type: string
+          example: Fitness
       responses:
         '200':
           description: List of trainings
@@ -312,6 +467,12 @@ paths:
     post:
       tags: [Trainers]
       summary: Register new trainer
+      description: |
+        Create a new trainer account.
+        
+        **Public endpoint - no authentication required.**
+        
+        Returns auto-generated username and password. Save these credentials to login later.
       security: []
       requestBody:
         required: true
@@ -319,6 +480,10 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/TrainerCreateRequest'
+            example:
+              firstName: Jane
+              lastName: Smith
+              specialization: Fitness
       responses:
         '201':
           description: Trainer created successfully
@@ -326,6 +491,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/UserCreateResponse'
+              example:
+                username: Jane.Smith
+                password: xY7zAb3dEf
         '400':
           $ref: '#/components/responses/BadRequest'
 
@@ -333,6 +501,10 @@ paths:
     get:
       tags: [Trainers]
       summary: Get trainer profile
+      description: |
+        Retrieve trainer profile information.
+        
+        **🔒 Requires authentication** - User can only access their own profile.
       parameters:
         - $ref: '#/components/parameters/username'
       responses:
@@ -352,6 +524,12 @@ paths:
     put:
       tags: [Trainers]
       summary: Update trainer profile
+      description: |
+        Update trainer profile information.
+        
+        **🔒 Requires authentication** - User can only update their own profile.
+        
+        Note: `specialization` cannot be changed after registration.
       parameters:
         - $ref: '#/components/parameters/username'
       requestBody:
@@ -380,6 +558,10 @@ paths:
     put:
       tags: [Trainers]
       summary: Change trainer password
+      description: |
+        Change trainer's password.
+        
+        **🔒 Requires authentication** - User can only change their own password.
       parameters:
         - $ref: '#/components/parameters/username'
       requestBody:
@@ -402,7 +584,12 @@ paths:
     patch:
       tags: [Trainers]
       summary: Activate or deactivate trainer
-      description: Non-idempotent operation. Returns 409 if already in requested state.
+      description: |
+        Change trainer's active status.
+        
+        **🔒 Requires authentication** - User can only change their own status.
+        
+        **Non-idempotent operation**: Returns `409 Conflict` if user is already in the requested state.
       parameters:
         - $ref: '#/components/parameters/username'
       requestBody:
@@ -429,20 +616,27 @@ paths:
     get:
       tags: [Trainers]
       summary: Get trainer's training sessions
+      description: |
+        Returns training sessions conducted by the trainer with optional filters.
+        
+        **🔒 Requires authentication** - User can only access their own trainings.
       parameters:
         - $ref: '#/components/parameters/username'
         - name: fromDate
           in: query
+          description: Filter trainings from this date (inclusive)
           schema:
             type: string
             format: date
         - name: toDate
           in: query
+          description: Filter trainings until this date (inclusive)
           schema:
             type: string
             format: date
         - name: traineeName
           in: query
+          description: Filter by trainee username
           schema:
             type: string
       responses:
@@ -466,12 +660,23 @@ paths:
     post:
       tags: [Trainings]
       summary: Add new training session
+      description: |
+        Create a training session between a trainee and trainer.
+        
+        **🔒 Requires authentication**
       requestBody:
         required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/TrainingCreateRequest'
+            example:
+              traineeUsername: John.Doe
+              trainerUsername: Jane.Smith
+              trainingName: Morning Cardio Session
+              trainingType: Fitness
+              trainingDate: "2024-01-20"
+              durationMinutes: 60
       responses:
         '200':
           description: Training created successfully
@@ -489,6 +694,10 @@ paths:
     get:
       tags: [Training Types]
       summary: Get all training types
+      description: |
+        Returns all available training types.
+        
+        **Public endpoint - no authentication required.**
       security: []
       responses:
         '200':
@@ -499,6 +708,17 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/TrainingTypeView'
+              example:
+                - trainingTypeId: 1
+                  trainingType: Fitness
+                - trainingTypeId: 2
+                  trainingType: Yoga
+                - trainingTypeId: 3
+                  trainingType: Zumba
+                - trainingTypeId: 4
+                  trainingType: Stretching
+                - trainingTypeId: 5
+                  trainingType: Resistance
 
 # ============================================================================
 # COMPONENTS
@@ -509,7 +729,23 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
-      description: JWT token obtained from /api/v1/auth/login
+      description: |
+        JWT Bearer token authentication.
+        
+        **How to obtain a token:**
+        1. Login via `POST /api/v1/auth/login`
+        2. Copy the `token` from the response
+        3. Click "Authorize" and enter the token
+        
+        **Token format:** `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...`
+        
+        **Token expiration:** 24 hours
+        
+        **Token claims:**
+        - `sub`: Username
+        - `role`: User role (TRAINEE or TRAINER)
+        - `iat`: Issued at timestamp
+        - `exp`: Expiration timestamp
 
   parameters:
     username:
@@ -518,33 +754,72 @@ components:
       required: true
       schema:
         type: string
-      description: User's unique username
+      description: |
+        User's unique username (format: FirstName.LastName)
+      example: John.Doe
 
   responses:
     BadRequest:
-      description: Validation error
+      description: Validation error - request body contains invalid data
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
+          example:
+            timestamp: "2024-01-15T10:30:00"
+            status: 400
+            error: Bad Request
+            message: Validation failed
+            path: /api/v1/trainees
+
     Unauthorized:
-      description: Missing or invalid JWT token
+      description: |
+        Missing or invalid JWT token.
+        
+        **Possible causes:**
+        - No `Authorization` header provided
+        - Token doesn't start with `Bearer `
+        - Token is expired
+        - Token signature is invalid
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
+          example:
+            timestamp: "2024-01-15T10:30:00"
+            status: 401
+            error: Unauthorized
+            message: Missing or invalid Authorization header
+            path: /api/v1/trainees/John.Doe
+
     Forbidden:
-      description: Access denied to resource
+      description: |
+        Access denied - user cannot access this resource.
+        
+        Users can only access their own profile and data.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
+          example:
+            timestamp: "2024-01-15T10:30:00"
+            status: 403
+            error: Forbidden
+            message: "User 'John.Doe' cannot access resources of 'Jane.Smith'"
+            path: /api/v1/trainees/Jane.Smith
+
     NotFound:
       description: Resource not found
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
+          example:
+            timestamp: "2024-01-15T10:30:00"
+            status: 404
+            error: Not Found
+            message: Trainee not found with username 'Unknown.User'
+            path: /api/v1/trainees/Unknown.User
 
   schemas:
     # --------------------------------------------------------------------------
@@ -556,22 +831,30 @@ components:
       properties:
         username:
           type: string
+          description: User's username
           example: John.Doe
         password:
           type: string
-          example: secretpass
+          format: password
+          description: User's password
+          example: mySecretPass123
 
     LoginResponse:
       type: object
       properties:
         token:
           type: string
-          description: JWT token
+          description: JWT token - use in Authorization header as "Bearer <token>"
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJKb2huLkRvZSIsInJvbGUiOiJUUkFJTkVFIn0.xxx
         username:
           type: string
+          description: Authenticated user's username
+          example: John.Doe
         role:
           type: string
           enum: [TRAINEE, TRAINER]
+          description: User's role in the system
+          example: TRAINEE
 
     # --------------------------------------------------------------------------
     # Trainee
@@ -582,17 +865,23 @@ components:
       properties:
         firstName:
           type: string
+          description: Trainee's first name
+          minLength: 1
           example: John
         lastName:
           type: string
+          description: Trainee's last name
+          minLength: 1
           example: Doe
         dateOfBirth:
           type: string
           format: date
+          description: Trainee's date of birth
           example: "1990-05-15"
         address:
           type: string
-          example: "123 Main St, City"
+          description: Trainee's address
+          example: "123 Main St, New York"
 
     TraineeUpdateRequest:
       type: object
@@ -600,12 +889,16 @@ components:
       properties:
         username:
           type: string
+          description: Username (must match path parameter)
         firstName:
           type: string
+          minLength: 1
         lastName:
           type: string
+          minLength: 1
         active:
           type: boolean
+          description: Account active status
         dateOfBirth:
           type: string
           format: date
@@ -617,19 +910,26 @@ components:
       properties:
         username:
           type: string
+          example: John.Doe
         firstName:
           type: string
+          example: John
         lastName:
           type: string
+          example: Doe
         active:
           type: boolean
+          example: true
         dateOfBirth:
           type: string
           format: date
+          example: "1990-05-15"
         address:
           type: string
+          example: "123 Main St, New York"
         trainers:
           type: array
+          description: List of assigned trainers
           items:
             $ref: '#/components/schemas/TrainerInfo'
 
@@ -639,8 +939,10 @@ components:
       properties:
         traineeUsername:
           type: string
+          description: Trainee's username
         trainerUsernames:
           type: array
+          description: List of trainer usernames to assign
           items:
             type: string
 
@@ -653,13 +955,19 @@ components:
       properties:
         firstName:
           type: string
+          description: Trainer's first name
+          minLength: 1
           example: Jane
         lastName:
           type: string
+          description: Trainer's last name
+          minLength: 1
           example: Smith
         specialization:
           type: string
-          example: CARDIO
+          description: Training specialization type
+          enum: [Fitness, Yoga, Zumba, Stretching, Resistance]
+          example: Fitness
 
     TrainerUpdateRequest:
       type: object
@@ -667,31 +975,41 @@ components:
       properties:
         username:
           type: string
+          description: Username (must match path parameter)
         firstName:
           type: string
+          minLength: 1
         lastName:
           type: string
+          minLength: 1
         active:
           type: boolean
+          description: Account active status
         specialization:
           type: string
-          description: Read-only, ignored on update
+          description: "**Read-only** - ignored on update"
 
     TrainerWithListView:
       type: object
       properties:
         username:
           type: string
+          example: Jane.Smith
         firstName:
           type: string
+          example: Jane
         lastName:
           type: string
+          example: Smith
         active:
           type: boolean
+          example: true
         specialization:
           type: string
+          example: Fitness
         trainees:
           type: array
+          description: List of assigned trainees
           items:
             $ref: '#/components/schemas/UserInfo'
 
@@ -700,12 +1018,16 @@ components:
       properties:
         username:
           type: string
+          example: Jane.Smith
         firstName:
           type: string
+          example: Jane
         lastName:
           type: string
+          example: Smith
         specialization:
           type: string
+          example: Fitness
 
     # --------------------------------------------------------------------------
     # Training
@@ -716,20 +1038,26 @@ components:
       properties:
         traineeUsername:
           type: string
+          example: John.Doe
         trainerUsername:
           type: string
+          example: Jane.Smith
         trainingName:
           type: string
+          description: Descriptive name for the training session
           example: Morning Cardio Session
         trainingType:
           type: string
-          example: CARDIO
+          enum: [Fitness, Yoga, Zumba, Stretching, Resistance]
+          example: Fitness
         trainingDate:
           type: string
           format: date
+          example: "2024-01-20"
         durationMinutes:
           type: integer
           minimum: 1
+          description: Training duration in minutes
           example: 60
 
     TrainingView:
@@ -737,37 +1065,51 @@ components:
       properties:
         trainingName:
           type: string
+          example: Morning Cardio Session
         trainingDate:
           type: string
           format: date
+          example: "2024-01-20"
         durationMinutes:
           type: integer
+          example: 60
         trainingType:
           type: string
+          example: Fitness
         traineeUsername:
           type: string
+          example: John.Doe
         trainerUsername:
           type: string
+          example: Jane.Smith
 
     TrainingTypeView:
       type: object
       properties:
-        trainingType:
-          type: string
         trainingTypeId:
           type: integer
+          description: Unique identifier for the training type
+          example: 1
+        trainingType:
+          type: string
+          description: Display name of the training type
+          example: Fitness
 
     # --------------------------------------------------------------------------
     # Common
     # --------------------------------------------------------------------------
     UserCreateResponse:
       type: object
+      description: Response after successful user registration
       properties:
         username:
           type: string
+          description: Auto-generated username (FirstName.LastName format)
+          example: John.Doe
         password:
           type: string
-          description: Auto-generated password
+          description: Auto-generated password - **save this, it won't be shown again!**
+          example: aB3dEf9xYz
 
     PasswordChangeRequest:
       type: object
@@ -775,10 +1117,16 @@ components:
       properties:
         username:
           type: string
+          description: Username (must match path parameter)
         oldPassword:
           type: string
+          format: password
+          description: Current password
         newPassword:
           type: string
+          format: password
+          description: New password
+          minLength: 1
 
     ActivationRequest:
       type: object
@@ -786,30 +1134,46 @@ components:
       properties:
         username:
           type: string
+          description: Username (must match path parameter)
         active:
           type: boolean
+          description: Desired active status (true = activate, false = deactivate)
 
     UserInfo:
       type: object
       properties:
         username:
           type: string
+          example: John.Doe
         firstName:
           type: string
+          example: John
         lastName:
           type: string
+          example: Doe
 
     ErrorResponse:
       type: object
+      description: Standard error response format
       properties:
         timestamp:
           type: string
           format: date-time
+          description: When the error occurred
+          example: "2024-01-15T10:30:00"
         status:
           type: integer
+          description: HTTP status code
+          example: 401
         error:
           type: string
+          description: HTTP status text
+          example: Unauthorized
         message:
           type: string
+          description: Detailed error message
+          example: Invalid username or password
         path:
           type: string
+          description: Request path that caused the error
+          example: /api/v1/auth/login
