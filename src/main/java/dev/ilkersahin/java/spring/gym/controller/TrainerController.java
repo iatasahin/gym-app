@@ -17,7 +17,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -81,10 +80,9 @@ public class TrainerController extends BaseController {
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     public ResponseEntity<TrainerWithListView> getTrainerProfile(
-            @Parameter(description = "Trainer username") @PathVariable String username,
-            HttpServletRequest request) {
+            @Parameter(description = "Trainer username") @PathVariable String username) {
 
-        verifyUserAccess(request, username);
+        verifyUserAccess(username);
         log.info("Getting profile for trainer '{}'", username);
 
         TrainerWithListView response = trainerService.getTrainer(username);
@@ -112,10 +110,9 @@ public class TrainerController extends BaseController {
     })
     public ResponseEntity<TrainerWithListView> updateTrainerProfile(
             @Parameter(description = "Trainer username") @PathVariable String username,
-            @Valid @RequestBody TrainerUpdateRequest request,
-            HttpServletRequest httpRequest) {
+            @Valid @RequestBody TrainerUpdateRequest request) {
 
-        verifyUserAccess(httpRequest, username);
+        verifyUserAccess(username);
         log.info("Updating profile for trainer '{}'", username);
 
         TrainerWithListView updated = trainerService.updateTrainer(request);
@@ -140,10 +137,9 @@ public class TrainerController extends BaseController {
     })
     public ResponseEntity<Void> changePassword(
             @Parameter(description = "Trainer username") @PathVariable String username,
-            @Valid @RequestBody PasswordChangeRequest request,
-            HttpServletRequest httpRequest) {
+            @Valid @RequestBody PasswordChangeRequest request) {
 
-        verifyUserAccess(httpRequest, username);
+        verifyUserAccess(username);
         log.info("Changing password for trainer '{}'", username);
 
         trainerService.changePassword(request);
@@ -169,10 +165,9 @@ public class TrainerController extends BaseController {
     })
     public ResponseEntity<Void> updateActivationStatus(
             @Parameter(description = "Trainer username") @PathVariable String username,
-            @Valid @RequestBody ActivationRequest request,
-            HttpServletRequest httpRequest) {
+            @Valid @RequestBody ActivationRequest request) {
 
-        verifyUserAccess(httpRequest, username);
+        verifyUserAccess(username);
         log.info("Updating activation status for trainer '{}' to {}", username, request.active());
 
         // Check current status for non-idempotent behavior
@@ -201,14 +196,6 @@ public class TrainerController extends BaseController {
     @GetMapping("/{username}/trainings")
     @Operation(summary = "Get trainer's trainings", description = "Returns training sessions with optional filters")
     @SecurityRequirement(name = "bearerAuth")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "List of trainings",
-                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = TrainingView.class)))),
-            @ApiResponse(responseCode = "401", description = "Missing or invalid JWT token",
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "403", description = "Access denied",
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
-    })
     public ResponseEntity<List<TrainingView>> getTrainings(
             @Parameter(description = "Trainer username")
             @PathVariable String username,
@@ -217,10 +204,9 @@ public class TrainerController extends BaseController {
             @Parameter(description = "Filter: end date (inclusive)")
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
             @Parameter(description = "Filter: trainee name")
-            @RequestParam(required = false) String traineeName,
-            HttpServletRequest request) {
+            @RequestParam(required = false) String traineeName) {
 
-        verifyUserAccess(request, username);
+        verifyUserAccess(username);
         log.info("Getting trainings for trainer '{}'", username);
 
         TrainingSearchRequestForTrainer searchRequest = new TrainingSearchRequestForTrainer(
