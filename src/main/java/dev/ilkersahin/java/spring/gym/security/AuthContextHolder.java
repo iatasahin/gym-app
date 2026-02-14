@@ -13,8 +13,14 @@ public class AuthContextHolder {
     }
 
     public static Optional<String> getAuthenticatedUsername() {
-        return Optional.ofNullable(
-                authContext != null && authContext.isAuthenticated() ? authContext.getUsername() : null
-        );
+        return Optional.ofNullable(authContext)
+                .filter(AuthContext::isAuthenticated)
+                .map(AuthContext::getUsername);
+    }
+
+    public static Optional<Role> getAuthenticatedRole() {
+        return Optional.ofNullable(authContext)
+                .filter(AuthContext::isAuthenticated)
+                .map(AuthContext::getRole);
     }
 }
