@@ -34,6 +34,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     public static final String AUTHENTICATED_ROLE = "authenticatedRole";
 
     private final JwtService jwtService;
+    private final AuthContextImpl authContextImpl;
 
     // Public endpoints that don't require authentication
     private static final Set<String> PUBLIC_ENDPOINTS = Set.of(
@@ -94,9 +95,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         // Token is valid - set username in request attributes for controllers
         String username = usernameOpt.get();
         request.setAttribute(AUTHENTICATED_USERNAME, username);
+        authContextImpl.setUsername(username);
+        authContextImpl.setAuthenticated(true);
 
-        jwtService.getRole(token).ifPresent(role ->
-                request.setAttribute(AUTHENTICATED_ROLE, role)
+        jwtService.getRole(token).ifPresent(role -> {
+                    request.setAttribute(AUTHENTICATED_ROLE, role);
+                    authContextImpl.setRole(role);
+                }
         );
 
         log.debug("Authenticated user '{}' accessing {} {}", username, method, path);
