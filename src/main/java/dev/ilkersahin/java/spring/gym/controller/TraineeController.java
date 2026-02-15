@@ -5,6 +5,7 @@ import dev.ilkersahin.java.spring.gym.dto.response.*;
 import dev.ilkersahin.java.spring.gym.dto.view.*;
 import dev.ilkersahin.java.spring.gym.exception.UserAlreadyActiveException;
 import dev.ilkersahin.java.spring.gym.exception.UserAlreadyInactiveException;
+import dev.ilkersahin.java.spring.gym.security.InjectRandomNumber;
 import dev.ilkersahin.java.spring.gym.service.TraineeService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -15,6 +16,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +38,14 @@ public class TraineeController extends BaseController {
     private static final Logger log = LoggerFactory.getLogger(TraineeController.class);
 
     private final TraineeService traineeService;
+
+    @InjectRandomNumber(min = -10, max = 10)
+    private int randomNumber; // For demonstration of custom annotation - can be used for logging or other purposes
+
+    @PostConstruct
+    public void init() {
+        log.info("TraineeController initialized with random number: {}", randomNumber);
+    }
 
 
     // =========================================================================
