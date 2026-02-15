@@ -13,6 +13,7 @@ import dev.ilkersahin.java.spring.gym.dto.view.TrainerInfo;
 import dev.ilkersahin.java.spring.gym.dto.view.TrainingView;
 import dev.ilkersahin.java.spring.gym.exception.UserAlreadyActiveException;
 import dev.ilkersahin.java.spring.gym.exception.UserAlreadyInactiveException;
+import dev.ilkersahin.java.spring.gym.security.SelfService;
 import dev.ilkersahin.java.spring.gym.service.TraineeService;
 import io.micrometer.core.annotation.Timed;
 import io.swagger.v3.oas.annotations.Operation;
@@ -93,11 +94,11 @@ public class TraineeController extends BaseController {
             @ApiResponse(responseCode = "404", description = "Trainee not found",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
+    @SelfService
     public ResponseEntity<TraineeWithListView> getTraineeProfile(
             @Parameter(description = "Trainee username") @PathVariable String username
     ) {
 
-        verifyUserAccess(username);
         log.info("Getting profile for trainee '{}'", username);
 
         TraineeWithListView response = traineeService.getTrainee(username);
