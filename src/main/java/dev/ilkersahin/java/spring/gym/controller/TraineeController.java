@@ -1,8 +1,16 @@
 package dev.ilkersahin.java.spring.gym.controller;
 
-import dev.ilkersahin.java.spring.gym.dto.request.*;
-import dev.ilkersahin.java.spring.gym.dto.response.*;
-import dev.ilkersahin.java.spring.gym.dto.view.*;
+import dev.ilkersahin.java.spring.gym.dto.request.ActivationRequest;
+import dev.ilkersahin.java.spring.gym.dto.request.PasswordChangeRequest;
+import dev.ilkersahin.java.spring.gym.dto.request.TraineeCreateRequest;
+import dev.ilkersahin.java.spring.gym.dto.request.TraineeTrainerListUpdateRequest;
+import dev.ilkersahin.java.spring.gym.dto.request.TraineeUpdateRequest;
+import dev.ilkersahin.java.spring.gym.dto.request.TrainingSearchRequestForTrainee;
+import dev.ilkersahin.java.spring.gym.dto.response.ErrorResponse;
+import dev.ilkersahin.java.spring.gym.dto.response.UserCreateResponse;
+import dev.ilkersahin.java.spring.gym.dto.view.TraineeWithListView;
+import dev.ilkersahin.java.spring.gym.dto.view.TrainerInfo;
+import dev.ilkersahin.java.spring.gym.dto.view.TrainingView;
 import dev.ilkersahin.java.spring.gym.exception.UserAlreadyActiveException;
 import dev.ilkersahin.java.spring.gym.exception.UserAlreadyInactiveException;
 import dev.ilkersahin.java.spring.gym.service.TraineeService;
@@ -15,7 +23,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -23,7 +30,16 @@ import org.slf4j.LoggerFactory;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -37,19 +53,16 @@ public class TraineeController extends BaseController {
 
     private final TraineeService traineeService;
 
-
     // =========================================================================
     // 1. REGISTRATION (Public)
     // =========================================================================
 
     @PostMapping
     @Operation(summary = "Register new trainee", description = "Public endpoint - no authentication required")
-    @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "Trainee created successfully",
-                    content = @Content(schema = @Schema(implementation = UserCreateResponse.class))),
-            @ApiResponse(responseCode = "400", description = "Validation error",
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
-    })
+    @ApiResponse(responseCode = "201", description = "Trainee created successfully",
+            content = @Content(schema = @Schema(implementation = UserCreateResponse.class)))
+    @ApiResponse(responseCode = "400", description = "Validation error",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     public ResponseEntity<UserCreateResponse> registerTrainee(@Valid @RequestBody TraineeCreateRequest request) {
 
         log.info("Registering new trainee: {} {}", request.firstName(), request.lastName());
@@ -77,11 +90,10 @@ public class TraineeController extends BaseController {
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     public ResponseEntity<TraineeWithListView> getTraineeProfile(
-            @Parameter(description = "Trainee username") @PathVariable String username,
-            HttpServletRequest request
+            @Parameter(description = "Trainee username") @PathVariable String username
     ) {
 
-        verifyUserAccess(request, username);
+        verifyUserAccess(username);
         log.info("Getting profile for trainee '{}'", username);
 
         TraineeWithListView response = traineeService.getTrainee(username);
@@ -109,11 +121,10 @@ public class TraineeController extends BaseController {
     })
     public ResponseEntity<TraineeWithListView> updateTraineeProfile(
             @Parameter(description = "Trainee username") @PathVariable String username,
-            @Valid @RequestBody TraineeUpdateRequest request,
-            HttpServletRequest httpRequest
+            @Valid @RequestBody TraineeUpdateRequest request
     ) {
 
-        verifyUserAccess(httpRequest, username);
+        verifyUserAccess(username);
         log.info("Updating profile for trainee '{}'", username);
 
         TraineeWithListView response = traineeService.updateTrainee(request);
@@ -137,11 +148,10 @@ public class TraineeController extends BaseController {
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     public ResponseEntity<Void> deleteTrainee(
-            @Parameter(description = "Trainee username") @PathVariable String username,
-            HttpServletRequest request
+            @Parameter(description = "Trainee username") @PathVariable String username
     ) {
 
-        verifyUserAccess(request, username);
+        verifyUserAccess(username);
         log.warn("Deleting trainee '{}'", username);
 
         traineeService.deleteTrainee(username);
@@ -166,11 +176,10 @@ public class TraineeController extends BaseController {
     })
     public ResponseEntity<Void> changePassword(
             @Parameter(description = "Trainee username") @PathVariable String username,
-            @Valid @RequestBody PasswordChangeRequest request,
-            HttpServletRequest httpRequest
+            @Valid @RequestBody PasswordChangeRequest request
     ) {
 
-        verifyUserAccess(httpRequest, username);
+        verifyUserAccess(username);
         log.info("Changing password for trainee '{}'", username);
 
         traineeService.changePassword(request);
@@ -196,11 +205,10 @@ public class TraineeController extends BaseController {
     })
     public ResponseEntity<Void> updateActivationStatus(
             @Parameter(description = "Trainee username") @PathVariable String username,
-            @Valid @RequestBody ActivationRequest request,
-            HttpServletRequest httpRequest
+            @Valid @RequestBody ActivationRequest request
     ) {
 
-        verifyUserAccess(httpRequest, username);
+        verifyUserAccess(username);
         log.info("Updating activation status for trainee '{}' to {}", username, request.active());
 
         // Check current status for non-idempotent behavior
@@ -240,10 +248,9 @@ public class TraineeController extends BaseController {
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     public ResponseEntity<List<TrainerInfo>> getUnassignedTrainers(
-            @Parameter(description = "Trainee username") @PathVariable String username,
-            HttpServletRequest request) {
+            @Parameter(description = "Trainee username") @PathVariable String username) {
 
-        verifyUserAccess(request, username);
+        verifyUserAccess(username);
         log.info("Getting unassigned trainers for trainee '{}'", username);
 
         List<TrainerInfo> response = traineeService.getUnassignedTrainers(username);
@@ -268,10 +275,9 @@ public class TraineeController extends BaseController {
     })
     public ResponseEntity<List<TrainerInfo>> updateTrainers(
             @Parameter(description = "Trainee username") @PathVariable String username,
-            @Valid @RequestBody TraineeTrainerListUpdateRequest request,
-            HttpServletRequest httpRequest) {
+            @Valid @RequestBody TraineeTrainerListUpdateRequest request) {
 
-        verifyUserAccess(httpRequest, username);
+        verifyUserAccess(username);
         log.info("Updating trainers for trainee '{}'", username);
 
         List<TrainerInfo> response = traineeService.updateTrainers(request);
@@ -304,11 +310,10 @@ public class TraineeController extends BaseController {
             @Parameter(description = "Filter: trainer name")
             @RequestParam(required = false) String trainerName,
             @Parameter(description = "Filter: training type")
-            @RequestParam(required = false) String trainingType,
-            HttpServletRequest request
+            @RequestParam(required = false) String trainingType
     ) {
 
-        verifyUserAccess(request, username);
+        verifyUserAccess(username);
         log.info("Getting trainings for trainee '{}'", username);
 
         TrainingSearchRequestForTrainee searchRequest = new TrainingSearchRequestForTrainee(

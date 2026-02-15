@@ -9,7 +9,6 @@ import dev.ilkersahin.java.spring.gym.dto.view.TrainingView;
 import dev.ilkersahin.java.spring.gym.exception.UserAlreadyActiveException;
 import dev.ilkersahin.java.spring.gym.exception.UserAlreadyInactiveException;
 import dev.ilkersahin.java.spring.gym.service.TraineeService;
-import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
@@ -32,7 +31,6 @@ import static org.mockito.Mockito.*;
 public class TraineeControllerTest {
 
     @Mock private TraineeService traineeService;
-    @Mock private HttpServletRequest httpServletRequest;
 
     @Spy
     @InjectMocks
@@ -50,7 +48,7 @@ public class TraineeControllerTest {
     @BeforeEach
     void setUp() {
         // Stub verifyUserAccess to do nothing by default (bypass authentication)
-        lenient().doNothing().when(traineeController).verifyUserAccess(any(), any());
+        lenient().doNothing().when(traineeController).verifyUserAccess(any());
 
         createRequest = new TraineeCreateRequest(
                 "John", "Doe", LocalDate.of(1990, 1, 1), "123 Main St"
@@ -123,7 +121,7 @@ public class TraineeControllerTest {
         when(traineeService.getTrainee("John.Doe")).thenReturn(activeTraineeView);
 
         ResponseEntity<TraineeWithListView> response = traineeController.getTraineeProfile(
-                "John.Doe", httpServletRequest
+                "John.Doe"
         );
 
         assertThat(response.getStatusCode().value()).isEqualTo(200);
@@ -144,7 +142,7 @@ public class TraineeControllerTest {
         when(traineeService.getTrainee("John.Doe")).thenReturn(viewWithTrainers);
 
         ResponseEntity<TraineeWithListView> response = traineeController.getTraineeProfile(
-                "John.Doe", httpServletRequest
+                "John.Doe"
         );
 
         assertThat(response.getBody()).isNotNull();
@@ -157,7 +155,7 @@ public class TraineeControllerTest {
     void getTraineeProfile_shouldCallServiceWithCorrectUsername() {
         when(traineeService.getTrainee("John.Doe")).thenReturn(activeTraineeView);
 
-        traineeController.getTraineeProfile("John.Doe", httpServletRequest);
+        traineeController.getTraineeProfile("John.Doe");
 
         verify(traineeService).getTrainee("John.Doe");
     }
@@ -172,7 +170,7 @@ public class TraineeControllerTest {
         when(traineeService.updateTrainee(updateRequest)).thenReturn(activeTraineeView);
 
         ResponseEntity<TraineeWithListView> response = traineeController.updateTraineeProfile(
-                "John.Doe", updateRequest, httpServletRequest
+                "John.Doe", updateRequest
         );
 
         assertThat(response.getStatusCode().value()).isEqualTo(200);
@@ -189,7 +187,7 @@ public class TraineeControllerTest {
         when(traineeService.updateTrainee(partialRequest)).thenReturn(activeTraineeView);
 
         ResponseEntity<TraineeWithListView> response = traineeController.updateTraineeProfile(
-                "John.Doe", partialRequest, httpServletRequest
+                "John.Doe", partialRequest
         );
 
         assertThat(response.getStatusCode().value()).isEqualTo(200);
@@ -205,7 +203,7 @@ public class TraineeControllerTest {
     void deleteTrainee_withValidUsername_shouldReturnOk() {
         when(traineeService.deleteTrainee("John.Doe")).thenReturn(true);
 
-        ResponseEntity<Void> response = traineeController.deleteTrainee("John.Doe", httpServletRequest);
+        ResponseEntity<Void> response = traineeController.deleteTrainee("John.Doe");
 
         assertThat(response.getStatusCode().value()).isEqualTo(200);
         verify(traineeService).deleteTrainee("John.Doe");
@@ -216,7 +214,7 @@ public class TraineeControllerTest {
     void deleteTrainee_shouldCallServiceWithCorrectUsername() {
         when(traineeService.deleteTrainee("Jane.Doe")).thenReturn(true);
 
-        traineeController.deleteTrainee("Jane.Doe", httpServletRequest);
+        traineeController.deleteTrainee("Jane.Doe");
 
         verify(traineeService).deleteTrainee("Jane.Doe");
     }
@@ -234,7 +232,7 @@ public class TraineeControllerTest {
         when(traineeService.changePassword(passwordRequest)).thenReturn(true);
 
         ResponseEntity<Void> response = traineeController.changePassword(
-                "John.Doe", passwordRequest, httpServletRequest
+                "John.Doe", passwordRequest
         );
 
         assertThat(response.getStatusCode().value()).isEqualTo(200);
@@ -249,7 +247,7 @@ public class TraineeControllerTest {
         );
         when(traineeService.changePassword(passwordRequest)).thenReturn(true);
 
-        traineeController.changePassword("John.Doe", passwordRequest, httpServletRequest);
+        traineeController.changePassword("John.Doe", passwordRequest);
 
         verify(traineeService).changePassword(argThat(req ->
                 req.username().equals("John.Doe") &&
@@ -270,7 +268,7 @@ public class TraineeControllerTest {
         when(traineeService.activate(activateRequest)).thenReturn(new ActivationResponse(true));
 
         ResponseEntity<Void> response = traineeController.updateActivationStatus(
-                "John.Doe", activateRequest, httpServletRequest
+                "John.Doe", activateRequest
         );
 
         assertThat(response.getStatusCode().value()).isEqualTo(200);
@@ -287,7 +285,7 @@ public class TraineeControllerTest {
         when(traineeService.deactivate(deactivateRequest)).thenReturn(new ActivationResponse(false));
 
         ResponseEntity<Void> response = traineeController.updateActivationStatus(
-                "John.Doe", deactivateRequest, httpServletRequest
+                "John.Doe", deactivateRequest
         );
 
         assertThat(response.getStatusCode().value()).isEqualTo(200);
@@ -303,7 +301,7 @@ public class TraineeControllerTest {
         when(traineeService.getTrainee("John.Doe")).thenReturn(activeTraineeView);
 
         assertThatThrownBy(() -> traineeController.updateActivationStatus(
-                "John.Doe", activateRequest, httpServletRequest
+                "John.Doe", activateRequest
         )).isInstanceOf(UserAlreadyActiveException.class);
 
         verify(traineeService, never()).activate(any());
@@ -317,7 +315,7 @@ public class TraineeControllerTest {
         when(traineeService.getTrainee("John.Doe")).thenReturn(inactiveTraineeView);
 
         assertThatThrownBy(() -> traineeController.updateActivationStatus(
-                "John.Doe", deactivateRequest, httpServletRequest
+                "John.Doe", deactivateRequest
         )).isInstanceOf(UserAlreadyInactiveException.class);
 
         verify(traineeService, never()).deactivate(any());
@@ -331,7 +329,7 @@ public class TraineeControllerTest {
         when(traineeService.getTrainee("John.Doe")).thenReturn(inactiveTraineeView);
         when(traineeService.activate(activateRequest)).thenReturn(new ActivationResponse(true));
 
-        traineeController.updateActivationStatus("John.Doe", activateRequest, httpServletRequest);
+        traineeController.updateActivationStatus("John.Doe", activateRequest);
 
         verify(traineeService).getTrainee("John.Doe");
     }
@@ -346,7 +344,7 @@ public class TraineeControllerTest {
         when(traineeService.getUnassignedTrainers("John.Doe")).thenReturn(List.of(trainerInfo));
 
         ResponseEntity<List<TrainerInfo>> response = traineeController.getUnassignedTrainers(
-                "John.Doe", httpServletRequest
+                "John.Doe"
         );
 
         assertThat(response.getStatusCode().value()).isEqualTo(200);
@@ -360,7 +358,7 @@ public class TraineeControllerTest {
         when(traineeService.getUnassignedTrainers("John.Doe")).thenReturn(List.of());
 
         ResponseEntity<List<TrainerInfo>> response = traineeController.getUnassignedTrainers(
-                "John.Doe", httpServletRequest
+                "John.Doe"
         );
 
         assertThat(response.getStatusCode().value()).isEqualTo(200);
@@ -377,7 +375,7 @@ public class TraineeControllerTest {
                 .thenReturn(List.of(trainerInfo, trainer2, trainer3));
 
         ResponseEntity<List<TrainerInfo>> response = traineeController.getUnassignedTrainers(
-                "John.Doe", httpServletRequest
+                "John.Doe"
         );
 
         assertThat(response.getBody()).hasSize(3);
@@ -399,7 +397,7 @@ public class TraineeControllerTest {
                 .thenReturn(List.of(trainerInfo, trainer2));
 
         ResponseEntity<List<TrainerInfo>> response = traineeController.updateTrainers(
-                "John.Doe", trainerListRequest, httpServletRequest
+                "John.Doe", trainerListRequest
         );
 
         assertThat(response.getStatusCode().value()).isEqualTo(200);
@@ -416,7 +414,7 @@ public class TraineeControllerTest {
         when(traineeService.updateTrainers(emptyRequest)).thenReturn(List.of());
 
         ResponseEntity<List<TrainerInfo>> response = traineeController.updateTrainers(
-                "John.Doe", emptyRequest, httpServletRequest
+                "John.Doe", emptyRequest
         );
 
         assertThat(response.getStatusCode().value()).isEqualTo(200);
@@ -432,7 +430,7 @@ public class TraineeControllerTest {
         when(traineeService.updateTrainers(singleRequest)).thenReturn(List.of(trainerInfo));
 
         ResponseEntity<List<TrainerInfo>> response = traineeController.updateTrainers(
-                "John.Doe", singleRequest, httpServletRequest
+                "John.Doe", singleRequest
         );
 
         assertThat(response.getBody()).hasSize(1);
@@ -450,7 +448,7 @@ public class TraineeControllerTest {
                 .thenReturn(List.of(trainingView));
 
         ResponseEntity<List<TrainingView>> response = traineeController.getTrainings(
-                "John.Doe", null, null, null, null, httpServletRequest
+                "John.Doe", null, null, null, null
         );
 
         assertThat(response.getStatusCode().value()).isEqualTo(200);
@@ -468,7 +466,7 @@ public class TraineeControllerTest {
                 .thenReturn(List.of(trainingView));
 
         ResponseEntity<List<TrainingView>> response = traineeController.getTrainings(
-                "John.Doe", fromDate, toDate, null, null, httpServletRequest
+                "John.Doe", fromDate, toDate, null, null
         );
 
         assertThat(response.getStatusCode().value()).isEqualTo(200);
@@ -491,7 +489,7 @@ public class TraineeControllerTest {
                 .thenReturn(List.of(trainingView));
 
         ResponseEntity<List<TrainingView>> response = traineeController.getTrainings(
-                "John.Doe", fromDate, toDate, trainerName, trainingType, httpServletRequest
+                "John.Doe", fromDate, toDate, trainerName, trainingType
         );
 
         assertThat(response.getStatusCode().value()).isEqualTo(200);
@@ -511,7 +509,7 @@ public class TraineeControllerTest {
                 .thenReturn(List.of());
 
         ResponseEntity<List<TrainingView>> response = traineeController.getTrainings(
-                "John.Doe", null, null, null, null, httpServletRequest
+                "John.Doe", null, null, null, null
         );
 
         assertThat(response.getStatusCode().value()).isEqualTo(200);
@@ -525,7 +523,7 @@ public class TraineeControllerTest {
                 .thenReturn(List.of(trainingView));
 
         traineeController.getTrainings(
-                "John.Doe", null, null, "Jane.Smith", null, httpServletRequest
+                "John.Doe", null, null, "Jane.Smith", null
         );
 
         verify(traineeService).getTrainings(argThat(req ->
@@ -544,7 +542,7 @@ public class TraineeControllerTest {
                 .thenReturn(List.of(trainingView));
 
         traineeController.getTrainings(
-                "John.Doe", null, null, null, "Yoga", httpServletRequest
+                "John.Doe", null, null, null, "Yoga"
         );
 
         verify(traineeService).getTrainings(argThat(req ->
@@ -565,7 +563,7 @@ public class TraineeControllerTest {
                 .thenReturn(List.of(trainingView, training2));
 
         ResponseEntity<List<TrainingView>> response = traineeController.getTrainings(
-                "John.Doe", null, null, null, null, httpServletRequest
+                "John.Doe", null, null, null, null
         );
 
         assertThat(response.getBody()).hasSize(2);

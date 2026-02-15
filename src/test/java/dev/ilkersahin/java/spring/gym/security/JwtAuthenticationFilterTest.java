@@ -25,6 +25,7 @@ public class JwtAuthenticationFilterTest {
     @Mock private HttpServletRequest request;
     @Mock private HttpServletResponse response;
     @Mock private FilterChain filterChain;
+    @Mock private AuthContextImpl authContextImpl;
 
     @InjectMocks
     private JwtAuthenticationFilter filter;
@@ -111,40 +112,32 @@ public class JwtAuthenticationFilterTest {
     // VALID TOKEN TESTS (300s)
     // =========================================================================
 
-    @Test
+    @ParameterizedTest(name = "[{index}] {0} should authenticate as {1} with role {2}")
+    @CsvSource({
+            "/api/v1/trainees/John.Doe, John.Doe, TRAINEE",
+            "/api/v1/trainers/Jane.Smith, Jane.Smith, TRAINER"
+    })
     @Order(301)
-    void doFilter_validToken_shouldSetUsernameAndRole() throws Exception {
-        when(request.getRequestURI()).thenReturn("/api/v1/trainees/John.Doe");
+    void doFilter_validToken_shouldSetUsernameAndRole(String uri, String username, String roleStr) throws Exception {
+        String token = "validToken";
+        when(request.getRequestURI()).thenReturn(uri);
         when(request.getMethod()).thenReturn("GET");
-        when(request.getHeader("Authorization")).thenReturn("Bearer validToken123");
-        when(jwtService.validateAndGetUsername("validToken123")).thenReturn(Optional.of("John.Doe"));
-        when(jwtService.getRole("validToken123")).thenReturn(Optional.of(Role.TRAINEE));
+        when(request.getHeader("Authorization")).thenReturn("Bearer " + token);
+        when(jwtService.validateAndGetUsername(token)).thenReturn(Optional.of(username));
+        when(jwtService.getRole(token)).thenReturn(Optional.of(Role.valueOf(roleStr)));
 
         filter.doFilterInternal(request, response, filterChain);
 
-        verify(request).setAttribute(JwtAuthenticationFilter.AUTHENTICATED_USERNAME, "John.Doe");
-        verify(request).setAttribute(JwtAuthenticationFilter.AUTHENTICATED_ROLE, Role.TRAINEE);
+        verify(request).setAttribute(JwtAuthenticationFilter.AUTHENTICATED_USERNAME, username);
+        verify(request).setAttribute(JwtAuthenticationFilter.AUTHENTICATED_ROLE, Role.valueOf(roleStr));
         verify(filterChain).doFilter(request, response);
+        verify(authContextImpl).setUsername(username);
+        verify(authContextImpl).setAuthenticated(true);
+        verify(authContextImpl).setRole(Role.valueOf(roleStr));
     }
 
     @Test
     @Order(302)
-    void doFilter_validTokenTrainer_shouldSetTrainerRole() throws Exception {
-        when(request.getRequestURI()).thenReturn("/api/v1/trainers/Jane.Smith");
-        when(request.getMethod()).thenReturn("GET");
-        when(request.getHeader("Authorization")).thenReturn("Bearer validToken");
-        when(jwtService.validateAndGetUsername("validToken")).thenReturn(Optional.of("Jane.Smith"));
-        when(jwtService.getRole("validToken")).thenReturn(Optional.of(Role.TRAINER));
-
-        filter.doFilterInternal(request, response, filterChain);
-
-        verify(request).setAttribute(JwtAuthenticationFilter.AUTHENTICATED_USERNAME, "Jane.Smith");
-        verify(request).setAttribute(JwtAuthenticationFilter.AUTHENTICATED_ROLE, Role.TRAINER);
-        verify(filterChain).doFilter(request, response);
-    }
-
-    @Test
-    @Order(303)
     void doFilter_validTokenNoRole_shouldStillPassThrough() throws Exception {
         when(request.getRequestURI()).thenReturn("/api/v1/trainees/John.Doe");
         when(request.getMethod()).thenReturn("GET");
@@ -157,6 +150,9 @@ public class JwtAuthenticationFilterTest {
         verify(request).setAttribute(JwtAuthenticationFilter.AUTHENTICATED_USERNAME, "John.Doe");
         verify(request, never()).setAttribute(eq(JwtAuthenticationFilter.AUTHENTICATED_ROLE), any());
         verify(filterChain).doFilter(request, response);
+        verify(authContextImpl).setUsername("John.Doe");
+        verify(authContextImpl).setAuthenticated(true);
+        verify(authContextImpl, never()).setRole(any());
     }
 
     // =========================================================================
