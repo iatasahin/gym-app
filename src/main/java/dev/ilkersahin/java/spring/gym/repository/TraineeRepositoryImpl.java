@@ -104,6 +104,8 @@ public class TraineeRepositoryImpl implements TraineeDao {
                                 select tr
                                 from Trainee t
                                     join t.trainers tr
+                                    join fetch tr.user
+                                    join fetch tr.specialization
                                     join t.user u
                                 where u.username = :username
                                 order by tr.user.username
