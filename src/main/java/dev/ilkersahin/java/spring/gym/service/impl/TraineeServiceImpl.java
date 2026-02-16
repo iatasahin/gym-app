@@ -16,8 +16,7 @@ import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,8 +25,8 @@ import java.util.List;
 @Service
 @Transactional
 @RequiredArgsConstructor
+@Slf4j
 public class TraineeServiceImpl implements TraineeService {
-    private static final Logger log = LoggerFactory.getLogger(TraineeServiceImpl.class);
 
     private final TraineeDao traineeDao;
     private final TrainerDao trainerDAO;

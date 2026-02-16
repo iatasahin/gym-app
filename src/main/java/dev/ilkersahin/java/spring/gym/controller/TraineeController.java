@@ -25,8 +25,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -47,9 +46,9 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/trainees")
 @RequiredArgsConstructor
+@Slf4j
 @Tag(name = "Trainees", description = "Trainee registration and profile management")
 public class TraineeController extends BaseController {
-    private static final Logger log = LoggerFactory.getLogger(TraineeController.class);
 
     private final TraineeService traineeService;
 

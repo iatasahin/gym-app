@@ -1,14 +1,13 @@
 package dev.ilkersahin.java.spring.gym.service.util;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
 
 @Service
+@Slf4j
 public class PasswordGeneratorService {
-    private static final Logger log = LoggerFactory.getLogger(PasswordGeneratorService.class);
 
     private static final String CHARS =
             "ABCDEFGHIJKLMNOPQRSTUVWXYZ" +

@@ -13,16 +13,15 @@ import dev.ilkersahin.java.spring.gym.model.TrainingType;
 import dev.ilkersahin.java.spring.gym.service.TrainingService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Transactional
 @RequiredArgsConstructor
+@Slf4j
 public class TrainingServiceImpl implements TrainingService {
-    private static final Logger log = LoggerFactory.getLogger(TrainingServiceImpl.class);
 
     private final TraineeDao traineeDao;
     private final TrainerDao trainerDao;
