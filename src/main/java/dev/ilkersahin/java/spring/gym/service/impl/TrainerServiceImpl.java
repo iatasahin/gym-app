@@ -1,13 +1,13 @@
 package dev.ilkersahin.java.spring.gym.service.impl;
 
-import dev.ilkersahin.java.spring.gym.dao.TrainerDao;
-import dev.ilkersahin.java.spring.gym.dao.TrainingDao;
-import dev.ilkersahin.java.spring.gym.dao.UserDao;
 import dev.ilkersahin.java.spring.gym.dto.request.*;
 import dev.ilkersahin.java.spring.gym.dto.response.*;
 import dev.ilkersahin.java.spring.gym.dto.view.*;
 import dev.ilkersahin.java.spring.gym.exception.InvalidCredentialsException;
 import dev.ilkersahin.java.spring.gym.model.*;
+import dev.ilkersahin.java.spring.gym.repository.TrainerRepository;
+import dev.ilkersahin.java.spring.gym.repository.TrainingRepository;
+import dev.ilkersahin.java.spring.gym.repository.UserRepository;
 import dev.ilkersahin.java.spring.gym.service.TrainerService;
 import dev.ilkersahin.java.spring.gym.service.util.PasswordGeneratorService;
 import dev.ilkersahin.java.spring.gym.service.util.UsernameGeneratorService;
@@ -27,9 +27,9 @@ import java.util.List;
 @Slf4j
 public class TrainerServiceImpl implements TrainerService {
 
-    private final TrainerDao trainerDao;
-    private final TrainingDao trainingDao;
-    private final UserDao userDao;
+    private final TrainerRepository trainerRepository;
+    private final TrainingRepository trainingRepository;
+    private final UserRepository userRepository;
     private final UsernameGeneratorService usernameGeneratorService;
     private final PasswordGeneratorService passwordGeneratorService;
     private final ViewMapper viewMapper;
@@ -46,13 +46,13 @@ public class TrainerServiceImpl implements TrainerService {
         String password = passwordGeneratorService.generate(10);
 
         User user = new User(request.firstName(), request.lastName(), username, password, true);
-        userDao.persist(user);
+        userRepository.save(user);
 
         Trainer trainer = new Trainer();
         trainer.setUser(user);
         trainer.setSpecialization(TrainingType.fromEnum(TrainingType.Type.fromName(request.specialization())));
 
-        Trainer saved = trainerDao.createTrainer(trainer);
+        Trainer saved = trainerRepository.save(trainer);
 
         log.info("Trainer created with username '{}'", saved.getUsername());
 
@@ -68,7 +68,7 @@ public class TrainerServiceImpl implements TrainerService {
     public TrainerWithListView getTrainer(String username) {
         log.debug("Fetching trainer '{}'", username);
         Trainer trainer = findTrainerOrThrow(username);
-        List<Trainee> trainees = trainerDao.findAssignedTrainees(username);
+        List<Trainee> trainees = trainerRepository.findAssignedTrainees(username);
         return toView(trainer, trainees);
     }
 
@@ -95,9 +95,9 @@ public class TrainerServiceImpl implements TrainerService {
             trainer.setSpecialization(TrainingType.fromEnum(TrainingType.Type.fromName(request.specialization())));
         }
 
-        trainerDao.updateTrainer(trainer);
+        trainerRepository.save(trainer);
 
-        List<Trainee> trainees = trainerDao.findAssignedTrainees(request.username());
+        List<Trainee> trainees = trainerRepository.findAssignedTrainees(request.username());
         return toView(trainer, trainees);
     }
 
@@ -114,7 +114,7 @@ public class TrainerServiceImpl implements TrainerService {
         }
         log.warn("Changing password of trainer '{}'", request.username());
         trainer.getUser().setPassword(request.newPassword());
-        userDao.merge(trainer.getUser());
+        userRepository.save(trainer.getUser());
         return true;
     }
 
@@ -150,7 +150,7 @@ public class TrainerServiceImpl implements TrainerService {
         log.info("Getting trainings for trainer '{}'", request.trainerUsername());
 
         List<Training> trainings =
-                trainingDao.findForTrainer(
+                trainingRepository.findForTrainer(
                         request.trainerUsername(),
                         request.fromDate(),
                         request.toDate(),
@@ -167,7 +167,7 @@ public class TrainerServiceImpl implements TrainerService {
     // -------------------------------------------------------------------------
 
     private Trainer findTrainerOrThrow(String username) {
-        Trainer trainer = trainerDao.getTrainer(username)
+        Trainer trainer = trainerRepository.findByUserUsername(username)
                 .orElseThrow(() -> new EntityNotFoundException("Trainer not found"));
         return trainer;
     }

@@ -1,14 +1,13 @@
 package dev.ilkersahin.java.spring.gym.controller;
 
-
-import dev.ilkersahin.java.spring.gym.dao.TraineeDao;
-import dev.ilkersahin.java.spring.gym.dao.TrainerDao;
 import dev.ilkersahin.java.spring.gym.dto.auth.LoginRequest;
 import dev.ilkersahin.java.spring.gym.dto.auth.LoginResponse;
 import dev.ilkersahin.java.spring.gym.dto.response.ErrorResponse;
 import dev.ilkersahin.java.spring.gym.exception.InvalidCredentialsException;
 import dev.ilkersahin.java.spring.gym.model.Trainee;
 import dev.ilkersahin.java.spring.gym.model.Trainer;
+import dev.ilkersahin.java.spring.gym.repository.TraineeRepository;
+import dev.ilkersahin.java.spring.gym.repository.TrainerRepository;
 import dev.ilkersahin.java.spring.gym.security.JwtService;
 import dev.ilkersahin.java.spring.gym.security.Role;
 import io.swagger.v3.oas.annotations.Operation;
@@ -34,8 +33,8 @@ import java.util.Optional;
 @Tag(name = "Authentication", description = "Login and token management")
 public class AuthController {
 
-    private final TraineeDao traineeDao;
-    private final TrainerDao trainerDao;
+    private final TraineeRepository traineeRepository;
+    private final TrainerRepository trainerRepository;
     private final JwtService jwtService;
 
     @PostMapping("/login")
@@ -51,7 +50,7 @@ public class AuthController {
         log.info("Login attempt for user '{}'", request.username());
 
         // Try to authenticate as Trainee
-        Optional<Trainee> traineeOpt = traineeDao.getTrainee(request.username());
+        Optional<Trainee> traineeOpt = traineeRepository.findByUserUsername(request.username());
         if (traineeOpt.isPresent()) {
             Trainee trainee = traineeOpt.get();
             if (trainee.getUser().getPassword().equals(request.password())) {
@@ -62,7 +61,7 @@ public class AuthController {
         }
 
         // Try to authenticate as Trainer
-        Optional<Trainer> trainerOpt = trainerDao.getTrainer(request.username());
+        Optional<Trainer> trainerOpt = trainerRepository.findByUserUsername(request.username());
         if (trainerOpt.isPresent()) {
             Trainer trainer = trainerOpt.get();
             if (trainer.getUser().getPassword().equals(request.password())) {

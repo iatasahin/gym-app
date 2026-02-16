@@ -1,8 +1,8 @@
 package dev.ilkersahin.java.spring.gym.service.util;
 
-import dev.ilkersahin.java.spring.gym.dao.UserDao;
-import dev.ilkersahin.java.spring.gym.dao.util.UsernameCounterDao;
 import dev.ilkersahin.java.spring.gym.model.util.UsernameCounter;
+import dev.ilkersahin.java.spring.gym.repository.UserRepository;
+import dev.ilkersahin.java.spring.gym.repository.util.UsernameCounterRepository;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,10 +14,10 @@ import org.springframework.transaction.annotation.Transactional;
 public class UsernameGeneratorService {
 
     @Setter(onMethod_ = {@Autowired})
-    private UsernameCounterDao usernameCounterDao;
+    private UsernameCounterRepository usernameCounterRepository;
 
     @Setter(onMethod_ = {@Autowired})
-    private UserDao userDao;
+    private UserRepository userRepository;
 
 
     /**
@@ -33,7 +33,7 @@ public class UsernameGeneratorService {
 
         log.debug("Generating username for base: {}", baseUsername);
 
-        if (!userDao.existsByUsername(baseUsername)) {
+        if (!userRepository.existsByUsername(baseUsername)) {
             log.debug("Base username available: {}", baseUsername);
             createCounterEntry(baseUsername);
             return baseUsername;
@@ -44,24 +44,23 @@ public class UsernameGeneratorService {
 
     private void createCounterEntry(String baseUsername) {
         UsernameCounter counter = new UsernameCounter(baseUsername);
-        usernameCounterDao.persist(counter);
+        usernameCounterRepository.saveAndFlush(counter);
         log.debug("Created counter entry for: {} with initial suffix: {}",
                 baseUsername, counter.getCurrentSuffix());
     }
 
     private String generateUsernameWithSuffix(String baseUsername) {
-        UsernameCounter counter = usernameCounterDao.findByBaseUsernameWithLock(baseUsername);
-
-        if (counter == null) {
-            counter = new UsernameCounter(baseUsername);
-            usernameCounterDao.persist(counter);
-            log.debug("Created new counter for: {}", baseUsername);
-        }
+        UsernameCounter counter = usernameCounterRepository
+                .findByBaseUsernameWithLock(baseUsername)
+                .orElseGet(() -> {
+                    log.debug("Creating new counter for: {}", baseUsername);
+                    return usernameCounterRepository.saveAndFlush(new UsernameCounter(baseUsername));
+                });
 
         int suffix = counter.getAndIncrementSuffix();
         String username = baseUsername + suffix;
 
-        usernameCounterDao.merge(counter);
+        usernameCounterRepository.save(counter);
 
         log.debug("Generated username with suffix: {}", username);
         return username;

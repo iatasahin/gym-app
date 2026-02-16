@@ -1,93 +1,26 @@
 package dev.ilkersahin.java.spring.gym.repository;
 
-import dev.ilkersahin.java.spring.gym.dao.TrainingDao;
 import dev.ilkersahin.java.spring.gym.model.Training;
 import dev.ilkersahin.java.spring.gym.model.TrainingType;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
-import jakarta.persistence.criteria.*;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
-@Repository
 @Slf4j
-public class TrainingRepositoryImpl implements TrainingDao {
+public class TrainingRepositoryImpl implements TrainingRepositoryCustom {
 
     @PersistenceContext
     private EntityManager entityManager;
-
-    // -------------------------------------------------------------------------
-    // WRITE
-    // -------------------------------------------------------------------------
-
-    @Override
-    @Transactional(propagation = Propagation.MANDATORY)
-    public Training createTraining(Training training) {
-        log.debug(
-                "Persisting training '{}' (trainee='{}', trainer='{}', date={})",
-                training.getTrainingName(),
-                training.getTrainee().getUser().getUsername(),
-                training.getTrainer().getUser().getUsername(),
-                training.getTrainingDate()
-        );
-        entityManager.persist(training);
-        return training;
-    }
-
-    // -------------------------------------------------------------------------
-    // READ
-    // -------------------------------------------------------------------------
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<Training> getTraining(UUID traineeID, UUID trainerID, LocalDate trainingDate) {
-        log.debug(
-                "Finding trainings by IDs: traineeId={}, trainerId={}, date={}",
-                traineeID, trainerID, trainingDate
-        );
-
-        if (traineeID == null || trainerID == null || trainingDate == null) {
-            return List.of();
-        }
-
-        return entityManager.createQuery(
-                        """
-                                select t
-                                from Training t
-                                where t.trainee.traineeId = :traineeId
-                                  and t.trainer.trainerId = :trainerId
-                                  and t.trainingDate = :date
-                                """,
-                        Training.class
-                )
-                .setParameter("traineeId", traineeID)
-                .setParameter("trainerId", trainerID)
-                .setParameter("date", trainingDate)
-                .getResultList();
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<Training> getAllTrainings() {
-        log.debug("Retrieving all trainings");
-
-        return entityManager.createQuery(
-                        """
-                                select t
-                                from Training t
-                                order by t.trainingDate desc
-                                """,
-                        Training.class
-                )
-                .getResultList();
-    }
 
     // -------------------------------------------------------------------------
     // SEARCH — TRAINEE
