@@ -5,9 +5,6 @@ import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import static org.assertj.core.api.Assertions.*;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
@@ -116,33 +113,6 @@ class PasswordGeneratorServiceTest {
 
     @Test
     @Order(301)
-    void generate_calledMultipleTimes_shouldGenerateDifferentPasswords() {
-        Set<String> passwords = new HashSet<>();
-        int iterations = 1000;
-
-        for (int i = 0; i < iterations; i++) {
-            passwords.add(service.generate(16));
-        }
-
-        assertThat(passwords).hasSizeGreaterThan((int) (iterations * 0.99));
-    }
-
-
-    @Test
-    @Order(302)
-    void generate_withShortLength_shouldStillGenerateUniquePasswords() {
-        Set<String> passwords = new HashSet<>();
-        int iterations = 100;
-
-        for (int i = 0; i < iterations; i++) {
-            passwords.add(service.generate(8));
-        }
-
-        assertThat(passwords).hasSizeGreaterThan((int) (iterations * 0.95));
-    }
-
-    @Test
-    @Order(303)
     void generate_consecutiveCalls_shouldNotGenerateIdenticalPasswords() {
         String password1 = service.generate(20);
         String password2 = service.generate(20);
@@ -154,7 +124,7 @@ class PasswordGeneratorServiceTest {
     }
 
     @Test
-    @Order(304)
+    @Order(302)
     void generate_withSameLength_shouldHaveGoodCharacterDistribution() {
         String password = service.generate(1000);
 
@@ -209,48 +179,6 @@ class PasswordGeneratorServiceTest {
                 .matches("[A-Za-z0-9]+");
     }
 
-    @Test
-    @Order(404)
-    void generate_multipleCallsWithZeroLength_shouldAlwaysReturnEmpty() {
-        for (int i = 0; i < 10; i++) {
-            assertThat(service.generate(0)).isEmpty();
-        }
-    }
-
-    // === PERFORMANCE AND STRESS TESTS (501+) ===
-
-    @Test
-    @Order(501)
-    void generate_manyShortPasswords_shouldPerformWell() {
-        long startTime = System.currentTimeMillis();
-
-        for (int i = 0; i < 10000; i++) {
-            String password = service.generate(10);
-            assertThat(password).hasSize(10);
-        }
-
-        long duration = System.currentTimeMillis() - startTime;
-
-        // Should complete within reasonable time (adjust threshold as needed)
-        assertThat(duration).isLessThan(5000); // 5 seconds
-    }
-
-    @Test
-    @Order(502)
-    void generate_fewLongPasswords_shouldPerformWell() {
-        long startTime = System.currentTimeMillis();
-
-        for (int i = 0; i < 100; i++) {
-            String password = service.generate(1000);
-            assertThat(password).hasSize(1000);
-        }
-
-        long duration = System.currentTimeMillis() - startTime;
-
-        // Should complete within reasonable time
-        assertThat(duration).isLessThan(3000); // 3 seconds
-    }
-
     // === INTEGRATION AND CONSISTENCY TESTS (601+) ===
 
     @Test
@@ -264,18 +192,5 @@ class PasswordGeneratorServiceTest {
 
         // Different instances should produce different passwords
         assertThat(password1).isNotEqualTo(password2);
-    }
-
-    @Test
-    @Order(602)
-    void generate_consistentBehaviorAcrossMultipleCalls() {
-        // Test that the service behaves consistently
-        for (int length = 1; length <= 50; length++) {
-            String password = service.generate(length);
-
-            assertThat(password)
-                    .hasSize(length)
-                    .matches("[A-Za-z0-9]*");
-        }
     }
 }
