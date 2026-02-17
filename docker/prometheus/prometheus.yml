@@ -1,0 +1,13 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: "spring-gym-app"
+    metrics_path: "/actuator/prometheus"
+    static_configs:
+      - targets:
+#          Linux address for host.docker.internal
+          - "172.17.0.1:8080"
+#          MacOS & Windows, Docker Desktop address for application running on host
+#          - "host.docker.internal:8080"
