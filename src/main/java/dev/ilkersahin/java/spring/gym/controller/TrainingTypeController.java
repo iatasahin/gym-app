@@ -2,6 +2,7 @@ package dev.ilkersahin.java.spring.gym.controller;
 
 import dev.ilkersahin.java.spring.gym.dto.view.TrainingTypeView;
 import dev.ilkersahin.java.spring.gym.model.TrainingType;
+import io.micrometer.core.annotation.Timed;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -21,6 +22,10 @@ import java.util.List;
 @RequestMapping("/api/v1/training-types")
 @Slf4j
 @Tag(name = "Training Types", description = "Training type catalog")
+@Timed(
+        value = "gym.http.training-type",
+        description = "Training Type controller HTTP requests"
+)
 public class TrainingTypeController {
 
     // =========================================================================

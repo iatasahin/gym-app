@@ -37,12 +37,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     // Public endpoints that don't require authentication
     private static final Set<String> PUBLIC_ENDPOINTS = Set.of(
+            "/actuator",
             "/api/v1/auth/login",
             "/api/v1/training-types",
             "/api-docs",
             "/api-docs.json",
             "/static/swagger-ui.html",
-            "/health",
             "/swagger-ui",
             "/v3/api-docs",
             "/webjars"

@@ -8,6 +8,7 @@ import dev.ilkersahin.java.spring.gym.dto.view.TrainingView;
 import dev.ilkersahin.java.spring.gym.exception.UserAlreadyActiveException;
 import dev.ilkersahin.java.spring.gym.exception.UserAlreadyInactiveException;
 import dev.ilkersahin.java.spring.gym.service.TrainerService;
+import io.micrometer.core.annotation.Timed;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
@@ -33,6 +34,10 @@ import java.util.List;
 @RequiredArgsConstructor
 @Slf4j
 @Tag(name = "Trainers", description = "Trainer registration and profile management")
+@Timed(
+        value = "gym.http.trainer",
+        description = "Trainer controller HTTP requests"
+)
 public class TrainerController extends BaseController {
 
     private final TrainerService trainerService;
@@ -195,6 +200,12 @@ public class TrainerController extends BaseController {
     @GetMapping("/{username}/trainings")
     @Operation(summary = "Get trainer's trainings", description = "Returns training sessions with optional filters")
     @SecurityRequirement(name = "bearerAuth")
+    @Timed(
+            value = "gym.http.trainer.training.search",
+            description = "Training search for Trainer endpoint",
+            percentiles = {0.95, 0.99},
+            histogram = true
+    )
     public ResponseEntity<List<TrainingView>> getTrainings(
             @Parameter(description = "Trainer username")
             @PathVariable String username,

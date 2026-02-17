@@ -3,6 +3,7 @@ package dev.ilkersahin.java.spring.gym.controller;
 import dev.ilkersahin.java.spring.gym.dto.request.TrainingCreateRequest;
 import dev.ilkersahin.java.spring.gym.dto.response.ErrorResponse;
 import dev.ilkersahin.java.spring.gym.service.TrainingService;
+import io.micrometer.core.annotation.Timed;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -24,6 +25,10 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 @Slf4j
 @Tag(name = "Trainings", description = "Training session management")
+@Timed(
+        value = "gym.http.training",
+        description = "Training controller HTTP requests"
+)
 public class TrainingController {
 
     private final TrainingService trainingService;
