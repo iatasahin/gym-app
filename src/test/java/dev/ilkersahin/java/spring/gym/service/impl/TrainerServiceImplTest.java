@@ -1,19 +1,22 @@
 package dev.ilkersahin.java.spring.gym.service.impl;
 
-
-import dev.ilkersahin.java.spring.gym.dao.TrainerDao;
-import dev.ilkersahin.java.spring.gym.dao.TrainingDao;
-import dev.ilkersahin.java.spring.gym.dao.UserDao;
 import dev.ilkersahin.java.spring.gym.dto.auth.Credentials;
-import dev.ilkersahin.java.spring.gym.dto.request.*;
-import dev.ilkersahin.java.spring.gym.dto.response.*;
-import dev.ilkersahin.java.spring.gym.dto.view.TrainerView;
+import dev.ilkersahin.java.spring.gym.dto.request.ActivationRequest;
+import dev.ilkersahin.java.spring.gym.dto.request.PasswordChangeRequest;
+import dev.ilkersahin.java.spring.gym.dto.request.TrainerCreateRequest;
+import dev.ilkersahin.java.spring.gym.dto.request.TrainerUpdateRequest;
+import dev.ilkersahin.java.spring.gym.dto.request.TrainingSearchRequestForTrainer;
+import dev.ilkersahin.java.spring.gym.dto.response.ActivationResponse;
+import dev.ilkersahin.java.spring.gym.dto.response.UserCreateResponse;
 import dev.ilkersahin.java.spring.gym.dto.view.TrainerWithListView;
 import dev.ilkersahin.java.spring.gym.dto.view.TrainingView;
 import dev.ilkersahin.java.spring.gym.model.Trainer;
 import dev.ilkersahin.java.spring.gym.model.Training;
 import dev.ilkersahin.java.spring.gym.model.TrainingType;
 import dev.ilkersahin.java.spring.gym.model.User;
+import dev.ilkersahin.java.spring.gym.repository.TrainerRepository;
+import dev.ilkersahin.java.spring.gym.repository.TrainingRepository;
+import dev.ilkersahin.java.spring.gym.repository.UserRepository;
 import dev.ilkersahin.java.spring.gym.service.util.PasswordGeneratorService;
 import dev.ilkersahin.java.spring.gym.service.util.UsernameGeneratorService;
 import dev.ilkersahin.java.spring.gym.service.util.ViewMapper;
@@ -36,9 +39,9 @@ import static org.mockito.Mockito.when;
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class TrainerServiceImplTest {
 
-    @Mock private TrainerDao trainerDao;
-    @Mock private TrainingDao trainingDao;
-    @Mock private UserDao userDao;
+    @Mock private TrainerRepository trainerRepository;
+    @Mock private TrainingRepository trainingRepository;
+    @Mock private UserRepository userRepository;
     @Mock private UsernameGeneratorService usernameGeneratorService;
     @Mock private PasswordGeneratorService passwordGeneratorService;
     @Mock private ViewMapper viewMapper;
@@ -74,14 +77,14 @@ class TrainerServiceImplTest {
 
         when(usernameGeneratorService.generateUniqueUsername("Tom", "Smith")).thenReturn("Tom.Smith");
         when(passwordGeneratorService.generate(10)).thenReturn("password123");
-        when(trainerDao.createTrainer(any(Trainer.class))).thenReturn(trainer);
+        when(trainerRepository.save(any(Trainer.class))).thenReturn(trainer);
 
         UserCreateResponse response = trainerService.createTrainer(request);
 
         assertThat(response.username()).isEqualTo("Tom.Smith");
         assertThat(response.password()).isEqualTo("password123");
-        verify(userDao).persist(any(User.class));
-        verify(trainerDao).createTrainer(any(Trainer.class));
+        verify(userRepository).save(any(User.class));
+        verify(trainerRepository).save(any(Trainer.class));
     }
 
     // =========================================================================
@@ -91,8 +94,8 @@ class TrainerServiceImplTest {
     @Test
     @Order(201)
     void getTrainer_withValidCredentials_shouldReturnTrainer() {
-        when(trainerDao.getTrainer("Tom.Smith")).thenReturn(Optional.of(trainer));
-        when(trainerDao.findAssignedTrainees("Tom.Smith")).thenReturn(List.of());
+        when(trainerRepository.findByUserUsername("Tom.Smith")).thenReturn(Optional.of(trainer));
+        when(trainerRepository.findAssignedTrainees("Tom.Smith")).thenReturn(List.of());
 
         TrainerWithListView response = trainerService.getTrainer(validCredentials.username());
 
@@ -115,8 +118,8 @@ class TrainerServiceImplTest {
                 true, TrainingType.Type.YOGA.getName()
         );
 
-        when(trainerDao.getTrainer("Tom.Smith")).thenReturn(Optional.of(trainer));
-        when(trainerDao.updateTrainer(trainer)).thenReturn(trainer);
+        when(trainerRepository.findByUserUsername("Tom.Smith")).thenReturn(Optional.of(trainer));
+        when(trainerRepository.save(trainer)).thenReturn(trainer);
 
         TrainerWithListView response = trainerService.updateTrainer(request);
 
@@ -136,8 +139,8 @@ class TrainerServiceImplTest {
                 validCredentials.username(), "John", null, null, null
         );
 
-        when(trainerDao.getTrainer("Tom.Smith")).thenReturn(Optional.of(trainer));
-        when(trainerDao.updateTrainer(trainer)).thenReturn(trainer);
+        when(trainerRepository.findByUserUsername("Tom.Smith")).thenReturn(Optional.of(trainer));
+        when(trainerRepository.save(trainer)).thenReturn(trainer);
 
         trainerService.updateTrainer(request);
 
@@ -152,8 +155,8 @@ class TrainerServiceImplTest {
                 validCredentials.username(), null, "Doe", null, null
         );
 
-        when(trainerDao.getTrainer("Tom.Smith")).thenReturn(Optional.of(trainer));
-        when(trainerDao.updateTrainer(trainer)).thenReturn(trainer);
+        when(trainerRepository.findByUserUsername("Tom.Smith")).thenReturn(Optional.of(trainer));
+        when(trainerRepository.save(trainer)).thenReturn(trainer);
 
         trainerService.updateTrainer(request);
 
@@ -168,8 +171,8 @@ class TrainerServiceImplTest {
                 validCredentials.username(), null, null, null, TrainingType.Type.STRETCHING.getName()
         );
 
-        when(trainerDao.getTrainer("Tom.Smith")).thenReturn(Optional.of(trainer));
-        when(trainerDao.updateTrainer(trainer)).thenReturn(trainer);
+        when(trainerRepository.findByUserUsername("Tom.Smith")).thenReturn(Optional.of(trainer));
+        when(trainerRepository.save(trainer)).thenReturn(trainer);
 
         trainerService.updateTrainer(request);
 
@@ -185,8 +188,8 @@ class TrainerServiceImplTest {
                 validCredentials.username(), null, null, null, null
         );
 
-        when(trainerDao.getTrainer("Tom.Smith")).thenReturn(Optional.of(trainer));
-        when(trainerDao.updateTrainer(trainer)).thenReturn(trainer);
+        when(trainerRepository.findByUserUsername("Tom.Smith")).thenReturn(Optional.of(trainer));
+        when(trainerRepository.save(trainer)).thenReturn(trainer);
 
         TrainerWithListView response = trainerService.updateTrainer(request);
 
@@ -205,13 +208,13 @@ class TrainerServiceImplTest {
                 validCredentials.username(), validCredentials.password(), "newSecurePassword"
         );
 
-        when(trainerDao.getTrainer("Tom.Smith")).thenReturn(Optional.of(trainer));
+        when(trainerRepository.findByUserUsername("Tom.Smith")).thenReturn(Optional.of(trainer));
 
         Boolean response = trainerService.changePassword(request);
 
         assertThat(response).isTrue();
         assertThat(trainer.getUser().getPassword()).isEqualTo("newSecurePassword");
-        verify(userDao).merge(trainer.getUser());
+        verify(userRepository).save(trainer.getUser());
     }
 
     // =========================================================================
@@ -224,7 +227,7 @@ class TrainerServiceImplTest {
         activeUser.setActive(false);
         ActivationRequest request = new ActivationRequest(validCredentials.username(), true);
 
-        when(trainerDao.getTrainer("Tom.Smith")).thenReturn(Optional.of(trainer));
+        when(trainerRepository.findByUserUsername("Tom.Smith")).thenReturn(Optional.of(trainer));
 
         ActivationResponse response = trainerService.activate(request);
 
@@ -237,7 +240,7 @@ class TrainerServiceImplTest {
     void deactivate_withValidCredentials_shouldSetActiveFalse() {
         ActivationRequest request = new ActivationRequest(validCredentials.username(), false);
 
-        when(trainerDao.getTrainer("Tom.Smith")).thenReturn(Optional.of(trainer));
+        when(trainerRepository.findByUserUsername("Tom.Smith")).thenReturn(Optional.of(trainer));
 
         ActivationResponse response = trainerService.deactivate(request);
 
@@ -262,8 +265,8 @@ class TrainerServiceImplTest {
                 TrainingType.Type.FITNESS.getName(), "Jack.Black", "Tom.Smith"
         );
 
-        when(trainerDao.getTrainer("Tom.Smith")).thenReturn(Optional.of(trainer));
-        when(trainingDao.findForTrainer("Tom.Smith", null, null, null))
+        when(trainerRepository.findByUserUsername("Tom.Smith")).thenReturn(Optional.of(trainer));
+        when(trainingRepository.findForTrainer("Tom.Smith", null, null, null))
                 .thenReturn(List.of(training));
         when(viewMapper.toView(training)).thenReturn(trainingView);
 
@@ -283,14 +286,14 @@ class TrainerServiceImplTest {
                 validCredentials.username(), from, to, "Jack.Black"
         );
 
-        when(trainerDao.getTrainer("Tom.Smith")).thenReturn(Optional.of(trainer));
-        when(trainingDao.findForTrainer("Tom.Smith", from, to, "Jack.Black"))
+        when(trainerRepository.findByUserUsername("Tom.Smith")).thenReturn(Optional.of(trainer));
+        when(trainingRepository.findForTrainer("Tom.Smith", from, to, "Jack.Black"))
                 .thenReturn(List.of());
 
         List<TrainingView> response = trainerService.getTrainings(request);
 
         assertThat(response).isEmpty();
-        verify(trainingDao).findForTrainer("Tom.Smith", from, to, "Jack.Black");
+        verify(trainingRepository).findForTrainer("Tom.Smith", from, to, "Jack.Black");
     }
 
     @Test
@@ -300,8 +303,8 @@ class TrainerServiceImplTest {
                 validCredentials.username(), null, null, null
         );
 
-        when(trainerDao.getTrainer("Tom.Smith")).thenReturn(Optional.of(trainer));
-        when(trainingDao.findForTrainer("Tom.Smith", null, null, null))
+        when(trainerRepository.findByUserUsername("Tom.Smith")).thenReturn(Optional.of(trainer));
+        when(trainingRepository.findForTrainer("Tom.Smith", null, null, null))
                 .thenReturn(List.of());
 
         List<TrainingView> response = trainerService.getTrainings(request);

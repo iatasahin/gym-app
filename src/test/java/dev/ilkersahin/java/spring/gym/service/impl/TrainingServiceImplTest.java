@@ -1,14 +1,17 @@
 package dev.ilkersahin.java.spring.gym.service.impl;
 
-
-import dev.ilkersahin.java.spring.gym.dao.TraineeDao;
-import dev.ilkersahin.java.spring.gym.dao.TrainerDao;
-import dev.ilkersahin.java.spring.gym.dao.TrainingDao;
 import dev.ilkersahin.java.spring.gym.dto.auth.Credentials;
 import dev.ilkersahin.java.spring.gym.dto.request.TrainingCreateRequest;
 import dev.ilkersahin.java.spring.gym.exception.TraineeDoesNotExistException;
 import dev.ilkersahin.java.spring.gym.exception.TrainerDoesNotExistException;
-import dev.ilkersahin.java.spring.gym.model.*;
+import dev.ilkersahin.java.spring.gym.model.Trainee;
+import dev.ilkersahin.java.spring.gym.model.Trainer;
+import dev.ilkersahin.java.spring.gym.model.Training;
+import dev.ilkersahin.java.spring.gym.model.TrainingType;
+import dev.ilkersahin.java.spring.gym.model.User;
+import dev.ilkersahin.java.spring.gym.repository.TraineeRepository;
+import dev.ilkersahin.java.spring.gym.repository.TrainerRepository;
+import dev.ilkersahin.java.spring.gym.repository.TrainingRepository;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -29,11 +32,11 @@ import static org.mockito.Mockito.*;
 class TrainingServiceImplTest {
 
     @Mock
-    private TraineeDao traineeDao;
+    private TraineeRepository traineeRepository;
     @Mock
-    private TrainerDao trainerDao;
+    private TrainerRepository trainerRepository;
     @Mock
-    private TrainingDao trainingDao;
+    private TrainingRepository trainingRepository;
 
     @InjectMocks
     private TrainingServiceImpl trainingService;
@@ -77,12 +80,12 @@ class TrainingServiceImplTest {
                 60
         );
 
-        when(traineeDao.getTrainee("Jack.Black")).thenReturn(Optional.of(trainee));
-        when(trainerDao.getTrainer("Tom.Smith")).thenReturn(Optional.of(trainer));
+        when(traineeRepository.findByUserUsername("Jack.Black")).thenReturn(Optional.of(trainee));
+        when(trainerRepository.findByUserUsername("Tom.Smith")).thenReturn(Optional.of(trainer));
 
         trainingService.createTraining(request);
 
-        verify(trainingDao).createTraining(any(Training.class));
+        verify(trainingRepository).save(any(Training.class));
     }
 
     @Test
@@ -97,14 +100,14 @@ class TrainingServiceImplTest {
                 90
         );
 
-        when(traineeDao.getTrainee("Jack.Black")).thenReturn(Optional.of(trainee));
-        when(trainerDao.getTrainer("Tom.Smith")).thenReturn(Optional.of(trainer));
+        when(traineeRepository.findByUserUsername("Jack.Black")).thenReturn(Optional.of(trainee));
+        when(trainerRepository.findByUserUsername("Tom.Smith")).thenReturn(Optional.of(trainer));
 
         ArgumentCaptor<Training> trainingCaptor = ArgumentCaptor.forClass(Training.class);
 
         trainingService.createTraining(request);
 
-        verify(trainingDao).createTraining(trainingCaptor.capture());
+        verify(trainingRepository).save(trainingCaptor.capture());
 
         Training captured = trainingCaptor.getValue();
         assertThat(captured.getTrainee()).isEqualTo(trainee);
@@ -126,14 +129,14 @@ class TrainingServiceImplTest {
                 30
         );
 
-        when(traineeDao.getTrainee("Jack.Black")).thenReturn(Optional.of(trainee));
-        when(trainerDao.getTrainer("Tom.Smith")).thenReturn(Optional.of(trainer));
+        when(traineeRepository.findByUserUsername("Jack.Black")).thenReturn(Optional.of(trainee));
+        when(trainerRepository.findByUserUsername("Tom.Smith")).thenReturn(Optional.of(trainer));
 
         ArgumentCaptor<Training> trainingCaptor = ArgumentCaptor.forClass(Training.class);
 
         trainingService.createTraining(request);
 
-        verify(trainingDao).createTraining(trainingCaptor.capture());
+        verify(trainingRepository).save(trainingCaptor.capture());
         assertThat(trainingCaptor.getValue().getTrainingDuration()).isEqualTo(30);
     }
 
@@ -153,13 +156,13 @@ class TrainingServiceImplTest {
                 60
         );
 
-        when(traineeDao.getTrainee("Non.Existent")).thenReturn(Optional.empty());
+        when(traineeRepository.findByUserUsername("Non.Existent")).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> trainingService.createTraining(request))
                 .isInstanceOf(TraineeDoesNotExistException.class)
                 .hasMessageContaining("Trainee not found");
 
-        verify(trainingDao, never()).createTraining(any());
+        verify(trainingRepository, never()).save(any());
     }
 
     // =========================================================================
@@ -178,13 +181,13 @@ class TrainingServiceImplTest {
                 60
         );
 
-        when(traineeDao.getTrainee("Jack.Black")).thenReturn(Optional.of(trainee));
-        when(trainerDao.getTrainer("Non.Existent.Trainer")).thenReturn(Optional.empty());
+        when(traineeRepository.findByUserUsername("Jack.Black")).thenReturn(Optional.of(trainee));
+        when(trainerRepository.findByUserUsername("Non.Existent.Trainer")).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> trainingService.createTraining(request))
                 .isInstanceOf(TrainerDoesNotExistException.class)
                 .hasMessageContaining("Trainer not found");
 
-        verify(trainingDao, never()).createTraining(any());
+        verify(trainingRepository, never()).save(any());
     }
 }
