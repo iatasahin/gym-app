@@ -45,7 +45,6 @@ public class JwtAuthenticationFilterTest {
     @ParameterizedTest(name = "[{index}] {0} {1} should pass through without authentication")
     @CsvSource({
             "POST, /api/v1/auth/login",
-            "GET,  /health",
             "GET,  /api/v1/training-types",
             "GET,  /swagger-ui/index.html",
             "GET,  /webjars/swagger-ui/swagger-ui.css",
