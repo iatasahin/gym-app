@@ -3,9 +3,11 @@ package dev.ilkersahin.java.spring.gym.controller;
 import dev.ilkersahin.java.spring.gym.exception.UnauthorizedAccessException;
 import dev.ilkersahin.java.spring.gym.security.AuthContextHolder;
 import dev.ilkersahin.java.spring.gym.security.Role;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.Optional;
 
+@Slf4j
 public abstract class BaseController {
 
     protected String getAuthenticatedUsername() {
@@ -23,9 +25,12 @@ public abstract class BaseController {
     protected void verifyUserAccess(String requestedUsername) {
         String authenticatedUsername = getAuthenticatedUsername();
         if (!authenticatedUsername.equals(requestedUsername)) {
+            log.warn("User '{}' is trying and failing to access resources of '{}'",
+                    authenticatedUsername, requestedUsername);
             throw new UnauthorizedAccessException(
                     "User '" + authenticatedUsername + "' cannot access resources of '" + requestedUsername + "'"
             );
         }
+        log.debug("User '{}' is accessing its own resources", authenticatedUsername);
     }
 }

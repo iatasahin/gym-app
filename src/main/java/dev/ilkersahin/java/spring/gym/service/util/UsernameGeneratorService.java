@@ -4,15 +4,14 @@ import dev.ilkersahin.java.spring.gym.dao.UserDao;
 import dev.ilkersahin.java.spring.gym.dao.util.UsernameCounterDao;
 import dev.ilkersahin.java.spring.gym.model.util.UsernameCounter;
 import lombok.Setter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Slf4j
 public class UsernameGeneratorService {
-    private static final Logger log = LoggerFactory.getLogger(UsernameGeneratorService.class);
 
     @Setter(onMethod_ = {@Autowired})
     private UsernameCounterDao usernameCounterDao;

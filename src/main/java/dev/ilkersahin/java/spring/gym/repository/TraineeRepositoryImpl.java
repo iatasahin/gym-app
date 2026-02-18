@@ -5,8 +5,7 @@ import dev.ilkersahin.java.spring.gym.model.Trainee;
 import dev.ilkersahin.java.spring.gym.model.Trainer;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,8 +14,8 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
+@Slf4j
 public class TraineeRepositoryImpl implements TraineeDao {
-    private static final Logger log = LoggerFactory.getLogger(TraineeRepositoryImpl.class);
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -104,6 +103,8 @@ public class TraineeRepositoryImpl implements TraineeDao {
                                 select tr
                                 from Trainee t
                                     join t.trainers tr
+                                    join fetch tr.user
+                                    join fetch tr.specialization
                                     join t.user u
                                 where u.username = :username
                                 order by tr.user.username
