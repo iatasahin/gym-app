@@ -4,6 +4,7 @@ import dev.ilkersahin.java.spring.gym.dto.auth.Credentials;
 import dev.ilkersahin.java.spring.gym.dto.request.TrainingCreateRequest;
 import dev.ilkersahin.java.spring.gym.exception.TraineeDoesNotExistException;
 import dev.ilkersahin.java.spring.gym.exception.TrainerDoesNotExistException;
+import dev.ilkersahin.java.spring.gym.metrics.TrainingMetrics;
 import dev.ilkersahin.java.spring.gym.model.Trainee;
 import dev.ilkersahin.java.spring.gym.model.Trainer;
 import dev.ilkersahin.java.spring.gym.model.Training;
@@ -37,6 +38,8 @@ class TrainingServiceImplTest {
     private TrainerRepository trainerRepository;
     @Mock
     private TrainingRepository trainingRepository;
+    @Mock
+    private TrainingMetrics trainingMetrics;
 
     @InjectMocks
     private TrainingServiceImpl trainingService;
