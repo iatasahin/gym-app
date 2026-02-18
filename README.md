@@ -1,197 +1,126 @@
 # spring-gym
 
-A Spring-based gym management application 
-built with **Spring Core + Spring ORM (JPA/Hibernate)**, 
-supporting **Flyway migrations**, **XML import/export**, 
-and **test coverage enforcement**.
+A **Spring Boot REST API** for gym management (CRM) with
+JWT authentication, OpenAPI documentation, and Prometheus/Grafana monitoring.
 
-This project intentionally avoids Spring Boot starters to demonstrate explicit configuration and layering.
+## Tech Stack
 
-## 🚀 Build
+- **Spring Boot 4.0.2** (Web MVC, Data JPA, Validation, Actuator)
+- **MySQL 9.x** + **Flyway** migrations
+- **JWT** authentication (jjwt 0.13.0)
+- **OpenAPI 3.0** + Swagger UI
+- **Micrometer** + Prometheus + Grafana
+- **Testcontainers** + JaCoCo (80% coverage enforced, with exclusions)
+- **Java 21**
 
-This project uses **Maven** and produces 
-a **self-contained executable (uber JAR)** using the **Maven Shade Plugin**.
+## Quick Start
+
+### 1. Start Infrastructure
 
 ```bash
-./mvnw clean package
-```
-
-Output:
-
-```text
-target/spring-gym-1.1-SNAPSHOT.jar
-```
-
-ℹ️ The shaded JAR includes all runtime dependencies and can be executed directly with java -jar.
-```bash
-java -jar target/spring-gym-1.1-SNAPSHOT.jar
-```
-
-## 🧱 Runtime Requirements
-This application requires the following to run locally:
-
-### Java
-- Java 21
-
-### Database:
-
-- MySQL (8.x or newer)
-- It can be managed via Docker + Docker Compose
-- No local MySQL installation is required when using Docker.
-
-
-## 🐳 Running MySQL with Docker
-A sample docker-compose.yml is provided to start a compatible MySQL instance.
-
-### Prerequisites
-- Docker
-- Docker Compose
-### Start MySQL
-```bash
+cd docker
 docker-compose up -d
 ```
-Stop & clean database data
-```bash
-docker-compose down -v
-```
-⚠️ Removing volumes (-v) deletes all database data.
 
-
-
-## 🧩 Runtime Profiles
-
-The application supports three profiles:
-
-| Profile    | Description                                 |
-|------------|---------------------------------------------| 
-| (none)     | Default DB-backed runtime (MySQL + Flyway)  |
-| xml-read   | Reads data from an external XML file        | 
-| xml-write  | Writes data to an external XML file         | 
-
-Profiles are activated using:
-```
--Dspring.profiles.active=<profile>
-```
-
-## 🗄 Database & Migrations
-- Database: MySQL (tested with MySQL 8.x and 9.x)
-- ORM: Hibernate (JPA)
-- Connection Pool: HikariCP
-- Migrations: Flyway
-- Flyway migrations are executed automatically on startup.
-
-✅ Flyway works correctly in the shaded JAR 
-thanks to explicit ServiceLoader resource merging in the Shade plugin.
-
-
-
-## 📁 External XML Storage
-
-When using xml-read or xml-write, the following property is used:
-
-```text
-gymapp.file.storage.path=file:./gym-external-data.xml
-```
-
-This path points to an **external XML** file used for import/export.
-
-## ▶️ Running the Application
-
-### Default runtime (DB + Flyway)
+### 2. Build & Run
 
 ```bash
-java -jar target/spring-gym-1.1-SNAPSHOT.jar
+export SPRING_PROFILES_ACTIVE=local
+./mvnw clean package
+java -jar target/spring-gym-1.1-SNAPSHOT.jar --spring.profiles.active=local
 ```
 
-### XML Read Profile
+### 3. Access
+
+| Resource   | URL                                   |
+|------------|---------------------------------------|
+| Swagger UI | http://localhost:8080/swagger-ui.html |
+| API Base   | http://localhost:8080/api/v1          |
+| Health     | http://localhost:8080/actuator/health |
+| Grafana    | http://localhost:3000 (admin/admin)   |
+
+## API Endpoints
+
+### Public (No Auth)
+
+| Method | Endpoint                 | Description         |
+|--------|--------------------------|---------------------|
+| POST   | `/api/v1/trainees`       | Register trainee    |
+| POST   | `/api/v1/trainers`       | Register trainer    |
+| POST   | `/api/v1/auth/login`     | Get JWT token       |
+| GET    | `/api/v1/training-types` | List training types |
+
+### Protected (Bearer Token)
+
+- **Trainees**: `GET/PUT/DELETE /{username}`, password, status, trainers, trainings
+- **Trainers**: `GET/PUT /{username}`, password, status, trainings
+- **Trainings**: `POST /api/v1/trainings`
+
+### Auth Flow
+
+```
+1. POST /api/v1/trainees → { username, password }
+2. POST /api/v1/auth/login → { token, role }
+3. Use header: Authorization: Bearer <token>
+```
+
+## Profiles
+
+| Profile | Database       | Logging |
+|---------|----------------|---------|
+| `local` | localhost:3306 | DEBUG   |
+| `dev`   | dev-db:3306    | DEBUG   |
+| `stg`   | stg-db:3306    | INFO    |
+| `prod`  | prod-db:3306   | WARN    |
 
 ```bash
-java \
--Dspring.profiles.active=xml-read \
--Dgymapp.file.storage.path=file:./gym-external-data.xml \
--jar target/spring-gym-1.1-SNAPSHOT.jar
+java -jar target/spring-gym-1.1-SNAPSHOT.jar --spring.profiles.active=local
 ```
 
-### XML Write Profile
-```bash
-java \
--Dspring.profiles.active=xml-write \
--Dgymapp.file.storage.path=file:./gym-external-data.xml \
--jar target/spring-gym-1.1-SNAPSHOT.jar
-```
+## Docker Services
 
-## ⚙️ Configuration Resolution Order
-
-Spring resolves configuration in the following order (highest → lowest priority):
-
-1. JVM system properties (-Dkey=value)
-2. Command-line arguments (--key=value)
-3. Environment variables
-4. application-{profile}.properties
-5. application.properties
-
-This means runtime overrides always take precedence.
-
-## 🧪 Testing & Coverage
-
-### Testing Stack
-
-- JUnit 5
-- Mockito
-- AssertJ
-- JaCoCo (coverage enforced)
-- Spring-test
-- H2 (in-memory DB for integration tests)
-
-### Test Types
-- Unit tests (services, utilities)
-- Integration tests (repositories with real JPA + H2)
-
-## ✅ Coverage Enforcement
-
-- JaCoCo enforces minimum 80% line coverage
-- Coverage is checked during mvn test
-
-### Excluded from coverage checks:
-- xmlfileIO/**
-- model/**
-- dto/**
-- config/**
-- SpringGymApplication
-
-## Run tests + coverage:
+| Service    | Port | Purpose    |
+|------------|------|------------|
+| MySQL      | 3306 | Database   |
+| Prometheus | 9090 | Metrics    |
+| Grafana    | 3000 | Dashboards |
 
 ```bash
-./mvnw clean test
+docker-compose up -d # Start
+docker-compose down -v # Stop + delete data
 ```
 
-### JaCoCo HTML report:
+## Testing
 
-```text
-target/site/jacoco/index.html
+```bash
+./mvnw clean test # Run tests
+xdg-open target/site/jacoco/index.html # Coverage report
 ```
 
-## 🧠 Notes on Shaded JAR & Flyway
-The project uses the Maven Shade Plugin to create a single executable JAR.
+- **Testcontainers** for MySQL integration tests
+- **JaCoCo** enforces 80% line coverage (with exclusions)
 
-To ensure Flyway database plugins are discoverable at runtime, 
-the build explicitly merges Java ServiceLoader metadata:
+## Project Structure
 
-```xml
-<transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+```
+src/main/java/.../gym/
+├── controller/ # REST endpoints + GlobalExceptionHandler
+├── service/ # Business logic
+├── repository/ # Spring Data JPA
+├── model/ # JPA entities
+├── dto/ # Request/Response objects
+├── security/ # JWT filter, auth context
+├── metrics/ # Custom Prometheus metrics
+└── actuator/health/ # Custom health indicators
 ```
 
-Without this, Flyway cannot detect database support when running the shaded JAR.
+## Observability
 
-## 📌 Versioning
+- **Transaction ID**: `X-Transaction-ID` header (auto-generated, logged via MDC)
+- **Custom Metrics**: `gym.users`, `gym.training.created.total`, etc.
+- **Health Indicators**: Database, Flyway, TrainingType validation
+- **Logs**: Rolling files in `logs/` (14 days retention)
 
-1.1-SNAPSHOT
+## License
 
-```text
-SNAPSHOT indicates an in-development, non-final build.
-```
-
-## 📄 License
-```text
 Educational / learning project.
-```
