@@ -1,8 +1,5 @@
 package dev.ilkersahin.java.spring.gym.service.impl;
 
-import dev.ilkersahin.java.spring.gym.dao.TraineeDao;
-import dev.ilkersahin.java.spring.gym.dao.TrainerDao;
-import dev.ilkersahin.java.spring.gym.dao.TrainingDao;
 import dev.ilkersahin.java.spring.gym.dto.request.TrainingCreateRequest;
 import dev.ilkersahin.java.spring.gym.exception.TraineeDoesNotExistException;
 import dev.ilkersahin.java.spring.gym.exception.TrainerDoesNotExistException;
@@ -10,6 +7,9 @@ import dev.ilkersahin.java.spring.gym.model.Trainee;
 import dev.ilkersahin.java.spring.gym.model.Trainer;
 import dev.ilkersahin.java.spring.gym.model.Training;
 import dev.ilkersahin.java.spring.gym.model.TrainingType;
+import dev.ilkersahin.java.spring.gym.repository.TraineeRepository;
+import dev.ilkersahin.java.spring.gym.repository.TrainerRepository;
+import dev.ilkersahin.java.spring.gym.repository.TrainingRepository;
 import dev.ilkersahin.java.spring.gym.service.TrainingService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -23,16 +23,16 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 public class TrainingServiceImpl implements TrainingService {
 
-    private final TraineeDao traineeDao;
-    private final TrainerDao trainerDao;
-    private final TrainingDao trainingDao;
+    private final TraineeRepository traineeRepository;
+    private final TrainerRepository trainerRepository;
+    private final TrainingRepository trainingRepository;
 
     @Override
     public void createTraining(@Valid TrainingCreateRequest request) {
 
         Trainee trainee = findTraineeOrThrow(request.traineeUsername());
 
-        Trainer trainer = trainerDao.getTrainer(request.trainerUsername())
+        Trainer trainer = trainerRepository.findByUserUsername(request.trainerUsername())
                 .orElseThrow(() -> new TrainerDoesNotExistException("Trainer not found"));
 
         log.info(
@@ -53,7 +53,7 @@ public class TrainingServiceImpl implements TrainingService {
                 request.durationMinutes()
         );
 
-        trainingDao.createTraining(training);
+        trainingRepository.save(training);
     }
 
     // -------------------------------------------------------------------------
@@ -61,7 +61,7 @@ public class TrainingServiceImpl implements TrainingService {
     // -------------------------------------------------------------------------
 
     private Trainee findTraineeOrThrow(String username) {
-        Trainee trainee = traineeDao.getTrainee(username)
+        Trainee trainee = traineeRepository.findByUserUsername(username)
                 .orElseThrow(() -> new TraineeDoesNotExistException("Trainee not found"));
         return trainee;
     }

@@ -1,7 +1,5 @@
 package dev.ilkersahin.java.spring.gym.controller;
 
-import dev.ilkersahin.java.spring.gym.dao.TraineeDao;
-import dev.ilkersahin.java.spring.gym.dao.TrainerDao;
 import dev.ilkersahin.java.spring.gym.dto.auth.LoginRequest;
 import dev.ilkersahin.java.spring.gym.dto.auth.LoginResponse;
 import dev.ilkersahin.java.spring.gym.exception.InvalidCredentialsException;
@@ -9,6 +7,8 @@ import dev.ilkersahin.java.spring.gym.model.Trainee;
 import dev.ilkersahin.java.spring.gym.model.Trainer;
 import dev.ilkersahin.java.spring.gym.model.TrainingType;
 import dev.ilkersahin.java.spring.gym.model.User;
+import dev.ilkersahin.java.spring.gym.repository.TraineeRepository;
+import dev.ilkersahin.java.spring.gym.repository.TrainerRepository;
 import dev.ilkersahin.java.spring.gym.security.JwtService;
 import dev.ilkersahin.java.spring.gym.security.Role;
 import org.junit.jupiter.api.*;
@@ -28,8 +28,8 @@ import static org.mockito.Mockito.when;
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class AuthControllerTest {
 
-    @Mock private TraineeDao traineeDao;
-    @Mock private TrainerDao trainerDao;
+    @Mock private TraineeRepository traineeRepository;
+    @Mock private TrainerRepository trainerRepository;
     @Mock private JwtService jwtService;
 
     @InjectMocks
@@ -60,7 +60,7 @@ public class AuthControllerTest {
     @Order(101)
     void login_withValidTraineeCredentials_shouldReturnToken() {
         LoginRequest request = new LoginRequest("John.Doe", "password123");
-        when(traineeDao.getTrainee("John.Doe")).thenReturn(Optional.of(trainee));
+        when(traineeRepository.findByUserUsername("John.Doe")).thenReturn(Optional.of(trainee));
         when(jwtService.generateToken("John.Doe", Role.TRAINEE)).thenReturn("traineeToken123");
 
         ResponseEntity<LoginResponse> response = authController.login(request);
@@ -76,8 +76,8 @@ public class AuthControllerTest {
     @Order(102)
     void login_withWrongTraineePassword_shouldTryTrainerThenFail() {
         LoginRequest request = new LoginRequest("John.Doe", "wrongPassword");
-        when(traineeDao.getTrainee("John.Doe")).thenReturn(Optional.of(trainee));
-        when(trainerDao.getTrainer("John.Doe")).thenReturn(Optional.empty());
+        when(traineeRepository.findByUserUsername("John.Doe")).thenReturn(Optional.of(trainee));
+        when(trainerRepository.findByUserUsername("John.Doe")).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> authController.login(request))
                 .isInstanceOf(InvalidCredentialsException.class)
@@ -92,8 +92,8 @@ public class AuthControllerTest {
     @Order(201)
     void login_withValidTrainerCredentials_shouldReturnToken() {
         LoginRequest request = new LoginRequest("Jane.Smith", "trainerPass");
-        when(traineeDao.getTrainee("Jane.Smith")).thenReturn(Optional.empty());
-        when(trainerDao.getTrainer("Jane.Smith")).thenReturn(Optional.of(trainer));
+        when(traineeRepository.findByUserUsername("Jane.Smith")).thenReturn(Optional.empty());
+        when(trainerRepository.findByUserUsername("Jane.Smith")).thenReturn(Optional.of(trainer));
         when(jwtService.generateToken("Jane.Smith", Role.TRAINER)).thenReturn("trainerToken456");
 
         ResponseEntity<LoginResponse> response = authController.login(request);
@@ -109,8 +109,8 @@ public class AuthControllerTest {
     @Order(202)
     void login_withWrongTrainerPassword_shouldFail() {
         LoginRequest request = new LoginRequest("Jane.Smith", "wrongPassword");
-        when(traineeDao.getTrainee("Jane.Smith")).thenReturn(Optional.empty());
-        when(trainerDao.getTrainer("Jane.Smith")).thenReturn(Optional.of(trainer));
+        when(traineeRepository.findByUserUsername("Jane.Smith")).thenReturn(Optional.empty());
+        when(trainerRepository.findByUserUsername("Jane.Smith")).thenReturn(Optional.of(trainer));
 
         assertThatThrownBy(() -> authController.login(request))
                 .isInstanceOf(InvalidCredentialsException.class);
@@ -124,8 +124,8 @@ public class AuthControllerTest {
     @Order(301)
     void login_withNonExistentUser_shouldFail() {
         LoginRequest request = new LoginRequest("NonExistent", "anyPassword");
-        when(traineeDao.getTrainee("NonExistent")).thenReturn(Optional.empty());
-        when(trainerDao.getTrainer("NonExistent")).thenReturn(Optional.empty());
+        when(traineeRepository.findByUserUsername("NonExistent")).thenReturn(Optional.empty());
+        when(trainerRepository.findByUserUsername("NonExistent")).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> authController.login(request))
                 .isInstanceOf(InvalidCredentialsException.class)
@@ -141,7 +141,7 @@ public class AuthControllerTest {
     void login_userExistsAsBoth_shouldAuthenticateAsTraineeFirst() {
         // Same username exists as both trainee and trainer (edge case)
         LoginRequest request = new LoginRequest("John.Doe", "password123");
-        when(traineeDao.getTrainee("John.Doe")).thenReturn(Optional.of(trainee));
+        when(traineeRepository.findByUserUsername("John.Doe")).thenReturn(Optional.of(trainee));
         when(jwtService.generateToken("John.Doe", Role.TRAINEE)).thenReturn("traineeToken");
 
         ResponseEntity<LoginResponse> response = authController.login(request);

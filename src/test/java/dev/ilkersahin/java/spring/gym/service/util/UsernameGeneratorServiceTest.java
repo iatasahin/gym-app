@@ -1,8 +1,8 @@
 package dev.ilkersahin.java.spring.gym.service.util;
 
-import dev.ilkersahin.java.spring.gym.dao.UserDao;
-import dev.ilkersahin.java.spring.gym.dao.util.UsernameCounterDao;
 import dev.ilkersahin.java.spring.gym.model.util.UsernameCounter;
+import dev.ilkersahin.java.spring.gym.repository.UserRepository;
+import dev.ilkersahin.java.spring.gym.repository.util.UsernameCounterRepository;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
@@ -13,6 +13,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.Optional;
+
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -20,10 +22,10 @@ import static org.mockito.Mockito.*;
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class UsernameGeneratorServiceTest {
     @Mock
-    private UsernameCounterDao usernameCounterDao;
+    private UsernameCounterRepository usernameCounterRepository;
 
     @Mock
-    private UserDao userDao;
+    private UserRepository userRepository;
 
     @InjectMocks
     private UsernameGeneratorService usernameGeneratorService;
@@ -35,7 +37,7 @@ public class UsernameGeneratorServiceTest {
     @Test
     @Order(101)
     void generateUniqueUsername_withAvailableBaseUsername_shouldReturnBaseUsername() {
-        when(userDao.existsByUsername("Jack.Black")).thenReturn(false);
+        when(userRepository.existsByUsername("Jack.Black")).thenReturn(false);
 
         String username = usernameGeneratorService.generateUniqueUsername("Jack", "Black");
 
@@ -45,12 +47,12 @@ public class UsernameGeneratorServiceTest {
     @Test
     @Order(102)
     void generateUniqueUsername_withAvailableBaseUsername_shouldCreateCounterEntry() {
-        when(userDao.existsByUsername("Jack.Black")).thenReturn(false);
+        when(userRepository.existsByUsername("Jack.Black")).thenReturn(false);
 
         usernameGeneratorService.generateUniqueUsername("Jack", "Black");
 
         ArgumentCaptor<UsernameCounter> captor = ArgumentCaptor.forClass(UsernameCounter.class);
-        verify(usernameCounterDao).persist(captor.capture());
+        verify(usernameCounterRepository).saveAndFlush(captor.capture());
 
         assertThat(captor.getValue().getBaseUsername()).isEqualTo("Jack.Black");
     }
@@ -62,10 +64,10 @@ public class UsernameGeneratorServiceTest {
     @Test
     @Order(201)
     void generateUniqueUsername_withExistingUsernameAndCounter_shouldReturnUsernameWithSuffix() {
-        when(userDao.existsByUsername("Jack.Black")).thenReturn(true);
+        when(userRepository.existsByUsername("Jack.Black")).thenReturn(true);
 
         UsernameCounter counter = new UsernameCounter("Jack.Black");
-        when(usernameCounterDao.findByBaseUsernameWithLock("Jack.Black")).thenReturn(counter);
+        when(usernameCounterRepository.findByBaseUsernameWithLock("Jack.Black")).thenReturn(Optional.of(counter));
 
         String username = usernameGeneratorService.generateUniqueUsername("Jack", "Black");
 
@@ -75,24 +77,24 @@ public class UsernameGeneratorServiceTest {
     @Test
     @Order(202)
     void generateUniqueUsername_withExistingUsernameAndCounter_shouldIncrementCounter() {
-        when(userDao.existsByUsername("Jack.Black")).thenReturn(true);
+        when(userRepository.existsByUsername("Jack.Black")).thenReturn(true);
 
         UsernameCounter counter = new UsernameCounter("Jack.Black");
-        when(usernameCounterDao.findByBaseUsernameWithLock("Jack.Black")).thenReturn(counter);
+        when(usernameCounterRepository.findByBaseUsernameWithLock("Jack.Black")).thenReturn(Optional.of(counter));
 
         usernameGeneratorService.generateUniqueUsername("Jack", "Black");
 
-        verify(usernameCounterDao).merge(counter);
+        verify(usernameCounterRepository).save(counter);
         assertThat(counter.getCurrentSuffix()).isEqualTo(3);
     }
 
     @Test
     @Order(203)
     void generateUniqueUsername_calledMultipleTimes_shouldIncrementSuffix() {
-        when(userDao.existsByUsername("Jack.Black")).thenReturn(true);
+        when(userRepository.existsByUsername("Jack.Black")).thenReturn(true);
 
         UsernameCounter counter = new UsernameCounter("Jack.Black");
-        when(usernameCounterDao.findByBaseUsernameWithLock("Jack.Black")).thenReturn(counter);
+        when(usernameCounterRepository.findByBaseUsernameWithLock("Jack.Black")).thenReturn(Optional.of(counter));
 
         String username1 = usernameGeneratorService.generateUniqueUsername("Jack", "Black");
         String username2 = usernameGeneratorService.generateUniqueUsername("Jack", "Black");
@@ -110,8 +112,10 @@ public class UsernameGeneratorServiceTest {
     @Test
     @Order(301)
     void generateUniqueUsername_withExistingUsernameButNoCounter_shouldCreateCounterAndReturnWithSuffix() {
-        when(userDao.existsByUsername("Jack.Black")).thenReturn(true);
-        when(usernameCounterDao.findByBaseUsernameWithLock("Jack.Black")).thenReturn(null);
+        when(userRepository.existsByUsername("Jack.Black")).thenReturn(true);
+        when(usernameCounterRepository.findByBaseUsernameWithLock("Jack.Black")).thenReturn(Optional.empty());
+        when(usernameCounterRepository.saveAndFlush(any(UsernameCounter.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
 
         String username = usernameGeneratorService.generateUniqueUsername("Jack", "Black");
 
@@ -121,13 +125,15 @@ public class UsernameGeneratorServiceTest {
     @Test
     @Order(302)
     void generateUniqueUsername_withExistingUsernameButNoCounter_shouldPersistNewCounter() {
-        when(userDao.existsByUsername("Jack.Black")).thenReturn(true);
-        when(usernameCounterDao.findByBaseUsernameWithLock("Jack.Black")).thenReturn(null);
+        when(userRepository.existsByUsername("Jack.Black")).thenReturn(true);
+        when(usernameCounterRepository.findByBaseUsernameWithLock("Jack.Black")).thenReturn(Optional.empty());
+        when(usernameCounterRepository.saveAndFlush(any(UsernameCounter.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
 
         usernameGeneratorService.generateUniqueUsername("Jack", "Black");
 
         ArgumentCaptor<UsernameCounter> captor = ArgumentCaptor.forClass(UsernameCounter.class);
-        verify(usernameCounterDao).persist(captor.capture());
+        verify(usernameCounterRepository).saveAndFlush(captor.capture());
 
         assertThat(captor.getValue().getBaseUsername()).isEqualTo("Jack.Black");
     }
@@ -139,7 +145,7 @@ public class UsernameGeneratorServiceTest {
     @Test
     @Order(401)
     void generateUniqueUsername_withDifferentNames_shouldConcatenateCorrectly() {
-        when(userDao.existsByUsername("Alice.Smith")).thenReturn(false);
+        when(userRepository.existsByUsername("Alice.Smith")).thenReturn(false);
 
         String username = usernameGeneratorService.generateUniqueUsername("Alice", "Smith");
 

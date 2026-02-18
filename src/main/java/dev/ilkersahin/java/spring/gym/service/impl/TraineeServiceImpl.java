@@ -1,13 +1,26 @@
 package dev.ilkersahin.java.spring.gym.service.impl;
 
-import dev.ilkersahin.java.spring.gym.dao.TraineeDao;
-import dev.ilkersahin.java.spring.gym.dao.TrainerDao;
-import dev.ilkersahin.java.spring.gym.dao.TrainingDao;
-import dev.ilkersahin.java.spring.gym.dao.UserDao;
-import dev.ilkersahin.java.spring.gym.dto.request.*;
-import dev.ilkersahin.java.spring.gym.dto.response.*;
-import dev.ilkersahin.java.spring.gym.dto.view.*;
-import dev.ilkersahin.java.spring.gym.model.*;
+import dev.ilkersahin.java.spring.gym.dto.request.ActivationRequest;
+import dev.ilkersahin.java.spring.gym.dto.request.PasswordChangeRequest;
+import dev.ilkersahin.java.spring.gym.dto.request.TraineeCreateRequest;
+import dev.ilkersahin.java.spring.gym.dto.request.TraineeTrainerListUpdateRequest;
+import dev.ilkersahin.java.spring.gym.dto.request.TraineeUpdateRequest;
+import dev.ilkersahin.java.spring.gym.dto.request.TrainingSearchRequestForTrainee;
+import dev.ilkersahin.java.spring.gym.dto.response.ActivationResponse;
+import dev.ilkersahin.java.spring.gym.dto.response.UserCreateResponse;
+import dev.ilkersahin.java.spring.gym.dto.view.TraineeView;
+import dev.ilkersahin.java.spring.gym.dto.view.TraineeWithListView;
+import dev.ilkersahin.java.spring.gym.dto.view.TrainerInfo;
+import dev.ilkersahin.java.spring.gym.dto.view.TrainingView;
+import dev.ilkersahin.java.spring.gym.model.Trainee;
+import dev.ilkersahin.java.spring.gym.model.Trainer;
+import dev.ilkersahin.java.spring.gym.model.Training;
+import dev.ilkersahin.java.spring.gym.model.TrainingType;
+import dev.ilkersahin.java.spring.gym.model.User;
+import dev.ilkersahin.java.spring.gym.repository.TraineeRepository;
+import dev.ilkersahin.java.spring.gym.repository.TrainerRepository;
+import dev.ilkersahin.java.spring.gym.repository.TrainingRepository;
+import dev.ilkersahin.java.spring.gym.repository.UserRepository;
 import dev.ilkersahin.java.spring.gym.service.TraineeService;
 import dev.ilkersahin.java.spring.gym.service.util.PasswordGeneratorService;
 import dev.ilkersahin.java.spring.gym.service.util.UsernameGeneratorService;
@@ -28,10 +41,10 @@ import java.util.List;
 @Slf4j
 public class TraineeServiceImpl implements TraineeService {
 
-    private final TraineeDao traineeDao;
-    private final TrainerDao trainerDAO;
-    private final TrainingDao trainingDao;
-    private final UserDao userDao;
+    private final TraineeRepository traineeRepository;
+    private final TrainerRepository trainerRepository;
+    private final TrainingRepository trainingRepository;
+    private final UserRepository userRepository;
     private final UsernameGeneratorService usernameGeneratorService;
     private final PasswordGeneratorService passwordGeneratorService;
     private final ViewMapper viewMapper;
@@ -48,14 +61,14 @@ public class TraineeServiceImpl implements TraineeService {
         String password = passwordGeneratorService.generate(10);
 
         User user = new User(request.firstName(), request.lastName(), username, password, true);
-        userDao.persist(user);
+        userRepository.save(user);
 
         Trainee trainee = new Trainee();
         trainee.setUser(user);
         trainee.setDateOfBirth(request.dateOfBirth());
         trainee.setAddress(request.address());
 
-        Trainee saved = traineeDao.createTrainee(trainee);
+        Trainee saved = traineeRepository.save(trainee);
 
         log.info("Trainee created with username '{}'", saved.getUsername());
 
@@ -71,7 +84,7 @@ public class TraineeServiceImpl implements TraineeService {
     public TraineeWithListView getTrainee(@NotBlank String username) {
         log.debug("Fetching trainee '{}'", username);
         Trainee trainee = findTraineeOrThrow(username);
-        List<Trainer> trainers = traineeDao.findAssignedTrainers(username);
+        List<Trainer> trainers = traineeRepository.findAssignedTrainers(username);
         return toView(trainee, trainers);
     }
 
@@ -101,9 +114,9 @@ public class TraineeServiceImpl implements TraineeService {
             trainee.setAddress(request.address());
         }
 
-        traineeDao.updateTrainee(trainee);
+        traineeRepository.save(trainee);
 
-        List<Trainer> trainers = traineeDao.findAssignedTrainers(request.username());
+        List<Trainer> trainers = traineeRepository.findAssignedTrainers(request.username());
         return toView(trainee, trainers);
     }
 
@@ -116,7 +129,7 @@ public class TraineeServiceImpl implements TraineeService {
         Trainee trainee = findTraineeOrThrow(request.username());
         log.warn("Changing password of trainee '{}'", request.username());
         trainee.getUser().setPassword(request.newPassword());
-        userDao.merge(trainee.getUser());
+        userRepository.save(trainee.getUser());
         return true;
     }
 
@@ -149,9 +162,10 @@ public class TraineeServiceImpl implements TraineeService {
         Trainee trainee = findTraineeOrThrow(username);
         log.warn("Deleting trainee '{}'", username);
 
-        trainee.getUser().setTrainee(null);
-        traineeDao.deleteTrainee(username);
-        userDao.deleteUser(username);
+        User user = trainee.getUser();
+        user.setTrainee(null);
+        traineeRepository.delete(trainee);
+        userRepository.delete(user);
         return true;
     }
 
@@ -166,7 +180,7 @@ public class TraineeServiceImpl implements TraineeService {
 
         log.info("Getting unassigned trainers for trainee '{}'", username);
 
-        List<Trainer> trainers = trainerDAO.findTrainersNotAssignedToTrainee(trainee.getUser().getUsername());
+        List<Trainer> trainers = trainerRepository.findTrainersNotAssignedToTrainee(trainee.getUser().getUsername());
 
         return toTrainerInfoList(trainers);
     }
@@ -177,9 +191,11 @@ public class TraineeServiceImpl implements TraineeService {
 
         log.warn("Updating trainers for trainee '{}'", request.traineeUsername());
 
-        List<Trainer> trainers = trainerDAO.findByUsernames(request.trainerUsernames());
+        List<Trainer> trainers = trainerRepository.findByUserUsernames(request.trainerUsernames());
 
-        traineeDao.updateTrainers(trainee.getUser().getUsername(), trainers);
+        trainee.getTrainers().clear();
+        trainee.getTrainers().addAll(trainers);
+        traineeRepository.save(trainee);
 
         log.info("Updated trainers for trainee {}", trainee.getUser().getUsername());
 
@@ -197,7 +213,7 @@ public class TraineeServiceImpl implements TraineeService {
 
         log.info("Getting trainings for trainee '{}'", request.traineeUsername());
 
-        List<Training> trainings = trainingDao.findForTrainee(
+        List<Training> trainings = trainingRepository.findForTrainee(
                 request.traineeUsername(),
                 request.fromDate(),
                 request.toDate(),
@@ -216,7 +232,7 @@ public class TraineeServiceImpl implements TraineeService {
     // -------------------------------------------------------------------------
 
     private Trainee findTraineeOrThrow(String username) {
-        Trainee trainee = traineeDao.getTrainee(username)
+        Trainee trainee = traineeRepository.findByUserUsername(username)
                 .orElseThrow(() -> new EntityNotFoundException("Trainee not found"));
         return trainee;
     }

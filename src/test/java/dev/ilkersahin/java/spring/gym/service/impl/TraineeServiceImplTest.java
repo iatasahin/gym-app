@@ -1,14 +1,29 @@
 package dev.ilkersahin.java.spring.gym.service.impl;
 
-import dev.ilkersahin.java.spring.gym.dao.TraineeDao;
-import dev.ilkersahin.java.spring.gym.dao.TrainerDao;
-import dev.ilkersahin.java.spring.gym.dao.TrainingDao;
-import dev.ilkersahin.java.spring.gym.dao.UserDao;
 import dev.ilkersahin.java.spring.gym.dto.auth.Credentials;
-import dev.ilkersahin.java.spring.gym.dto.request.*;
-import dev.ilkersahin.java.spring.gym.dto.response.*;
-import dev.ilkersahin.java.spring.gym.dto.view.*;
-import dev.ilkersahin.java.spring.gym.model.*;
+import dev.ilkersahin.java.spring.gym.dto.request.ActivationRequest;
+import dev.ilkersahin.java.spring.gym.dto.request.PasswordChangeRequest;
+import dev.ilkersahin.java.spring.gym.dto.request.TraineeCreateRequest;
+import dev.ilkersahin.java.spring.gym.dto.request.TraineeDeleteRequest;
+import dev.ilkersahin.java.spring.gym.dto.request.TraineeTrainerListUpdateRequest;
+import dev.ilkersahin.java.spring.gym.dto.request.TraineeUpdateRequest;
+import dev.ilkersahin.java.spring.gym.dto.request.TrainingSearchRequestForTrainee;
+import dev.ilkersahin.java.spring.gym.dto.response.ActivationResponse;
+import dev.ilkersahin.java.spring.gym.dto.response.UserCreateResponse;
+import dev.ilkersahin.java.spring.gym.dto.view.TraineeView;
+import dev.ilkersahin.java.spring.gym.dto.view.TraineeWithListView;
+import dev.ilkersahin.java.spring.gym.dto.view.TrainerInfo;
+import dev.ilkersahin.java.spring.gym.dto.view.TrainerView;
+import dev.ilkersahin.java.spring.gym.dto.view.TrainingView;
+import dev.ilkersahin.java.spring.gym.model.Trainee;
+import dev.ilkersahin.java.spring.gym.model.Trainer;
+import dev.ilkersahin.java.spring.gym.model.Training;
+import dev.ilkersahin.java.spring.gym.model.TrainingType;
+import dev.ilkersahin.java.spring.gym.model.User;
+import dev.ilkersahin.java.spring.gym.repository.TraineeRepository;
+import dev.ilkersahin.java.spring.gym.repository.TrainerRepository;
+import dev.ilkersahin.java.spring.gym.repository.TrainingRepository;
+import dev.ilkersahin.java.spring.gym.repository.UserRepository;
 import dev.ilkersahin.java.spring.gym.service.util.PasswordGeneratorService;
 import dev.ilkersahin.java.spring.gym.service.util.UsernameGeneratorService;
 import dev.ilkersahin.java.spring.gym.service.util.ViewMapper;
@@ -23,7 +38,6 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -32,10 +46,10 @@ import static org.mockito.Mockito.when;
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class TraineeServiceImplTest {
 
-    @Mock private TraineeDao traineeDao;
-    @Mock private TrainerDao trainerDao;
-    @Mock private TrainingDao trainingDao;
-    @Mock private UserDao userDao;
+    @Mock private TraineeRepository traineeRepository;
+    @Mock private TrainerRepository trainerRepository;
+    @Mock private TrainingRepository trainingRepository;
+    @Mock private UserRepository userRepository;
     @Mock private UsernameGeneratorService usernameGeneratorService;
     @Mock private PasswordGeneratorService passwordGeneratorService;
     @Mock private ViewMapper viewMapper;
@@ -89,14 +103,14 @@ public class TraineeServiceImplTest {
 
         when(usernameGeneratorService.generateUniqueUsername("Jack", "Black")).thenReturn("Jack.Black");
         when(passwordGeneratorService.generate(10)).thenReturn("password123");
-        when(traineeDao.createTrainee(any(Trainee.class))).thenReturn(activeTrainee);
+        when(traineeRepository.save(any(Trainee.class))).thenReturn(activeTrainee);
 
         UserCreateResponse response = traineeService.createTrainee(request);
 
         assertThat(response.username()).isEqualTo("Jack.Black");
         assertThat(response.password()).isEqualTo("password123");
-        verify(userDao).persist(any(User.class));
-        verify(traineeDao).createTrainee(any(Trainee.class));
+        verify(userRepository).save(any(User.class));
+        verify(traineeRepository).save(any(Trainee.class));
     }
 
     @Test
@@ -108,7 +122,7 @@ public class TraineeServiceImplTest {
 
         when(usernameGeneratorService.generateUniqueUsername("Jack", "Black")).thenReturn("Jack.Black");
         when(passwordGeneratorService.generate(10)).thenReturn("password123");
-        when(traineeDao.createTrainee(any(Trainee.class))).thenReturn(activeTrainee);
+        when(traineeRepository.save(any(Trainee.class))).thenReturn(activeTrainee);
 
         UserCreateResponse response = traineeService.createTrainee(request);
 
@@ -123,8 +137,8 @@ public class TraineeServiceImplTest {
     @Test
     @Order(201)
     void getTrainee_withValidCredentials_shouldReturnTrainee() {
-        when(traineeDao.getTrainee("Jack.Black")).thenReturn(Optional.of(activeTrainee));
-        when(traineeDao.findAssignedTrainers("Jack.Black")).thenReturn(List.of());
+        when(traineeRepository.findByUserUsername("Jack.Black")).thenReturn(Optional.of(activeTrainee));
+        when(traineeRepository.findAssignedTrainers("Jack.Black")).thenReturn(List.of());
 
         TraineeWithListView response = traineeService.getTrainee(validCredentials.username());
 
@@ -145,8 +159,8 @@ public class TraineeServiceImplTest {
                 validCredentials.username(), "John", "Doe", true,
                 LocalDate.of(1985, 5, 5), "456 Oak St"
         );
-        when(traineeDao.getTrainee("Jack.Black")).thenReturn(Optional.of(activeTrainee));
-        when(traineeDao.updateTrainee(activeTrainee)).thenReturn(activeTrainee);
+        when(traineeRepository.findByUserUsername("Jack.Black")).thenReturn(Optional.of(activeTrainee));
+        when(traineeRepository.save(activeTrainee)).thenReturn(activeTrainee);
 
         TraineeWithListView response = traineeService.updateTrainee(request);
 
@@ -163,8 +177,8 @@ public class TraineeServiceImplTest {
                 validCredentials.username(), "John", null, null, null, null
         );
 
-        when(traineeDao.getTrainee("Jack.Black")).thenReturn(Optional.of(activeTrainee));
-        when(traineeDao.updateTrainee(activeTrainee)).thenReturn(activeTrainee);
+        when(traineeRepository.findByUserUsername("Jack.Black")).thenReturn(Optional.of(activeTrainee));
+        when(traineeRepository.save(activeTrainee)).thenReturn(activeTrainee);
 
         traineeService.updateTrainee(request);
 
@@ -179,8 +193,8 @@ public class TraineeServiceImplTest {
                 validCredentials.username(), null, "Doe", null, null, null
         );
 
-        when(traineeDao.getTrainee("Jack.Black")).thenReturn(Optional.of(activeTrainee));
-        when(traineeDao.updateTrainee(activeTrainee)).thenReturn(activeTrainee);
+        when(traineeRepository.findByUserUsername("Jack.Black")).thenReturn(Optional.of(activeTrainee));
+        when(traineeRepository.save(activeTrainee)).thenReturn(activeTrainee);
 
         traineeService.updateTrainee(request);
 
@@ -196,8 +210,8 @@ public class TraineeServiceImplTest {
                 LocalDate.of(1995, 12, 25), null
         );
 
-        when(traineeDao.getTrainee("Jack.Black")).thenReturn(Optional.of(activeTrainee));
-        when(traineeDao.updateTrainee(activeTrainee)).thenReturn(activeTrainee);
+        when(traineeRepository.findByUserUsername("Jack.Black")).thenReturn(Optional.of(activeTrainee));
+        when(traineeRepository.save(activeTrainee)).thenReturn(activeTrainee);
 
         traineeService.updateTrainee(request);
 
@@ -213,8 +227,8 @@ public class TraineeServiceImplTest {
                 "789 Pine Ave"
         );
 
-        when(traineeDao.getTrainee("Jack.Black")).thenReturn(Optional.of(activeTrainee));
-        when(traineeDao.updateTrainee(activeTrainee)).thenReturn(activeTrainee);
+        when(traineeRepository.findByUserUsername("Jack.Black")).thenReturn(Optional.of(activeTrainee));
+        when(traineeRepository.save(activeTrainee)).thenReturn(activeTrainee);
 
         traineeService.updateTrainee(request);
 
@@ -229,8 +243,8 @@ public class TraineeServiceImplTest {
                 validCredentials.username(), null, null, null, null, null
         );
 
-        when(traineeDao.getTrainee("Jack.Black")).thenReturn(Optional.of(activeTrainee));
-        when(traineeDao.updateTrainee(activeTrainee)).thenReturn(activeTrainee);
+        when(traineeRepository.findByUserUsername("Jack.Black")).thenReturn(Optional.of(activeTrainee));
+        when(traineeRepository.save(activeTrainee)).thenReturn(activeTrainee);
 
         TraineeWithListView response = traineeService.updateTrainee(request);
 
@@ -251,13 +265,13 @@ public class TraineeServiceImplTest {
                 "newSecurePassword"
         );
 
-        when(traineeDao.getTrainee("Jack.Black")).thenReturn(Optional.of(activeTrainee));
+        when(traineeRepository.findByUserUsername("Jack.Black")).thenReturn(Optional.of(activeTrainee));
 
         Boolean response = traineeService.changePassword(request);
 
         assertThat(response).isTrue();
         assertThat(activeTrainee.getUser().getPassword()).isEqualTo("newSecurePassword");
-        verify(userDao).merge(activeTrainee.getUser());
+        verify(userRepository).save(activeTrainee.getUser());
     }
 
     // =========================================================================
@@ -270,7 +284,7 @@ public class TraineeServiceImplTest {
         activeUser.setActive(false); // start inactive for this test
         ActivationRequest request = new ActivationRequest("Jack.Black", true);
 
-        when(traineeDao.getTrainee("Jack.Black")).thenReturn(Optional.of(activeTrainee));
+        when(traineeRepository.findByUserUsername("Jack.Black")).thenReturn(Optional.of(activeTrainee));
 
         ActivationResponse response = traineeService.activate(request);
 
@@ -283,7 +297,7 @@ public class TraineeServiceImplTest {
     void deactivate_withValidCredentials_shouldSetActiveFalse() {
         ActivationRequest request = new ActivationRequest(validCredentials.username(), false);
 
-        when(traineeDao.getTrainee("Jack.Black")).thenReturn(Optional.of(activeTrainee));
+        when(traineeRepository.findByUserUsername("Jack.Black")).thenReturn(Optional.of(activeTrainee));
 
         ActivationResponse response = traineeService.deactivate(request);
 
@@ -300,12 +314,12 @@ public class TraineeServiceImplTest {
     void deleteTrainee_withValidCredentials_shouldDeleteAndReturnSuccess() {
         TraineeDeleteRequest request = new TraineeDeleteRequest(validCredentials);
 
-        when(traineeDao.getTrainee("Jack.Black")).thenReturn(Optional.of(activeTrainee));
+        when(traineeRepository.findByUserUsername("Jack.Black")).thenReturn(Optional.of(activeTrainee));
 
         Boolean response = traineeService.deleteTrainee(request.credentials().username());
 
         assertThat(response).isTrue();
-        verify(traineeDao).deleteTrainee("Jack.Black");
+        verify(traineeRepository).delete(activeTrainee);
     }
 
     // =========================================================================
@@ -324,8 +338,8 @@ public class TraineeServiceImplTest {
                 "Tom.Smith", "Tom", "Smith", true, "Fitness"
         );
 
-        when(traineeDao.getTrainee("Jack.Black")).thenReturn(Optional.of(activeTrainee));
-        when(trainerDao.findTrainersNotAssignedToTrainee("Jack.Black")).thenReturn(List.of(trainer));
+        when(traineeRepository.findByUserUsername("Jack.Black")).thenReturn(Optional.of(activeTrainee));
+        when(trainerRepository.findTrainersNotAssignedToTrainee("Jack.Black")).thenReturn(List.of(trainer));
 
         List<TrainerInfo> response = traineeService.getUnassignedTrainers(validCredentials.username());
 
@@ -336,8 +350,8 @@ public class TraineeServiceImplTest {
     @Test
     @Order(702)
     void getUnassignedTrainers_withNoAvailableTrainers_shouldReturnEmptyList() {
-        when(traineeDao.getTrainee("Jack.Black")).thenReturn(Optional.of(activeTrainee));
-        when(trainerDao.findTrainersNotAssignedToTrainee("Jack.Black")).thenReturn(List.of());
+        when(traineeRepository.findByUserUsername("Jack.Black")).thenReturn(Optional.of(activeTrainee));
+        when(trainerRepository.findTrainersNotAssignedToTrainee("Jack.Black")).thenReturn(List.of());
 
         List<TrainerInfo> response = traineeService.getUnassignedTrainers(validCredentials.username());
 
@@ -365,8 +379,8 @@ public class TraineeServiceImplTest {
         trainer2.setUser(trainerUser2);
         trainer2.setSpecializationType(TrainingType.Type.YOGA);
 
-        when(traineeDao.getTrainee("Jack.Black")).thenReturn(Optional.of(activeTrainee));
-        when(trainerDao.findByUsernames(List.of("Tom.Smith", "Jane.Doe")))
+        when(traineeRepository.findByUserUsername("Jack.Black")).thenReturn(Optional.of(activeTrainee));
+        when(trainerRepository.findByUserUsernames(List.of("Tom.Smith", "Jane.Doe")))
                 .thenReturn(List.of(trainer1, trainer2));
 
         List<TrainerInfo> response = traineeService.updateTrainers(request);
@@ -375,7 +389,7 @@ public class TraineeServiceImplTest {
         assertThat(response).hasSize(2);
         assertThat(response.getFirst().username()).isEqualTo("Tom.Smith");
         assertThat(response.get(1).username()).isEqualTo("Jane.Doe");
-        verify(traineeDao).updateTrainers("Jack.Black", List.of(trainer1, trainer2));
+        verify(traineeRepository).save(activeTrainee);
     }
 
     @Test
@@ -385,14 +399,14 @@ public class TraineeServiceImplTest {
                 validCredentials.username(), List.of()
         );
 
-        when(traineeDao.getTrainee("Jack.Black")).thenReturn(Optional.of(activeTrainee));
-        when(trainerDao.findByUsernames(List.of())).thenReturn(List.of());
+        when(traineeRepository.findByUserUsername("Jack.Black")).thenReturn(Optional.of(activeTrainee));
+        when(trainerRepository.findByUserUsernames(List.of())).thenReturn(List.of());
 
         List<TrainerInfo>  response = traineeService.updateTrainers(request);
 
         assertThat(response).isNotNull();
         assertThat(response).hasSize(0);
-        verify(traineeDao).updateTrainers("Jack.Black", List.of());
+        verify(traineeRepository).save(activeTrainee);
     }
 
     // =========================================================================
@@ -412,8 +426,8 @@ public class TraineeServiceImplTest {
                 TrainingType.Type.FITNESS.getName(), "Jack.Black", "Tom.Smith"
         );
 
-        when(traineeDao.getTrainee("Jack.Black")).thenReturn(Optional.of(activeTrainee));
-        when(trainingDao.findForTrainee("Jack.Black", null, null, null, null))
+        when(traineeRepository.findByUserUsername("Jack.Black")).thenReturn(Optional.of(activeTrainee));
+        when(trainingRepository.findForTrainee("Jack.Black", null, null, null, null))
                 .thenReturn(List.of(training));
         when(viewMapper.toView(training)).thenReturn(trainingView);
 
@@ -434,13 +448,13 @@ public class TraineeServiceImplTest {
                 validCredentials.username(), from, to, "Tom.Smith", TrainingType.Type.FITNESS.getName()
         );
 
-        when(traineeDao.getTrainee("Jack.Black")).thenReturn(Optional.of(activeTrainee));
-        when(trainingDao.findForTrainee("Jack.Black", from, to, "Tom.Smith", TrainingType.Type.FITNESS))
+        when(traineeRepository.findByUserUsername("Jack.Black")).thenReturn(Optional.of(activeTrainee));
+        when(trainingRepository.findForTrainee("Jack.Black", from, to, "Tom.Smith", TrainingType.Type.FITNESS))
                 .thenReturn(List.of());
 
         List<TrainingView> response = traineeService.getTrainings(request);
 
         assertThat(response).isEmpty();
-        verify(trainingDao).findForTrainee("Jack.Black", from, to, "Tom.Smith", TrainingType.Type.FITNESS);
+        verify(trainingRepository).findForTrainee("Jack.Black", from, to, "Tom.Smith", TrainingType.Type.FITNESS);
     }
 }
