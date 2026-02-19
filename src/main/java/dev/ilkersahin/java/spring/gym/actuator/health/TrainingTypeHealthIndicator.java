@@ -14,12 +14,12 @@ public class TrainingTypeHealthIndicator implements HealthIndicator {
 
     @Override
     public Health health() {
-        Long count = em.createQuery(
-                "SELECT COUNT(t) FROM TrainingType t", Long.class
-        ).getSingleResult();
-
-        return count > 0
-                ? Health.up().withDetail("trainingTypes", count).build()
+        boolean exists = !em.createQuery("SELECT t.id FROM TrainingType t")
+                .setMaxResults(1)
+                .getResultList()
+                .isEmpty();
+        return exists
+                ? Health.up().withDetail("trainingTypes", "exist").build()
                 : Health.down().withDetail("trainingTypes", 0).build();
     }
 }
