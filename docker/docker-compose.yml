@@ -15,6 +15,36 @@ services:
     networks:
       - gymapp-network
 
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    container_name: gymapp-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    networks:
+      - gymapp-network
+
+  grafana:
+    image: grafana/grafana:11.3.0
+    container_name: gymapp-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    depends_on:
+      - prometheus
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    networks:
+      - gymapp-network
+
+volumes:
+  grafana-data:
+
 networks:
   gymapp-network:
     driver: bridge

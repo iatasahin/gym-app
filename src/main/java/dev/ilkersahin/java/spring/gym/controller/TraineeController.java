@@ -14,6 +14,7 @@ import dev.ilkersahin.java.spring.gym.dto.view.TrainingView;
 import dev.ilkersahin.java.spring.gym.exception.UserAlreadyActiveException;
 import dev.ilkersahin.java.spring.gym.exception.UserAlreadyInactiveException;
 import dev.ilkersahin.java.spring.gym.service.TraineeService;
+import io.micrometer.core.annotation.Timed;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
@@ -48,6 +49,10 @@ import java.util.List;
 @RequiredArgsConstructor
 @Slf4j
 @Tag(name = "Trainees", description = "Trainee registration and profile management")
+@Timed(
+        value = "gym.http.trainee",
+        description = "Trainee controller HTTP requests"
+)
 public class TraineeController extends BaseController {
 
     private final TraineeService traineeService;
@@ -299,6 +304,12 @@ public class TraineeController extends BaseController {
             @ApiResponse(responseCode = "403", description = "Access denied",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
+    @Timed(
+            value = "gym.http.trainee.training.search",
+            description = "Training search for Trainee endpoint",
+            percentiles = {0.95, 0.99},
+            histogram = true
+    )
     public ResponseEntity<List<TrainingView>> getTrainings(
             @Parameter(description = "Trainee username")
             @PathVariable String username,
