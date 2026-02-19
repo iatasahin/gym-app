@@ -1,0 +1,44 @@
+{
+  "uid": "spring-gym-overview",
+  "title": "Spring Gym – Overview",
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "10s",
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Total Users",
+      "gridPos": { "x": 0, "y": 0, "w": 4, "h": 4 },
+      "targets": [{ "expr": "gym_users" }]
+    },
+    {
+      "type": "stat",
+      "title": "Total Trainees",
+      "gridPos": { "x": 4, "y": 0, "w": 4, "h": 4 },
+      "targets": [{ "expr": "gym_trainees" }]
+    },
+    {
+      "type": "stat",
+      "title": "Total Trainers",
+      "gridPos": { "x": 8, "y": 0, "w": 4, "h": 4 },
+      "targets": [{ "expr": "gym_trainers" }]
+    },
+    {
+      "type": "stat",
+      "title": "Total Training Minutes",
+      "gridPos": { "x": 12, "y": 0, "w": 4, "h": 4 },
+      "targets": [{ "expr": "gym_training_duration_total_minutes" }]
+    },
+    {
+      "type": "timeseries",
+      "title": "HTTP Requests (All)",
+      "gridPos": { "x": 0, "y": 4, "w": 16, "h": 6 },
+      "targets": [
+        {
+          "expr": "sum(rate(http_server_requests_seconds_count[1m]))"
+        }
+      ]
+    }
+  ]
+}

@@ -3,6 +3,7 @@ package dev.ilkersahin.java.spring.gym.service.impl;
 import dev.ilkersahin.java.spring.gym.dto.request.TrainingCreateRequest;
 import dev.ilkersahin.java.spring.gym.exception.TraineeDoesNotExistException;
 import dev.ilkersahin.java.spring.gym.exception.TrainerDoesNotExistException;
+import dev.ilkersahin.java.spring.gym.metrics.TrainingMetrics;
 import dev.ilkersahin.java.spring.gym.model.Trainee;
 import dev.ilkersahin.java.spring.gym.model.Trainer;
 import dev.ilkersahin.java.spring.gym.model.Training;
@@ -26,6 +27,7 @@ public class TrainingServiceImpl implements TrainingService {
     private final TraineeRepository traineeRepository;
     private final TrainerRepository trainerRepository;
     private final TrainingRepository trainingRepository;
+    private final TrainingMetrics  trainingMetrics;
 
     @Override
     public void createTraining(@Valid TrainingCreateRequest request) {
@@ -54,6 +56,9 @@ public class TrainingServiceImpl implements TrainingService {
         );
 
         trainingRepository.save(training);
+
+        trainingMetrics.incrementTrainings();
+        trainingMetrics.addTrainingDuration(request.durationMinutes());
     }
 
     // -------------------------------------------------------------------------

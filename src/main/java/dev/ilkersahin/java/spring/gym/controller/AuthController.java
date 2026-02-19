@@ -10,6 +10,7 @@ import dev.ilkersahin.java.spring.gym.repository.TraineeRepository;
 import dev.ilkersahin.java.spring.gym.repository.TrainerRepository;
 import dev.ilkersahin.java.spring.gym.security.JwtService;
 import dev.ilkersahin.java.spring.gym.security.Role;
+import io.micrometer.core.annotation.Timed;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -31,6 +32,10 @@ import java.util.Optional;
 @RequiredArgsConstructor
 @Slf4j
 @Tag(name = "Authentication", description = "Login and token management")
+@Timed(
+        value = "gym.http.auth",
+        description = "Authentication controller HTTP requests"
+)
 public class AuthController {
 
     private final TraineeRepository traineeRepository;
