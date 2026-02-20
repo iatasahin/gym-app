@@ -9,6 +9,7 @@ import dev.ilkersahin.java.spring.gym.repository.UserRepository;
 import dev.ilkersahin.java.spring.gym.security.JwtService;
 import dev.ilkersahin.java.spring.gym.security.Role;
 import dev.ilkersahin.java.spring.gym.security.service.CustomUserDetailsService;
+import dev.ilkersahin.java.spring.gym.security.service.LoginAttemptService;
 import io.micrometer.core.annotation.Timed;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -16,6 +17,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -41,6 +43,8 @@ public class AuthController {
     private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
     private final CustomUserDetailsService userDetailsService;
+    private final LoginAttemptService loginAttemptService;
+    private final HttpServletRequest httpRequest;
 
     @PostMapping("/login")
     @Operation(summary = "User login", description = "Authenticate user and receive JWT token")
@@ -56,15 +60,34 @@ public class AuthController {
 
         log.info("Login attempt for user '{}'", request.username());
 
+        loginAttemptService.checkIfBlocked(request.username());
+
+        String clientIp = getClientIpAddress();
+
         User user = userRepository.findByUsername(request.username())
                 .orElse(null);
         if (user == null || !passwordEncoder.matches(request.password(), user.getPassword())) {
             log.warn("Failed login attempt for user '{}'", request.username());
+            loginAttemptService.recordFailedAttempt(request.username(), clientIp);
             throw new InvalidCredentialsException("Invalid username or password");
         }
         Role role = userDetailsService.getPrimaryRole(user);
         String token = jwtService.generateToken(request.username(), role);
+        loginAttemptService.clearAttempts(request.username());
+
         log.info("User '{}' logged in successfully with role '{}'", request.username(), role);
         return ResponseEntity.ok(new LoginResponse(token, request.username(), role));
+    }
+
+    /**
+     * Extract client IP address from request, handling proxies.
+     */
+    private String getClientIpAddress() {
+        String xForwardedFor = httpRequest.getHeader("X-Forwarded-For");
+        if (xForwardedFor != null && !xForwardedFor.isEmpty()) {
+            // X-Forwarded-For can contain multiple IPs; the first one is the client
+            return xForwardedFor.split(",")[0].trim();
+        }
+        return httpRequest.getRemoteAddr();
     }
 }
