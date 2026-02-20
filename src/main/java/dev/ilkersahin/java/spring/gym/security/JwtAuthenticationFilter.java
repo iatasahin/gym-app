@@ -8,14 +8,16 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 @Component
 @Order(2)
@@ -25,35 +27,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private static final String BEARER_PREFIX = "Bearer ";
 
-    /**
-     * Request attribute key for storing authenticated username.
-     * Controllers can access via: request.getAttribute(AUTHENTICATED_USERNAME)
-     */
-    public static final String AUTHENTICATED_USERNAME = "authenticatedUsername";
-    public static final String AUTHENTICATED_ROLE = "authenticatedRole";
-
     private final JwtService jwtService;
-    private final AuthContextImpl authContextImpl;
-
-    // Public endpoints that don't require authentication
-    private static final Set<String> PUBLIC_ENDPOINTS = Set.of(
-            "/actuator",
-            "/api/v1/auth/login",
-            "/api/v1/training-types",
-            "/api-docs",
-            "/api-docs.json",
-            "/static/swagger-ui.html",
-            "/swagger-ui",
-            "/v3/api-docs",
-            "/webjars"
-    );
-
-
-    // Endpoints that are public only for POST (registration)
-    private static final Set<String> PUBLIC_POST_ENDPOINTS = Set.of(
-            "/api/v1/trainees",
-            "/api/v1/trainers"
-    );
 
     @Override
     protected void doFilterInternal(
@@ -65,76 +39,61 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String path = request.getRequestURI();
         String method = request.getMethod();
 
-        // Check if endpoint is public
-        if (isPublicEndpoint(path, method)) {
-            log.debug("Public endpoint accessed: {} {}", method, path);
-            filterChain.doFilter(request, response);
-            return;
-        }
-
         // Extract Authorization header
         String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
 
         if (authHeader == null || !authHeader.startsWith(BEARER_PREFIX)) {
-            log.warn("Missing or invalid Authorization header for {} {}", method, path);
-            sendUnauthorizedResponse(response, "Missing or invalid Authorization header");
+            // No token present - let Spring Security handle authorization
+            filterChain.doFilter(request, response);
             return;
         }
 
         // Extract and validate token
         String token = authHeader.substring(BEARER_PREFIX.length());
+
+        // Skip if already authenticated
+        if (SecurityContextHolder.getContext().getAuthentication() != null) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         Optional<String> usernameOpt = jwtService.validateAndGetUsername(token);
 
         if (usernameOpt.isEmpty()) {
             log.warn("Invalid or expired JWT for {} {}", method, path);
-            sendUnauthorizedResponse(response, "Invalid or expired token");
+            // Invalid token - let Spring Security handle (will result in 401)
+            filterChain.doFilter(request, response);
             return;
         }
 
-        // Token is valid - set username in request attributes for controllers
+        // Token is valid - set up Spring Security context
         String username = usernameOpt.get();
-        request.setAttribute(AUTHENTICATED_USERNAME, username);
-        authContextImpl.setUsername(username);
-        authContextImpl.setAuthenticated(true);
+        Optional<Role> roleOpt = jwtService.getRole(token);
 
-        jwtService.getRole(token).ifPresent(role -> {
-                    request.setAttribute(AUTHENTICATED_ROLE, role);
-                    authContextImpl.setRole(role);
-                }
+        if (roleOpt.isEmpty()) {
+            log.warn("JWT token missing role claim for user: {}", username);
+            filterChain.doFilter(request, response);
+            return;
+        }
+        Role role = roleOpt.get();
+
+        List<SimpleGrantedAuthority> authorities = List.of(
+                new SimpleGrantedAuthority("ROLE_" + role.name())
         );
 
-        log.debug("Authenticated user '{}' accessing {} {}", username, method, path);
+        var authToken = new UsernamePasswordAuthenticationToken(
+                username,
+                null,  // credentials not needed after authentication
+                authorities
+        );
+
+        authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+
+        SecurityContextHolder.getContext().setAuthentication(authToken);
+
+        log.debug("Authenticated user '{}' with role '{}' accessing {} {}",
+                username, role, method, path);
 
         filterChain.doFilter(request, response);
-    }
-
-
-    private boolean isPublicEndpoint(String path, String method) {
-        // Check fully public endpoints
-        for (String publicPath : PUBLIC_ENDPOINTS) {
-            if (path.startsWith(publicPath)) {
-                return true;
-            }
-        }
-
-        // Check POST-only public endpoints (registration)
-        if ("POST".equalsIgnoreCase(method)) {
-            for (String publicPostPath : PUBLIC_POST_ENDPOINTS) {
-                if (path.equals(publicPostPath)) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
-    }
-
-    private void sendUnauthorizedResponse(HttpServletResponse response, String message) throws IOException {
-        response.setStatus(HttpStatus.UNAUTHORIZED.value());
-        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-        response.getWriter().write("""
-                {"error":"Unauthorized","message":"%s","status":401}
-                """.formatted(message)
-        );
     }
 }

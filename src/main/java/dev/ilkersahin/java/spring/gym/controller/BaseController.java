@@ -1,8 +1,8 @@
 package dev.ilkersahin.java.spring.gym.controller;
 
 import dev.ilkersahin.java.spring.gym.exception.UnauthorizedAccessException;
-import dev.ilkersahin.java.spring.gym.security.AuthContextHolder;
 import dev.ilkersahin.java.spring.gym.security.Role;
+import dev.ilkersahin.java.spring.gym.security.SecurityUtils;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Optional;
@@ -11,7 +11,7 @@ import java.util.Optional;
 public abstract class BaseController {
 
     protected String getAuthenticatedUsername() {
-        Optional<String> username = AuthContextHolder.getAuthenticatedUsername();
+        Optional<String> username = SecurityUtils.getCurrentUsername();
         if (username.isEmpty()) {
             throw new UnauthorizedAccessException("No authenticated user");
         }
@@ -19,7 +19,7 @@ public abstract class BaseController {
     }
 
     protected Optional<Role> getAuthenticatedRole() {
-        return AuthContextHolder.getAuthenticatedRole();
+        return SecurityUtils.getCurrentRole();
     }
 
     protected void verifyUserAccess(String requestedUsername) {

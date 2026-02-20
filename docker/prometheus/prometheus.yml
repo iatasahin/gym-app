@@ -8,6 +8,6 @@ scrape_configs:
     static_configs:
       - targets:
 #          Linux address for host.docker.internal
-          - "172.17.0.1:8080"
+          - "172.17.0.1:8081"
 #          MacOS & Windows, Docker Desktop address for application running on host
 #          - "host.docker.internal:8080"

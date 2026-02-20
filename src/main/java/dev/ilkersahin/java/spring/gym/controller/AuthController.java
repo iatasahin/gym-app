@@ -4,12 +4,11 @@ import dev.ilkersahin.java.spring.gym.dto.auth.LoginRequest;
 import dev.ilkersahin.java.spring.gym.dto.auth.LoginResponse;
 import dev.ilkersahin.java.spring.gym.dto.response.ErrorResponse;
 import dev.ilkersahin.java.spring.gym.exception.InvalidCredentialsException;
-import dev.ilkersahin.java.spring.gym.model.Trainee;
-import dev.ilkersahin.java.spring.gym.model.Trainer;
-import dev.ilkersahin.java.spring.gym.repository.TraineeRepository;
-import dev.ilkersahin.java.spring.gym.repository.TrainerRepository;
+import dev.ilkersahin.java.spring.gym.model.User;
+import dev.ilkersahin.java.spring.gym.repository.UserRepository;
 import dev.ilkersahin.java.spring.gym.security.JwtService;
 import dev.ilkersahin.java.spring.gym.security.Role;
+import dev.ilkersahin.java.spring.gym.security.service.CustomUserDetailsService;
 import io.micrometer.core.annotation.Timed;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -17,15 +16,15 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -38,9 +37,10 @@ import java.util.Optional;
 )
 public class AuthController {
 
-    private final TraineeRepository traineeRepository;
-    private final TrainerRepository trainerRepository;
+    private final UserRepository userRepository;
     private final JwtService jwtService;
+    private final PasswordEncoder passwordEncoder;
+    private final CustomUserDetailsService userDetailsService;
 
     @PostMapping("/login")
     @Operation(summary = "User login", description = "Authenticate user and receive JWT token")
@@ -48,35 +48,23 @@ public class AuthController {
             @ApiResponse(responseCode = "200", description = "Login successful",
                     content = @Content(schema = @Schema(implementation = LoginResponse.class))),
             @ApiResponse(responseCode = "401", description = "Invalid credentials",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "429", description = "Too many failed attempts",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
-    public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest request) {
+    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
 
         log.info("Login attempt for user '{}'", request.username());
 
-        // Try to authenticate as Trainee
-        Optional<Trainee> traineeOpt = traineeRepository.findByUserUsername(request.username());
-        if (traineeOpt.isPresent()) {
-            Trainee trainee = traineeOpt.get();
-            if (trainee.getUser().getPassword().equals(request.password())) {
-                String token = jwtService.generateToken(request.username(), Role.TRAINEE);
-                log.info("Trainee '{}' logged in successfully", request.username());
-                return ResponseEntity.ok(new LoginResponse(token, request.username(), Role.TRAINEE));
-            }
+        User user = userRepository.findByUsername(request.username())
+                .orElse(null);
+        if (user == null || !passwordEncoder.matches(request.password(), user.getPassword())) {
+            log.warn("Failed login attempt for user '{}'", request.username());
+            throw new InvalidCredentialsException("Invalid username or password");
         }
-
-        // Try to authenticate as Trainer
-        Optional<Trainer> trainerOpt = trainerRepository.findByUserUsername(request.username());
-        if (trainerOpt.isPresent()) {
-            Trainer trainer = trainerOpt.get();
-            if (trainer.getUser().getPassword().equals(request.password())) {
-                String token = jwtService.generateToken(request.username(), Role.TRAINER);
-                log.info("Trainer '{}' logged in successfully", request.username());
-                return ResponseEntity.ok(new LoginResponse(token, request.username(), Role.TRAINER));
-            }
-        }
-
-        log.warn("Failed login attempt for user '{}'", request.username());
-        throw new InvalidCredentialsException("Invalid username or password");
+        Role role = userDetailsService.getPrimaryRole(user);
+        String token = jwtService.generateToken(request.username(), role);
+        log.info("User '{}' logged in successfully with role '{}'", request.username(), role);
+        return ResponseEntity.ok(new LoginResponse(token, request.username(), role));
     }
 }

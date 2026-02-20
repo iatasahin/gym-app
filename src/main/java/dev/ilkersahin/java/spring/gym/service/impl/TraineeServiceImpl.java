@@ -12,6 +12,7 @@ import dev.ilkersahin.java.spring.gym.dto.view.TraineeView;
 import dev.ilkersahin.java.spring.gym.dto.view.TraineeWithListView;
 import dev.ilkersahin.java.spring.gym.dto.view.TrainerInfo;
 import dev.ilkersahin.java.spring.gym.dto.view.TrainingView;
+import dev.ilkersahin.java.spring.gym.exception.InvalidCredentialsException;
 import dev.ilkersahin.java.spring.gym.model.Trainee;
 import dev.ilkersahin.java.spring.gym.model.Trainer;
 import dev.ilkersahin.java.spring.gym.model.Training;
@@ -30,6 +31,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -48,6 +50,7 @@ public class TraineeServiceImpl implements TraineeService {
     private final UsernameGeneratorService usernameGeneratorService;
     private final PasswordGeneratorService passwordGeneratorService;
     private final ViewMapper viewMapper;
+    private final PasswordEncoder passwordEncoder;
 
     // -------------------------------------------------------------------------
     // CREATE
@@ -58,9 +61,10 @@ public class TraineeServiceImpl implements TraineeService {
         log.info("Creating Trainee: {} {}", request.firstName(), request.lastName());
 
         String username = usernameGeneratorService.generateUniqueUsername(request.firstName(), request.lastName());
-        String password = passwordGeneratorService.generate(10);
+        String rawPassword = passwordGeneratorService.generate(10);
+        String hashedPassword = passwordEncoder.encode(rawPassword);
 
-        User user = new User(request.firstName(), request.lastName(), username, password, true);
+        User user = new User(request.firstName(), request.lastName(), username, hashedPassword, true);
         userRepository.save(user);
 
         Trainee trainee = new Trainee();
@@ -72,7 +76,7 @@ public class TraineeServiceImpl implements TraineeService {
 
         log.info("Trainee created with username '{}'", saved.getUsername());
 
-        return new UserCreateResponse(saved.getUsername(), saved.getPassword());
+        return new UserCreateResponse(saved.getUsername(), rawPassword);
     }
 
     // -------------------------------------------------------------------------
@@ -127,8 +131,14 @@ public class TraineeServiceImpl implements TraineeService {
     @Override
     public Boolean changePassword(@Valid PasswordChangeRequest request) {
         Trainee trainee = findTraineeOrThrow(request.username());
+
+        if(!passwordEncoder.matches(request.oldPassword(), trainee.getUser().getPassword())){
+            log.warn("Password change failed for trainee '{}': incorrect old password", request.username());
+            throw new InvalidCredentialsException("Old password is incorrect");
+        }
         log.warn("Changing password of trainee '{}'", request.username());
-        trainee.getUser().setPassword(request.newPassword());
+        String hashedPassword = passwordEncoder.encode(request.newPassword());
+        trainee.getUser().setPassword(hashedPassword);
         userRepository.save(trainee.getUser());
         return true;
     }

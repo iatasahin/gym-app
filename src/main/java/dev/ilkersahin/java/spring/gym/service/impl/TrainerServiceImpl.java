@@ -16,6 +16,7 @@ import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,6 +34,7 @@ public class TrainerServiceImpl implements TrainerService {
     private final UsernameGeneratorService usernameGeneratorService;
     private final PasswordGeneratorService passwordGeneratorService;
     private final ViewMapper viewMapper;
+    private final PasswordEncoder passwordEncoder;
 
     // -------------------------------------------------------------------------
     // CREATE
@@ -43,9 +45,10 @@ public class TrainerServiceImpl implements TrainerService {
         log.info("Creating trainer: {} {}", request.firstName(), request.lastName());
 
         String username = usernameGeneratorService.generateUniqueUsername(request.firstName(), request.lastName());
-        String password = passwordGeneratorService.generate(10);
+        String rawPassword = passwordGeneratorService.generate(10);
+        String hashedPassword = passwordEncoder.encode(rawPassword);
 
-        User user = new User(request.firstName(), request.lastName(), username, password, true);
+        User user = new User(request.firstName(), request.lastName(), username, hashedPassword, true);
         userRepository.save(user);
 
         Trainer trainer = new Trainer();
@@ -56,7 +59,7 @@ public class TrainerServiceImpl implements TrainerService {
 
         log.info("Trainer created with username '{}'", saved.getUsername());
 
-        return new UserCreateResponse(saved.getUsername(), saved.getPassword());
+        return new UserCreateResponse(saved.getUsername(), rawPassword);
     }
 
     // -------------------------------------------------------------------------
@@ -109,11 +112,13 @@ public class TrainerServiceImpl implements TrainerService {
     public Boolean changePassword(@Valid PasswordChangeRequest request) {
         Trainer trainer = findTrainerOrThrow(request.username());
         // Verify old password
-        if (!trainer.getUser().getPassword().equals(request.oldPassword())) {
+        if(!passwordEncoder.matches(request.oldPassword(), trainer.getUser().getPassword())) {
+            log.warn("Password change failed for trainer '{}': incorrect old password", request.username());
             throw new InvalidCredentialsException("Old password is incorrect");
         }
         log.warn("Changing password of trainer '{}'", request.username());
-        trainer.getUser().setPassword(request.newPassword());
+        String hashedPassword = passwordEncoder.encode(request.newPassword());
+        trainer.getUser().setPassword(hashedPassword);
         userRepository.save(trainer.getUser());
         return true;
     }
