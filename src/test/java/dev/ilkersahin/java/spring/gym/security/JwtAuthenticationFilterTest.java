@@ -1,5 +1,6 @@
 package dev.ilkersahin.java.spring.gym.security;
 
+import dev.ilkersahin.java.spring.gym.security.service.TokenBlacklistService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -24,6 +25,7 @@ import static org.mockito.Mockito.*;
 public class JwtAuthenticationFilterTest {
 
     @Mock private JwtService jwtService;
+    @Mock private TokenBlacklistService tokenBlacklistService;
     @Mock private HttpServletRequest request;
     @Mock private HttpServletResponse response;
     @Mock private FilterChain filterChain;

@@ -7,12 +7,14 @@ import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.Date;
 import java.util.Optional;
 
@@ -24,6 +26,7 @@ public class JwtService {
     private String secret;
 
     @Value("${jwt.expiration-ms}")
+    @Getter
     private long expirationMs;
 
     private SecretKey signingKey;
@@ -102,6 +105,24 @@ public class JwtService {
             String roleStr = claims.get("role", String.class);
             return Optional.ofNullable(Role.fromString(roleStr));
         } catch (JwtException | RoleDoesNotExistException e) {
+            return Optional.empty();
+        }
+    }
+
+
+    public Optional<Instant> getExpiration(String token) {
+        try {
+            Claims claims = Jwts.parser()
+                    .verifyWith(signingKey)
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
+
+            Date expiration = claims.getExpiration();
+            return Optional.of(expiration.toInstant());
+
+        } catch (JwtException e) {
+            log.warn("Failed to extract expiration from token: {}", e.getMessage());
             return Optional.empty();
         }
     }

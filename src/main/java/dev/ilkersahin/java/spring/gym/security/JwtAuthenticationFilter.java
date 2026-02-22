@@ -1,5 +1,6 @@
 package dev.ilkersahin.java.spring.gym.security;
 
+import dev.ilkersahin.java.spring.gym.security.service.TokenBlacklistService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -28,6 +29,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private static final String BEARER_PREFIX = "Bearer ";
 
     private final JwtService jwtService;
+    private final TokenBlacklistService tokenBlacklistService;
 
     @Override
     protected void doFilterInternal(
@@ -53,6 +55,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         // Skip if already authenticated
         if (SecurityContextHolder.getContext().getAuthentication() != null) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        // Check if token is blacklisted (logged out)
+        if (tokenBlacklistService.isBlacklisted(token)) {
+            log.warn("Attempted use of blacklisted token");
+            // Token is blacklisted - let Spring Security handle (will result in 401)
             filterChain.doFilter(request, response);
             return;
         }
