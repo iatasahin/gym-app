@@ -45,9 +45,6 @@ public class TrainerControllerTest {
 
     @BeforeEach
     void setUp() {
-        // Stub verifyUserAccess to do nothing by default (bypass authentication)
-        lenient().doNothing().when(trainerController).verifyUserAccess(any());
-
         createRequest = new TrainerCreateRequest(
                 "Jane", "Smith", "Fitness"
         );
@@ -523,18 +520,5 @@ public class TrainerControllerTest {
         assertThat(response.getBody().get(0).trainingName()).isEqualTo("Morning Session");
         assertThat(response.getBody().get(1).trainingName()).isEqualTo("Evening Session");
         assertThat(response.getBody().get(2).trainingName()).isEqualTo("Weekend Workout");
-    }
-
-    @Test
-    @Order(609)
-    void getTrainings_shouldVerifyUserAccessIsCalled() {
-        when(trainerService.getTrainings(any(TrainingSearchRequestForTrainer.class)))
-                .thenReturn(List.of());
-
-        trainerController.getTrainings(
-                "Jane.Smith", null, null, null
-        );
-
-        verify(trainerController).verifyUserAccess("Jane.Smith");
     }
 }

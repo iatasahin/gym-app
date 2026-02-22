@@ -1,6 +1,7 @@
-package dev.ilkersahin.java.spring.gym.security;
+package dev.ilkersahin.java.spring.gym.security.selfservice;
 
 import dev.ilkersahin.java.spring.gym.exception.UnauthorizedAccessException;
+import dev.ilkersahin.java.spring.gym.security.SecurityUtils;
 import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
 import org.jspecify.annotations.Nullable;
@@ -23,7 +24,7 @@ public class SelfServiceAuthenticationInterceptor implements MethodInterceptor {
         }
 
         //Step 2: If the method is annotated with @SelfService, but the user is not authenticated, throw an exception
-        var authenticatedUsername = AuthContextHolder.getAuthenticatedUsername();
+        var authenticatedUsername = SecurityUtils.getCurrentUsername();
         if(authenticatedUsername.isEmpty()) {
             throw new UnauthorizedAccessException("User is not authenticated");
         }

@@ -1,4 +1,4 @@
-package dev.ilkersahin.java.spring.gym.security;
+package dev.ilkersahin.java.spring.gym.security.selfservice;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

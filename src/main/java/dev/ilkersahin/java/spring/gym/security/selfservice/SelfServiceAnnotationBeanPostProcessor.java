@@ -1,4 +1,4 @@
-package dev.ilkersahin.java.spring.gym.security;
+package dev.ilkersahin.java.spring.gym.security.selfservice;
 
 import org.springframework.aop.Advisor;
 import org.springframework.aop.framework.ProxyFactory;
