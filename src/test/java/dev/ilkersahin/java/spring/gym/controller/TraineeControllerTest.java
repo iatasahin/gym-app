@@ -47,9 +47,6 @@ public class TraineeControllerTest {
 
     @BeforeEach
     void setUp() {
-        // Stub verifyUserAccess to do nothing by default (bypass authentication)
-        lenient().doNothing().when(traineeController).verifyUserAccess(any());
-
         createRequest = new TraineeCreateRequest(
                 "John", "Doe", LocalDate.of(1990, 1, 1), "123 Main St"
         );

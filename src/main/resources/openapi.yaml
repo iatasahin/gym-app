@@ -40,7 +40,7 @@ tags:
     description: |
       Login and token management.
       
-      **Flow**: Register → Login → Use token for protected endpoints
+      **Flow**: Register → Login → Use token for protected endpoints → Logout
   - name: Trainees
     description: Trainee registration and profile management
   - name: Trainers
@@ -140,6 +140,63 @@ paths:
                 error: Unauthorized
                 message: Invalid username or password
                 path: /api/v1/auth/login
+        '429':
+          description: Too many failed login attempts - account temporarily locked
+          headers:
+            Retry-After:
+              description: Seconds until the account is unlocked
+              schema:
+                type: integer
+              example: 300
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                timestamp: "2024-01-15T10:30:00"
+                status: 429
+                error: Too Many Requests
+                message: Account temporarily locked due to multiple failed login attempts. Retry after 300 seconds.
+                path: /api/v1/auth/login
+  /api/v1/auth/logout:
+    post:
+      tags: [ Authentication ]
+      summary: User logout
+      description: |
+        Invalidate the current JWT token.
+
+        **🔒 Requires authentication**
+
+        After logout, the token cannot be used for any further requests.
+        The user must login again to get a new token.
+
+        **Note:** The token is blacklisted until its natural expiration time.
+      requestBody:
+        description: No request body required - token is extracted from Authorization header
+        required: false
+        content: { }
+      responses:
+        '200':
+          description: Logout successful - token invalidated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LogoutResponse'
+              example:
+                message: Successfully logged out
+                username: John.Doe
+        '401':
+          description: Not authenticated or invalid token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                timestamp: "2024-01-15T10:30:00"
+                status: 401
+                error: Unauthorized
+                message: Authentication required. Please provide a valid JWT token.
+                path: /api/v1/auth/logout
 
   # ==========================================================================
   # TRAINEES
@@ -781,6 +838,7 @@ components:
         - Token doesn't start with `Bearer `
         - Token is expired
         - Token signature is invalid
+        - Token has been invalidated (user logged out)
       content:
         application/json:
           schema:
@@ -855,7 +913,18 @@ components:
           enum: [TRAINEE, TRAINER]
           description: User's role in the system
           example: TRAINEE
-
+    LogoutResponse:
+      type: object
+      description: Response after successful logout
+      properties:
+        message:
+          type: string
+          description: Confirmation message
+          example: Successfully logged out
+        username:
+          type: string
+          description: Username of the logged out user
+          example: John.Doe
     # --------------------------------------------------------------------------
     # Trainee
     # --------------------------------------------------------------------------

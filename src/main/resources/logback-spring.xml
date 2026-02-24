@@ -30,7 +30,7 @@
 
     <logger name="dev.ilkersahin" level="DEBUG"/>
 
-    <springProfile name="local,dev">
+    <springProfile name="local,dev,test">
         <root level="DEBUG">
             <appender-ref ref="CONSOLE"/>
             <appender-ref ref="FILE"/>

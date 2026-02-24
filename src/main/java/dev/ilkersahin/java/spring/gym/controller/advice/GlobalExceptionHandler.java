@@ -1,11 +1,18 @@
 package dev.ilkersahin.java.spring.gym.controller.advice;
 
 import dev.ilkersahin.java.spring.gym.dto.response.ErrorResponse;
-import dev.ilkersahin.java.spring.gym.exception.*;
+import dev.ilkersahin.java.spring.gym.exception.AccountLockedException;
+import dev.ilkersahin.java.spring.gym.exception.InvalidCredentialsException;
+import dev.ilkersahin.java.spring.gym.exception.TraineeDoesNotExistException;
+import dev.ilkersahin.java.spring.gym.exception.TrainerDoesNotExistException;
+import dev.ilkersahin.java.spring.gym.exception.UnauthorizedAccessException;
+import dev.ilkersahin.java.spring.gym.exception.UserAlreadyActiveException;
+import dev.ilkersahin.java.spring.gym.exception.UserAlreadyInactiveException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -49,6 +56,26 @@ public class GlobalExceptionHandler {
                         HttpStatus.FORBIDDEN.value(),
                         "Forbidden",
                         e.getMessage(),
+                        request.getRequestURI()
+                ));
+    }
+
+    // =========================================================================
+    // TOO MANY REQUESTS (429) - Brute Force Protection
+    // =========================================================================
+
+    @ExceptionHandler(AccountLockedException.class)
+    public ResponseEntity<ErrorResponse> handleAccountLocked(
+            AccountLockedException e, HttpServletRequest request) {
+
+        log.warn("Account locked - too many failed attempts: {}", e.getMessage());
+
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                .header(HttpHeaders.RETRY_AFTER, String.valueOf(e.getRetryAfterSeconds()))
+                .body(new ErrorResponse(
+                        HttpStatus.TOO_MANY_REQUESTS.value(),
+                        "Too Many Requests",
+                        e.getMessage() + ". Retry after " + e.getRetryAfterSeconds() + " seconds.",
                         request.getRequestURI()
                 ));
     }

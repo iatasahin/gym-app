@@ -58,6 +58,10 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
 
         <!-- Web -->
         <!-- Micrometer Prometheus Registry -->
@@ -142,6 +146,11 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-webmvc-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security-test</artifactId>
             <scope>test</scope>
         </dependency>
         <!-- Testcontainers -->
@@ -240,9 +249,12 @@
                             </rules>
                             <excludes>
                                 <exclude>dev/ilkersahin/java/spring/gym/config/**</exclude>
+                                <exclude>dev/ilkersahin/java/spring/gym/security/config/**</exclude>
                                 <exclude>dev/ilkersahin/java/spring/gym/model/**</exclude>
                                 <exclude>dev/ilkersahin/java/spring/gym/dto/**</exclude>
                                 <exclude>dev/ilkersahin/java/spring/gym/exception/**</exclude>
+                                <exclude>dev/ilkersahin/java/spring/gym/actuator/**</exclude>
+                                <exclude>dev/ilkersahin/java/spring/gym/metrics/**</exclude>
                                 <exclude>dev/ilkersahin/java/spring/gym/SpringGymApplication.class</exclude>
                             </excludes>
                         </configuration>

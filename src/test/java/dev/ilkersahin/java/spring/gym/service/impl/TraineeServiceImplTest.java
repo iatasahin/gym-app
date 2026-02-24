@@ -15,6 +15,7 @@ import dev.ilkersahin.java.spring.gym.dto.view.TraineeWithListView;
 import dev.ilkersahin.java.spring.gym.dto.view.TrainerInfo;
 import dev.ilkersahin.java.spring.gym.dto.view.TrainerView;
 import dev.ilkersahin.java.spring.gym.dto.view.TrainingView;
+import dev.ilkersahin.java.spring.gym.exception.InvalidCredentialsException;
 import dev.ilkersahin.java.spring.gym.model.Trainee;
 import dev.ilkersahin.java.spring.gym.model.Trainer;
 import dev.ilkersahin.java.spring.gym.model.Training;
@@ -32,15 +33,16 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
@@ -53,6 +55,7 @@ public class TraineeServiceImplTest {
     @Mock private UsernameGeneratorService usernameGeneratorService;
     @Mock private PasswordGeneratorService passwordGeneratorService;
     @Mock private ViewMapper viewMapper;
+    @Mock private PasswordEncoder passwordEncoder;
 
     @InjectMocks
     private TraineeServiceImpl traineeService;
@@ -266,12 +269,36 @@ public class TraineeServiceImplTest {
         );
 
         when(traineeRepository.findByUserUsername("Jack.Black")).thenReturn(Optional.of(activeTrainee));
+        when(passwordEncoder.matches(validCredentials.password(), activeTrainee.getUser().getPassword()))
+                .thenReturn(true);
+        when(passwordEncoder.encode("newSecurePassword"))
+                .thenReturn("$2a$10$hashedNewPassword");
 
         Boolean response = traineeService.changePassword(request);
 
         assertThat(response).isTrue();
-        assertThat(activeTrainee.getUser().getPassword()).isEqualTo("newSecurePassword");
+        assertThat(activeTrainee.getUser().getPassword()).isEqualTo("$2a$10$hashedNewPassword");
         verify(userRepository).save(activeTrainee.getUser());
+        verify(passwordEncoder).encode("newSecurePassword");
+    }
+
+    @Test
+    @Order(402)
+    void changePassword_withInvalidOldPassword_shouldThrowException() {
+        PasswordChangeRequest request = new PasswordChangeRequest(
+                validCredentials.username(), "wrongOldPassword",
+                "newSecurePassword"
+        );
+
+        when(traineeRepository.findByUserUsername("Jack.Black")).thenReturn(Optional.of(activeTrainee));
+        when(passwordEncoder.matches("wrongOldPassword", activeTrainee.getUser().getPassword()))
+                .thenReturn(false);
+
+        assertThatThrownBy(() -> traineeService.changePassword(request))
+                .isInstanceOf(InvalidCredentialsException.class)
+                .hasMessage("Old password is incorrect");
+
+        verify(userRepository, never()).save(any());
     }
 
     // =========================================================================

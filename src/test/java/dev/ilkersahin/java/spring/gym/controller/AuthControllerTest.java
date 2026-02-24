@@ -2,35 +2,42 @@ package dev.ilkersahin.java.spring.gym.controller;
 
 import dev.ilkersahin.java.spring.gym.dto.auth.LoginRequest;
 import dev.ilkersahin.java.spring.gym.dto.auth.LoginResponse;
+import dev.ilkersahin.java.spring.gym.exception.AccountLockedException;
 import dev.ilkersahin.java.spring.gym.exception.InvalidCredentialsException;
 import dev.ilkersahin.java.spring.gym.model.Trainee;
 import dev.ilkersahin.java.spring.gym.model.Trainer;
 import dev.ilkersahin.java.spring.gym.model.TrainingType;
 import dev.ilkersahin.java.spring.gym.model.User;
-import dev.ilkersahin.java.spring.gym.repository.TraineeRepository;
-import dev.ilkersahin.java.spring.gym.repository.TrainerRepository;
+import dev.ilkersahin.java.spring.gym.repository.UserRepository;
 import dev.ilkersahin.java.spring.gym.security.JwtService;
 import dev.ilkersahin.java.spring.gym.security.Role;
+import dev.ilkersahin.java.spring.gym.security.service.CustomUserDetailsService;
+import dev.ilkersahin.java.spring.gym.security.service.LoginAttemptService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class AuthControllerTest {
 
-    @Mock private TraineeRepository traineeRepository;
-    @Mock private TrainerRepository trainerRepository;
+    @Mock private UserRepository userRepository;
     @Mock private JwtService jwtService;
+    @Mock private PasswordEncoder passwordEncoder;
+    @Mock private CustomUserDetailsService userDetailsService;
+    @Mock private LoginAttemptService loginAttemptService;
+    @Mock private HttpServletRequest httpRequest;
 
     @InjectMocks
     private AuthController authController;
@@ -50,6 +57,8 @@ public class AuthControllerTest {
         trainer = new Trainer();
         trainer.setUser(trainerUser);
         trainer.setSpecializationType(TrainingType.Type.FITNESS);
+
+        lenient().when(httpRequest.getRemoteAddr()).thenReturn("127.0.0.1");
     }
 
     // =========================================================================
@@ -60,7 +69,9 @@ public class AuthControllerTest {
     @Order(101)
     void login_withValidTraineeCredentials_shouldReturnToken() {
         LoginRequest request = new LoginRequest("John.Doe", "password123");
-        when(traineeRepository.findByUserUsername("John.Doe")).thenReturn(Optional.of(trainee));
+        when(userRepository.findByUsername("John.Doe")).thenReturn(Optional.of(traineeUser));
+        when(passwordEncoder.matches("password123", traineeUser.getPassword())).thenReturn(true);
+        when(userDetailsService.getPrimaryRole(traineeUser)).thenReturn(Role.TRAINEE);
         when(jwtService.generateToken("John.Doe", Role.TRAINEE)).thenReturn("traineeToken123");
 
         ResponseEntity<LoginResponse> response = authController.login(request);
@@ -76,8 +87,8 @@ public class AuthControllerTest {
     @Order(102)
     void login_withWrongTraineePassword_shouldTryTrainerThenFail() {
         LoginRequest request = new LoginRequest("John.Doe", "wrongPassword");
-        when(traineeRepository.findByUserUsername("John.Doe")).thenReturn(Optional.of(trainee));
-        when(trainerRepository.findByUserUsername("John.Doe")).thenReturn(Optional.empty());
+        when(userRepository.findByUsername("John.Doe")).thenReturn(Optional.of(traineeUser));
+        when(passwordEncoder.matches("wrongPassword", traineeUser.getPassword())).thenReturn(false);
 
         assertThatThrownBy(() -> authController.login(request))
                 .isInstanceOf(InvalidCredentialsException.class)
@@ -92,8 +103,9 @@ public class AuthControllerTest {
     @Order(201)
     void login_withValidTrainerCredentials_shouldReturnToken() {
         LoginRequest request = new LoginRequest("Jane.Smith", "trainerPass");
-        when(traineeRepository.findByUserUsername("Jane.Smith")).thenReturn(Optional.empty());
-        when(trainerRepository.findByUserUsername("Jane.Smith")).thenReturn(Optional.of(trainer));
+        when(userRepository.findByUsername("Jane.Smith")).thenReturn(Optional.of(trainerUser));
+        when(passwordEncoder.matches("trainerPass", trainerUser.getPassword())).thenReturn(true);
+        when(userDetailsService.getPrimaryRole(trainerUser)).thenReturn(Role.TRAINER);
         when(jwtService.generateToken("Jane.Smith", Role.TRAINER)).thenReturn("trainerToken456");
 
         ResponseEntity<LoginResponse> response = authController.login(request);
@@ -109,8 +121,8 @@ public class AuthControllerTest {
     @Order(202)
     void login_withWrongTrainerPassword_shouldFail() {
         LoginRequest request = new LoginRequest("Jane.Smith", "wrongPassword");
-        when(traineeRepository.findByUserUsername("Jane.Smith")).thenReturn(Optional.empty());
-        when(trainerRepository.findByUserUsername("Jane.Smith")).thenReturn(Optional.of(trainer));
+        when(userRepository.findByUsername("Jane.Smith")).thenReturn(Optional.of(trainerUser));
+        when(passwordEncoder.matches("wrongPassword", trainerUser.getPassword())).thenReturn(false);
 
         assertThatThrownBy(() -> authController.login(request))
                 .isInstanceOf(InvalidCredentialsException.class);
@@ -124,8 +136,7 @@ public class AuthControllerTest {
     @Order(301)
     void login_withNonExistentUser_shouldFail() {
         LoginRequest request = new LoginRequest("NonExistent", "anyPassword");
-        when(traineeRepository.findByUserUsername("NonExistent")).thenReturn(Optional.empty());
-        when(trainerRepository.findByUserUsername("NonExistent")).thenReturn(Optional.empty());
+        when(userRepository.findByUsername("NonExistent")).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> authController.login(request))
                 .isInstanceOf(InvalidCredentialsException.class)
@@ -133,19 +144,44 @@ public class AuthControllerTest {
     }
 
     // =========================================================================
-    // PRIORITY TESTS (400s) - Trainee checked before Trainer
+    // BRUTE FORCE PROTECTION TESTS (400s)
     // =========================================================================
 
     @Test
     @Order(401)
-    void login_userExistsAsBoth_shouldAuthenticateAsTraineeFirst() {
-        // Same username exists as both trainee and trainer (edge case)
+    void login_whenAccountLocked_shouldThrowAccountLockedException() {
         LoginRequest request = new LoginRequest("John.Doe", "password123");
-        when(traineeRepository.findByUserUsername("John.Doe")).thenReturn(Optional.of(trainee));
-        when(jwtService.generateToken("John.Doe", Role.TRAINEE)).thenReturn("traineeToken");
+        doThrow(new AccountLockedException(300))
+                .when(loginAttemptService).checkIfBlocked("John.Doe");
 
-        ResponseEntity<LoginResponse> response = authController.login(request);
+        assertThatThrownBy(() -> authController.login(request))
+                .isInstanceOf(AccountLockedException.class);
+    }
 
-        assertThat(response.getBody().role()).isEqualTo(Role.TRAINEE);
+    @Test
+    @Order(402)
+    void login_withFailedAttempt_shouldRecordAttempt() {
+        LoginRequest request = new LoginRequest("John.Doe", "wrongPassword");
+        when(userRepository.findByUsername("John.Doe")).thenReturn(Optional.of(traineeUser));
+        when(passwordEncoder.matches("wrongPassword", traineeUser.getPassword())).thenReturn(false);
+
+        assertThatThrownBy(() -> authController.login(request))
+                .isInstanceOf(InvalidCredentialsException.class);
+
+        verify(loginAttemptService).recordFailedAttempt(eq("John.Doe"), anyString());
+    }
+
+    @Test
+    @Order(403)
+    void login_withSuccessfulLogin_shouldClearAttempts() {
+        LoginRequest request = new LoginRequest("John.Doe", "password123");
+        when(userRepository.findByUsername("John.Doe")).thenReturn(Optional.of(traineeUser));
+        when(passwordEncoder.matches("password123", traineeUser.getPassword())).thenReturn(true);
+        when(userDetailsService.getPrimaryRole(traineeUser)).thenReturn(Role.TRAINEE);
+        when(jwtService.generateToken("John.Doe", Role.TRAINEE)).thenReturn("token");
+
+        authController.login(request);
+
+        verify(loginAttemptService).clearAttempts("John.Doe");
     }
 }
