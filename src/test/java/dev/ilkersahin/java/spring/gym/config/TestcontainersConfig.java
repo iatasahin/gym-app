@@ -4,10 +4,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Profile;
 import org.testcontainers.mysql.MySQLContainer;
 
 @TestConfiguration(proxyBeanMethods = false)
 @Slf4j
+@Profile("integration-test")
 public class TestcontainersConfig {
 
     @Bean
