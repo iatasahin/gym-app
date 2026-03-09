@@ -6,6 +6,7 @@ import io.micrometer.core.annotation.Timed;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -33,9 +34,34 @@ public class TrainingTypeController {
     // =========================================================================
 
     @GetMapping
-    @Operation(summary = "Get all training types", description = "Public endpoint - no authentication required")
-    @ApiResponse(responseCode = "200", description = "List of training types",
-            content = @Content(array = @ArraySchema(schema = @Schema(implementation = TrainingTypeView.class)))
+    @Operation(
+            summary = "Get all training types",
+            description = """
+            Returns all available training types.
+            
+            **Public endpoint - no authentication required.**
+            
+            Training types are predefined and cannot be modified by users.
+            Use these values when creating trainers (specialization) or training sessions.
+            """,
+            security = {}
+    )
+    @ApiResponse(
+            responseCode = "200",
+            description = "List of training types",
+            content = @Content(
+                    mediaType = "application/json",
+                    array = @ArraySchema(schema = @Schema(implementation = TrainingTypeView.class)),
+                    examples = @ExampleObject(value = """
+                [
+                    {"trainingTypeId": 1, "trainingType": "Fitness"},
+                    {"trainingTypeId": 2, "trainingType": "Yoga"},
+                    {"trainingTypeId": 3, "trainingType": "Zumba"},
+                    {"trainingTypeId": 4, "trainingType": "Stretching"},
+                    {"trainingTypeId": 5, "trainingType": "Resistance"}
+                ]
+                """)
+            )
     )
     public ResponseEntity<List<TrainingTypeView>> getTrainingTypes() {
         log.info("Getting all training types");
