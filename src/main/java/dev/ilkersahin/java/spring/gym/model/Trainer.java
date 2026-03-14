@@ -70,25 +70,7 @@ public class Trainer {
         this.specialization = specialization;
     }
 
-    // Legacy Constructor
-    public Trainer(
-            String firstName, String lastName, String username, String password, boolean isActive,
-            TrainingType.Type specialization, UUID trainerId
-    ) {
-        this(firstName, lastName, username, password, isActive, TrainingType.fromEnum(specialization));
-    }
-
     //    --------------------- Getters/Setters delegating to user --------------------- //
-
-    public UUID getUserId() {
-        if (user == null) return null;
-        return user.getUserId();
-    }
-
-    public void setUserId(UUID userId) {
-        if (user == null) return;
-        user.setUserId(userId);
-    }
 
     public boolean isActive() {
         if (user == null) return false;

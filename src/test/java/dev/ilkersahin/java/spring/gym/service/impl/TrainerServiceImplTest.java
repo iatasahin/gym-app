@@ -194,7 +194,7 @@ class TrainerServiceImplTest {
         when(trainerRepository.findByUserUsername("Tom.Smith")).thenReturn(Optional.of(trainer));
         when(trainerRepository.save(trainer)).thenReturn(trainer);
 
-        TrainerWithListView response = trainerService.updateTrainer(request);
+        trainerService.updateTrainer(request);
 
         assertThat(trainer.getUser().getFirstName()).isEqualTo("Tom");
         assertThat(trainer.getUser().getLastName()).isEqualTo("Smith");

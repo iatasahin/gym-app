@@ -1,6 +1,8 @@
 package dev.ilkersahin.java.spring.gym.security;
 
 import org.junit.jupiter.api.*;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Optional;
@@ -8,7 +10,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-public class JwtServiceTest {
+class JwtServiceTest {
 
     private JwtService jwtService;
 
@@ -75,8 +77,7 @@ public class JwtServiceTest {
 
         Optional<String> result = jwtService.validateAndGetUsername(token);
 
-        assertThat(result).isPresent();
-        assertThat(result.get()).isEqualTo("testUser");
+        assertThat(result).isPresent().contains("testUser");
     }
 
     @Test
@@ -126,8 +127,7 @@ public class JwtServiceTest {
 
         Optional<Role> result = jwtService.getRole(token);
 
-        assertThat(result).isPresent();
-        assertThat(result.get()).isEqualTo(Role.TRAINEE);
+        assertThat(result).isPresent().contains(Role.TRAINEE);
     }
 
     @Test
@@ -137,8 +137,7 @@ public class JwtServiceTest {
 
         Optional<Role> result = jwtService.getRole(token);
 
-        assertThat(result).isPresent();
-        assertThat(result.get()).isEqualTo(Role.TRAINER);
+        assertThat(result).isPresent().contains(Role.TRAINER);
     }
 
     @Test
@@ -174,26 +173,11 @@ public class JwtServiceTest {
         assertThat(result).isEqualTo("testUser");
     }
 
-    @Test
+    @ParameterizedTest(name = "[{index}] Token ''{0}'' should return ''unknown''")
+    @ValueSource(strings = {"not-a-valid-token", "", "header.!!!invalid-base64!!!.signature"})
     @Order(402)
-    void extractUsernameUnsafe_withInvalidToken_shouldReturnUnknown() {
-        String result = jwtService.extractUsernameUnsafe("not-a-valid-token");
-
-        assertThat(result).isEqualTo("unknown");
-    }
-
-    @Test
-    @Order(403)
-    void extractUsernameUnsafe_withEmptyToken_shouldReturnUnknown() {
-        String result = jwtService.extractUsernameUnsafe("");
-
-        assertThat(result).isEqualTo("unknown");
-    }
-
-    @Test
-    @Order(404)
-    void extractUsernameUnsafe_withMalformedBase64_shouldReturnUnknown() {
-        String result = jwtService.extractUsernameUnsafe("header.!!!invalid-base64!!!.signature");
+    void extractUsernameUnsafe_withInvalidOrEmptyOrMalformedToken_shouldReturnUnknown(String token) {
+        String result = jwtService.extractUsernameUnsafe(token);
 
         assertThat(result).isEqualTo("unknown");
     }

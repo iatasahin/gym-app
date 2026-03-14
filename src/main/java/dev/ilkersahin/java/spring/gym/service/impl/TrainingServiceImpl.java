@@ -66,8 +66,7 @@ public class TrainingServiceImpl implements TrainingService {
     // -------------------------------------------------------------------------
 
     private Trainee findTraineeOrThrow(String username) {
-        Trainee trainee = traineeRepository.findByUserUsername(username)
+        return traineeRepository.findByUserUsername(username)
                 .orElseThrow(() -> new TraineeDoesNotExistException("Trainee not found"));
-        return trainee;
     }
 }

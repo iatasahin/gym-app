@@ -12,7 +12,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-public class SecurityUtilsTest {
+class SecurityUtilsTest {
 
     @AfterEach
     void tearDown() {

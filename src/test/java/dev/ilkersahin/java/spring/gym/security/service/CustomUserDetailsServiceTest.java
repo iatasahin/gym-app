@@ -22,7 +22,7 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-public class CustomUserDetailsServiceTest {
+class CustomUserDetailsServiceTest {
 
     @Mock private UserRepository userRepository;
 

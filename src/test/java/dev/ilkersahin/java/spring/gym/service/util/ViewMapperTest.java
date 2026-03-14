@@ -11,7 +11,7 @@ import java.time.LocalDate;
 import static org.assertj.core.api.Assertions.*;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-public class ViewMapperTest {
+class ViewMapperTest {
 
     private ViewMapper viewMapper;
 

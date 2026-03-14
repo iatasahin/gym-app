@@ -39,7 +39,7 @@ public class LoginAttemptService {
         int attempts = loginAttemptRepository.countRecentAttempts(username, windowStart);
 
         if (attempts >= properties.getMaxAttempts()) {
-            long retryAfterSeconds = calculateRetryAfterSeconds(username, windowStart);
+            long retryAfterSeconds = calculateRetryAfterSeconds(username);
             log.warn("User '{}' is blocked. {} failed attempts in the last {} minutes. Retry after {} seconds.",
                     username, attempts, properties.getBlockDurationMinutes(), retryAfterSeconds);
             throw new AccountLockedException(retryAfterSeconds);
@@ -104,7 +104,7 @@ public class LoginAttemptService {
     /**
      * Calculate how many seconds until the user can retry.
      */
-    private long calculateRetryAfterSeconds(String username, Instant windowStart) {
+    private long calculateRetryAfterSeconds(String username) {
         return loginAttemptRepository.findMostRecentAttempt(username)
                 .map(attempt -> {
                     // The first attempt in the window determines when the block expires

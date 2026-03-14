@@ -20,7 +20,7 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-public class UsernameGeneratorServiceTest {
+class UsernameGeneratorServiceTest {
     @Mock
     private UsernameCounterRepository usernameCounterRepository;
 
