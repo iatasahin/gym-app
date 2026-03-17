@@ -42,9 +42,19 @@ services:
     networks:
       - gymapp-network
 
+  main-app:
+    image: iasw/spring-gym:latest
+    depends_on:
+      - db
+    restart: on-failure
+    ports:
+      - "8080:8080"
+
+
 volumes:
   grafana-data:
 
 networks:
   gymapp-network:
+    name: gymapp-network
     driver: bridge

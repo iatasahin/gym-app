@@ -25,10 +25,22 @@ docker-compose up -d
 
 ### 2. Build & Run
 
+#### 2.a Run directly on host
+
 ```bash
 export SPRING_PROFILES_ACTIVE=local
 ./mvnw clean package
 java -jar target/spring-gym-1.1-SNAPSHOT.jar --spring.profiles.active=local
+```
+
+#### 2.b Run in a docker container
+
+```bash
+docker run \
+  -p 8080:8080 -p 8081:8081 \
+  -e SPRING_PROFILES_ACTIVE=docker \
+  --network gymapp-network \
+  iasw/spring-gym:latest
 ```
 
 ### 3. Access
@@ -83,6 +95,7 @@ java -jar target/spring-gym-1.1-SNAPSHOT.jar --spring.profiles.active=local
 | Profile            | Database       | Logging |
 |--------------------|----------------|---------|
 | `local`            | localhost:3306 | DEBUG   |
+| `docker`           | gymappMySqlContainer:3306 | INFO    |
 | `dev`              | dev-db:3306    | DEBUG   |
 | `stg`              | stg-db:3306    | INFO    |
 | `prod`             | prod-db:3306   | WARN    |

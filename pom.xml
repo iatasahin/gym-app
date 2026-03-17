@@ -207,6 +207,13 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
+                    <image>
+                        <name>iasw/${project.artifactId}:${project.version}</name>
+                        <tags>
+                            <tag>iasw/${project.artifactId}:latest</tag>
+                        </tags>
+                        <publish>true</publish>
+                    </image>
                     <excludes>
                         <exclude>
                             <groupId>org.projectlombok</groupId>
