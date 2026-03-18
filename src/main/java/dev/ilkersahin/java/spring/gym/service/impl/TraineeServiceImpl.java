@@ -1,5 +1,6 @@
 package dev.ilkersahin.java.spring.gym.service.impl;
 
+import dev.ilkersahin.java.spring.gym.client.WorkloadNotificationService;
 import dev.ilkersahin.java.spring.gym.dto.request.ActivationRequest;
 import dev.ilkersahin.java.spring.gym.dto.request.PasswordChangeRequest;
 import dev.ilkersahin.java.spring.gym.dto.request.TraineeCreateRequest;
@@ -8,7 +9,6 @@ import dev.ilkersahin.java.spring.gym.dto.request.TraineeUpdateRequest;
 import dev.ilkersahin.java.spring.gym.dto.request.TrainingSearchRequestForTrainee;
 import dev.ilkersahin.java.spring.gym.dto.response.ActivationResponse;
 import dev.ilkersahin.java.spring.gym.dto.response.UserCreateResponse;
-import dev.ilkersahin.java.spring.gym.dto.view.TraineeView;
 import dev.ilkersahin.java.spring.gym.dto.view.TraineeWithListView;
 import dev.ilkersahin.java.spring.gym.dto.view.TrainerInfo;
 import dev.ilkersahin.java.spring.gym.dto.view.TrainingView;
@@ -36,6 +36,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Set;
 
 @Service
 @Transactional
@@ -51,6 +52,7 @@ public class TraineeServiceImpl implements TraineeService {
     private final PasswordGeneratorService passwordGeneratorService;
     private final ViewMapper viewMapper;
     private final PasswordEncoder passwordEncoder;
+    private final WorkloadNotificationService workloadNotificationService;
 
     // -------------------------------------------------------------------------
     // CREATE
@@ -171,6 +173,15 @@ public class TraineeServiceImpl implements TraineeService {
     public Boolean deleteTrainee(String username) {
         Trainee trainee = findTraineeOrThrow(username);
         log.warn("Deleting trainee '{}'", username);
+
+        Set<Training> trainings = trainee.getTrainings();
+        if (!trainings.isEmpty()) {
+            log.info("Sending {} DELETE workload notifications for trainee '{}'",
+                    trainings.size(), username);
+            for (Training training : trainings) {
+                workloadNotificationService.notifyTrainingDeleted(training);
+            }
+        }
 
         User user = trainee.getUser();
         user.setTrainee(null);

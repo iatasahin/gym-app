@@ -1,5 +1,6 @@
 package dev.ilkersahin.java.spring.gym.service.impl;
 
+import dev.ilkersahin.java.spring.gym.client.WorkloadNotificationService;
 import dev.ilkersahin.java.spring.gym.dto.request.TrainingCreateRequest;
 import dev.ilkersahin.java.spring.gym.exception.TraineeDoesNotExistException;
 import dev.ilkersahin.java.spring.gym.exception.TrainerDoesNotExistException;
@@ -12,11 +13,14 @@ import dev.ilkersahin.java.spring.gym.repository.TraineeRepository;
 import dev.ilkersahin.java.spring.gym.repository.TrainerRepository;
 import dev.ilkersahin.java.spring.gym.repository.TrainingRepository;
 import dev.ilkersahin.java.spring.gym.service.TrainingService;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.UUID;
 
 @Service
 @Transactional
@@ -28,6 +32,7 @@ public class TrainingServiceImpl implements TrainingService {
     private final TrainerRepository trainerRepository;
     private final TrainingRepository trainingRepository;
     private final TrainingMetrics  trainingMetrics;
+    private final WorkloadNotificationService workloadNotificationService;
 
     @Override
     public void createTraining(@Valid TrainingCreateRequest request) {
@@ -59,6 +64,27 @@ public class TrainingServiceImpl implements TrainingService {
 
         trainingMetrics.incrementTrainings();
         trainingMetrics.addTrainingDuration(request.durationMinutes());
+
+        workloadNotificationService.notifyTrainingAdded(training);
+    }
+
+    @Override
+    public void deleteTraining(UUID trainingId) {
+
+        Training training = trainingRepository.findById(trainingId)
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "Training not found with id: " + trainingId));
+
+        log.info("Deleting training '{}' (id={}) for trainee '{}' with trainer '{}' on date '{}'",
+                training.getTrainingName(),
+                trainingId,
+                training.getTrainee().getUsername(),
+                training.getTrainer().getUsername(),
+                training.getTrainingDate());
+
+        trainingRepository.delete(training);
+
+        workloadNotificationService.notifyTrainingDeleted(training);
     }
 
     // -------------------------------------------------------------------------

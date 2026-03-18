@@ -290,11 +290,13 @@
                             <excludes>
                                 <exclude>dev/ilkersahin/java/spring/gym/config/**</exclude>
                                 <exclude>dev/ilkersahin/java/spring/gym/security/config/**</exclude>
+                                <exclude>dev/ilkersahin/java/spring/gym/security/selfservice/**</exclude>
                                 <exclude>dev/ilkersahin/java/spring/gym/repository/**</exclude>
                                 <exclude>dev/ilkersahin/java/spring/gym/model/**</exclude>
                                 <exclude>dev/ilkersahin/java/spring/gym/dto/**</exclude>
                                 <exclude>dev/ilkersahin/java/spring/gym/exception/**</exclude>
                                 <exclude>dev/ilkersahin/java/spring/gym/actuator/**</exclude>
+                                <exclude>dev/ilkersahin/java/spring/gym/client/**</exclude>
                                 <exclude>dev/ilkersahin/java/spring/gym/metrics/**</exclude>
                                 <exclude>dev/ilkersahin/java/spring/gym/SpringGymApplication.class</exclude>
                             </excludes>

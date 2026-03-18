@@ -5,6 +5,7 @@ import dev.ilkersahin.java.spring.gym.dto.response.ErrorResponse;
 import dev.ilkersahin.java.spring.gym.service.TrainingService;
 import io.micrometer.core.annotation.Timed;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -15,10 +16,14 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/trainings")
@@ -186,6 +191,35 @@ public class TrainingController {
         log.info("Adding training '{}' for trainee '{}'", request.trainingName(), request.traineeUsername());
 
         trainingService.createTraining(request);
+
+        return ResponseEntity.ok().build();
+    }
+
+
+    // =========================================================================
+    // DELETE TRAINING
+    // =========================================================================
+
+    @DeleteMapping("/{trainingId}")
+    @Operation(
+            summary = "Delete training session",
+            description = """
+                    Delete a training session by its ID.
+                    
+                    **🔒 Requires authentication**
+                    """
+    )
+    @SecurityRequirement(name = "bearerAuth")
+    @ApiResponse(responseCode = "200", description = "Training deleted successfully")
+    @ApiResponse(responseCode = "404", description = "Training not found",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    public ResponseEntity<Void> deleteTraining(
+            @Parameter(description = "Training session UUID", required = true)
+            @PathVariable UUID trainingId
+    ) {
+        log.info("Deleting training with id '{}'", trainingId);
+
+        trainingService.deleteTraining(trainingId);
 
         return ResponseEntity.ok().build();
     }

@@ -1,5 +1,6 @@
 package dev.ilkersahin.java.spring.gym.service.impl;
 
+import dev.ilkersahin.java.spring.gym.client.WorkloadNotificationService;
 import dev.ilkersahin.java.spring.gym.dto.auth.Credentials;
 import dev.ilkersahin.java.spring.gym.dto.request.TrainingCreateRequest;
 import dev.ilkersahin.java.spring.gym.exception.TraineeDoesNotExistException;
@@ -40,6 +41,8 @@ class TrainingServiceImplTest {
     private TrainingRepository trainingRepository;
     @Mock
     private TrainingMetrics trainingMetrics;
+    @Mock
+    private WorkloadNotificationService workloadNotificationService;
 
     @InjectMocks
     private TrainingServiceImpl trainingService;
