@@ -51,6 +51,19 @@ services:
     networks:
       - gymapp-network
 
+  workload-app:
+    image: iasw/spring-gym-workload:latest
+    container_name: gymapp-workload
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    depends_on:
+      - eureka
+    restart: on-failure
+    ports:
+      - "8082:8082"
+    networks:
+      - gymapp-network
+
   main-app:
     image: iasw/spring-gym:latest
     container_name: gymapp-main
@@ -62,6 +75,7 @@ services:
     restart: on-failure
     ports:
       - "8080:8080"
+      - "8081:8081"
     networks:
       - gymapp-network
 
