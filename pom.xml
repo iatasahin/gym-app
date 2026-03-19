@@ -171,6 +171,24 @@
         </dependency>
     </dependencies>
 
+    <profiles>
+        <profile>
+            <id>integration-test</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <groups>integration</groups>
+                            <excludedGroups>none</excludedGroups>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
     <build>
         <plugins>
             <plugin>
@@ -178,6 +196,7 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
                     <useModulePath>false</useModulePath>
+                    <excludedGroups>integration</excludedGroups>
                 </configuration>
             </plugin>
 
@@ -250,6 +269,7 @@
                             <excludes>
                                 <exclude>dev/ilkersahin/java/spring/gym/config/**</exclude>
                                 <exclude>dev/ilkersahin/java/spring/gym/security/config/**</exclude>
+                                <exclude>dev/ilkersahin/java/spring/gym/repository/**</exclude>
                                 <exclude>dev/ilkersahin/java/spring/gym/model/**</exclude>
                                 <exclude>dev/ilkersahin/java/spring/gym/dto/**</exclude>
                                 <exclude>dev/ilkersahin/java/spring/gym/exception/**</exclude>
