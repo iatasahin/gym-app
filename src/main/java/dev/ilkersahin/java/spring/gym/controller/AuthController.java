@@ -15,7 +15,9 @@ import dev.ilkersahin.java.spring.gym.security.service.LoginAttemptService;
 import dev.ilkersahin.java.spring.gym.security.service.TokenBlacklistService;
 import io.micrometer.core.annotation.Timed;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.headers.Header;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -54,14 +56,86 @@ public class AuthController {
     private final HttpServletRequest httpRequest;
 
     @PostMapping("/login")
-    @Operation(summary = "User login", description = "Authenticate user and receive JWT token")
-    @ApiResponse(responseCode = "200", description = "Login successful",
-            content = @Content(schema = @Schema(implementation = LoginResponse.class)))
-    @ApiResponse(responseCode = "401", description = "Invalid credentials",
-            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
-    @ApiResponse(responseCode = "429", description = "Too many failed attempts",
-            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
-    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
+    @Operation(summary = "User login", description = """
+            Authenticate user and receive JWT token.
+            
+            **Public endpoint - no authentication required.**
+            
+            The returned token should be used in the `Authorization` header for protected endpoints:
+            ```
+            Authorization: Bearer <token>
+            ```
+            """,
+            security = {})
+    @ApiResponse(
+            responseCode = "200",
+            description = "Login successful - JWT token returned",
+            content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = LoginResponse.class),
+                    examples = @ExampleObject(value = """
+                    {
+                        "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                        "username": "John.Doe",
+                        "role": "TRAINEE"
+                    }
+                    """)
+            ))
+    @ApiResponse(
+            responseCode = "401",
+            description = "Invalid credentials - username or password incorrect",
+            content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = """
+                    {
+                        "timestamp": "2024-01-15T10:30:00",
+                        "status": 401,
+                        "error": "Unauthorized",
+                        "message": "Invalid username or password",
+                        "path": "/api/v1/auth/login"
+                    }
+                    """)
+            ))
+    @ApiResponse(
+            responseCode = "429",
+            description = "Too many failed attempts",
+            headers = @Header(
+                    name = "Retry-After",
+                    description = "Seconds until the account is unlocked",
+                    schema = @Schema(type = "integer", example = "300")
+            ),
+            content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = ErrorResponse.class)
+            )
+    )
+    public ResponseEntity<LoginResponse> login(
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    required = true,
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = LoginRequest.class),
+                            examples = {
+                                    @ExampleObject(
+                                            name = "trainee",
+                                            summary = "Trainee Login",
+                                            value = """
+                                                    {"username": "John.Doe", "password": "mySecretPass123"}
+                                                    """
+
+                                    ),
+                                    @ExampleObject(
+                                            name = "trainer",
+                                            summary = "Trainer login",
+                                            value = """
+                                                    {"username": "Jane.Smith", "password": "trainerPass456"}
+                                                    """
+                                    )
+                            }
+                    )
+            )
+            @Valid @RequestBody LoginRequest request) {
 
         log.info("Login attempt for user '{}'", request.username());
 
@@ -87,12 +161,21 @@ public class AuthController {
     @PostMapping("/logout")
     @Operation(
             summary = "User logout",
-            description = "Invalidate the current JWT token",
-            security = @SecurityRequirement(name = "bearerAuth")
+            description = """
+            Invalidate the current JWT token.
+            
+            **🔒 Requires authentication**
+            
+            After logout, the token cannot be used for any further requests.
+            """
     )
-    @ApiResponse(responseCode = "200", description = "Logout successful",
-            content = @Content(schema = @Schema(implementation = LogoutResponse.class)))
-    @ApiResponse(responseCode = "401", description = "Not authenticated",
+    @SecurityRequirement(name = "bearerAuth")
+    @ApiResponse(
+            responseCode = "200",
+            description = "Logout successful - token invalidated",
+            content = @Content(schema = @Schema(implementation = LogoutResponse.class))
+    )
+    @ApiResponse(responseCode = "401", description = "Not authenticated or invalid token",
             content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     public ResponseEntity<LogoutResponse> logout(HttpServletRequest request) {
         // Get current authenticated username
