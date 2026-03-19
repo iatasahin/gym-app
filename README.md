@@ -6,6 +6,7 @@ JWT authentication, OpenAPI documentation, and Prometheus/Grafana monitoring.
 ## Tech Stack
 
 - **Spring Boot 4.0.2** (Web MVC, Data JPA, Validation, Actuator)
+- **Spring Security** + **BCrypt** password hashing
 - **MySQL 9.x** + **Flyway** migrations
 - **JWT** authentication (jjwt 0.13.0)
 - **OpenAPI 3.0** + Swagger UI
@@ -52,9 +53,12 @@ java -jar target/spring-gym-1.1-SNAPSHOT.jar --spring.profiles.active=local
 
 ### Protected (Bearer Token)
 
+- **Auth**: `POST /api/v1/auth/logout`
 - **Trainees**: `GET/PUT/DELETE /{username}`, password, status, trainers, trainings
 - **Trainers**: `GET/PUT /{username}`, password, status, trainings
 - **Trainings**: `POST /api/v1/trainings`
+
+> **Note**: Users can only access their own resources (enforced via `@SelfService` AOP annotation).
 
 ### Auth Flow
 
@@ -64,14 +68,25 @@ java -jar target/spring-gym-1.1-SNAPSHOT.jar --spring.profiles.active=local
 3. Use header: Authorization: Bearer <token>
 ```
 
+## Security Features
+
+| Feature                        | Description                                           |
+|--------------------------------|-------------------------------------------------------|
+| **BCrypt Hashing**             | Passwords hashed with BCrypt encoder                  |
+| **JWT Tokens**                 | 24-hour expiration, blacklisted on logout             |
+| **Brute Force Protection**     | 3 failed attempts → 5 min lockout (429 + Retry-After) |
+| **Token Blacklist**            | Logged-out tokens rejected until expiration           |
+| **Self-Service Authorization** | Users can only access their own resources             |
+
 ## Profiles
 
-| Profile | Database       | Logging |
-|---------|----------------|---------|
-| `local` | localhost:3306 | DEBUG   |
-| `dev`   | dev-db:3306    | DEBUG   |
-| `stg`   | stg-db:3306    | INFO    |
-| `prod`  | prod-db:3306   | WARN    |
+| Profile            | Database       | Logging |
+|--------------------|----------------|---------|
+| `local`            | localhost:3306 | DEBUG   |
+| `dev`              | dev-db:3306    | DEBUG   |
+| `stg`              | stg-db:3306    | INFO    |
+| `prod`             | prod-db:3306   | WARN    |
+| `integration-test` | TestContainers | DEBUG   |
 
 ```bash
 java -jar target/spring-gym-1.1-SNAPSHOT.jar --spring.profiles.active=local
@@ -93,11 +108,13 @@ docker-compose down -v # Stop + delete data
 ## Testing
 
 ```bash
-./mvnw clean test # Run tests
+./mvnw test                      # Unit tests only (~5s)
+./mvnw test -P integration-test  # Integration tests with MySQL
 xdg-open target/site/jacoco/index.html # Coverage report
 ```
 
-- **Testcontainers** for MySQL integration tests
+- **Unit tests**: Fast, no external dependencies
+- **Integration tests**: TestContainers + MySQL (tagged with `@Tag("integration")`)
 - **JaCoCo** enforces 80% line coverage (with exclusions)
 
 ## Project Structure
@@ -109,7 +126,7 @@ src/main/java/.../gym/
 ├── repository/ # Spring Data JPA
 ├── model/ # JPA entities
 ├── dto/ # Request/Response objects
-├── security/ # JWT filter, auth context
+├── security/ # JWT, Spring Security, @SelfService AOP
 ├── metrics/ # Custom Prometheus metrics
 └── actuator/health/ # Custom health indicators
 ```
