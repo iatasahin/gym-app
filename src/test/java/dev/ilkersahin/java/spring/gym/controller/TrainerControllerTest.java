@@ -27,7 +27,7 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-public class TrainerControllerTest {
+class TrainerControllerTest {
 
     @Mock private TrainerService trainerService;
 

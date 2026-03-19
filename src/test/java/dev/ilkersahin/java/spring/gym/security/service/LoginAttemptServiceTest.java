@@ -22,7 +22,7 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-public class LoginAttemptServiceTest {
+class LoginAttemptServiceTest {
 
     @Mock private LoginAttemptRepository loginAttemptRepository;
     @Mock private BruteForceProtectionProperties properties;
@@ -168,7 +168,7 @@ public class LoginAttemptServiceTest {
 
         int remaining = loginAttemptService.getRemainingAttempts(TEST_USERNAME);
 
-        assertThat(remaining).isEqualTo(0);
+        assertThat(remaining).isZero();
     }
 
     @Test

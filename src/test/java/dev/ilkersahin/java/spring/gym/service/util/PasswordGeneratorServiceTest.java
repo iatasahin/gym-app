@@ -4,6 +4,8 @@ import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import static org.assertj.core.api.Assertions.*;
 
@@ -61,36 +63,18 @@ class PasswordGeneratorServiceTest {
 
     // === CHARACTER VALIDATION TESTS ===
 
-    @Test
+    @ParameterizedTest(name = "[{index}] generate should contain ''{1}''")
+    @CsvSource({
+            "[A-Za-z0-9]+,only allowed characters",
+            ".*[A-Z].*,uppercase letters",
+            ".*[a-z].*,lowercase letters",
+            ".*[0-9].*,digits"
+    })
     @Order(201)
-    void generate_withAnyValidLength_shouldUseOnlyAllowedCharacters() {
+    void generate_withLargeLength_shouldContainUppercaseLowercaseAndDigits(String regex, String content) {
         String pw = service.generate(100);
 
-        assertThat(pw).matches("[A-Za-z0-9]+");
-    }
-
-    @Test
-    @Order(202)
-    void generate_withLargeLength_shouldContainUppercaseLetters() {
-        String password = service.generate(100); // Large sample for statistical confidence
-
-        assertThat(password).matches(".*[A-Z].*");
-    }
-
-    @Test
-    @Order(203)
-    void generate_withLargeLength_shouldContainLowercaseLetters() {
-        String password = service.generate(100);
-
-        assertThat(password).matches(".*[a-z].*");
-    }
-
-    @Test
-    @Order(204)
-    void generate_withLargeLength_shouldContainDigits() {
-        String password = service.generate(100);
-
-        assertThat(password).matches(".*[0-9].*");
+        assertThat(pw).matches(regex);
     }
 
     @Test

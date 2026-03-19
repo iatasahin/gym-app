@@ -30,7 +30,7 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-public class AuthControllerTest {
+class AuthControllerTest {
 
     @Mock private UserRepository userRepository;
     @Mock private JwtService jwtService;

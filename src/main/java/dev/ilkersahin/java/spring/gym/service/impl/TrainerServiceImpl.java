@@ -172,15 +172,9 @@ public class TrainerServiceImpl implements TrainerService {
     // -------------------------------------------------------------------------
 
     private Trainer findTrainerOrThrow(String username) {
-        Trainer trainer = trainerRepository.findByUserUsername(username)
+        return trainerRepository.findByUserUsername(username)
                 .orElseThrow(() -> new EntityNotFoundException("Trainer not found"));
-        return trainer;
     }
-
-    private TrainerView toView(Trainer trainer) {
-        return viewMapper.toView(trainer);
-    }
-
 
     private TrainerWithListView toView(Trainer trainer, List<Trainee> trainees) {
         return new TrainerWithListView(

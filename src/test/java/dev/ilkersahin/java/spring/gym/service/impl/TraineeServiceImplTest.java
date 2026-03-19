@@ -10,10 +10,8 @@ import dev.ilkersahin.java.spring.gym.dto.request.TraineeUpdateRequest;
 import dev.ilkersahin.java.spring.gym.dto.request.TrainingSearchRequestForTrainee;
 import dev.ilkersahin.java.spring.gym.dto.response.ActivationResponse;
 import dev.ilkersahin.java.spring.gym.dto.response.UserCreateResponse;
-import dev.ilkersahin.java.spring.gym.dto.view.TraineeView;
 import dev.ilkersahin.java.spring.gym.dto.view.TraineeWithListView;
 import dev.ilkersahin.java.spring.gym.dto.view.TrainerInfo;
-import dev.ilkersahin.java.spring.gym.dto.view.TrainerView;
 import dev.ilkersahin.java.spring.gym.dto.view.TrainingView;
 import dev.ilkersahin.java.spring.gym.exception.InvalidCredentialsException;
 import dev.ilkersahin.java.spring.gym.model.Trainee;
@@ -46,7 +44,7 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-public class TraineeServiceImplTest {
+class TraineeServiceImplTest {
 
     @Mock private TraineeRepository traineeRepository;
     @Mock private TrainerRepository trainerRepository;
@@ -65,9 +63,6 @@ public class TraineeServiceImplTest {
     private Trainee activeTrainee;
     private Trainee inactiveTrainee;
     private Credentials validCredentials;
-    private Credentials wrongPasswordCredentials;
-    private Credentials nonExistentCredentials;
-    private TraineeView traineeView;
 
     @BeforeEach
     void setUp() {
@@ -83,13 +78,6 @@ public class TraineeServiceImplTest {
         inactiveTrainee.setUser(inactiveUser);
 
         validCredentials = new Credentials("Jack.Black", "password123");
-        wrongPasswordCredentials = new Credentials("Jack.Black", "wrongPassword");
-        nonExistentCredentials = new Credentials("Non.Existent", "password");
-
-        traineeView = new TraineeView(
-                "Jack.Black", "Jack", "Black", true,
-                LocalDate.of(1990, 1, 1), "123 Main St"
-        );
     }
 
     // =========================================================================
@@ -165,7 +153,7 @@ public class TraineeServiceImplTest {
         when(traineeRepository.findByUserUsername("Jack.Black")).thenReturn(Optional.of(activeTrainee));
         when(traineeRepository.save(activeTrainee)).thenReturn(activeTrainee);
 
-        TraineeWithListView response = traineeService.updateTrainee(request);
+        traineeService.updateTrainee(request);
 
         assertThat(activeTrainee.getUser().getFirstName()).isEqualTo("John");
         assertThat(activeTrainee.getUser().getLastName()).isEqualTo("Doe");
@@ -361,10 +349,6 @@ public class TraineeServiceImplTest {
         trainer.setUser(trainerUser);
         trainer.setSpecializationType(TrainingType.Type.YOGA);
 
-        TrainerView trainerView = new TrainerView(
-                "Tom.Smith", "Tom", "Smith", true, "Fitness"
-        );
-
         when(traineeRepository.findByUserUsername("Jack.Black")).thenReturn(Optional.of(activeTrainee));
         when(trainerRepository.findTrainersNotAssignedToTrainee("Jack.Black")).thenReturn(List.of(trainer));
 
@@ -412,8 +396,7 @@ public class TraineeServiceImplTest {
 
         List<TrainerInfo> response = traineeService.updateTrainers(request);
 
-        assertThat(response).isNotNull();
-        assertThat(response).hasSize(2);
+        assertThat(response).isNotNull().hasSize(2);
         assertThat(response.getFirst().username()).isEqualTo("Tom.Smith");
         assertThat(response.get(1).username()).isEqualTo("Jane.Doe");
         verify(traineeRepository).save(activeTrainee);
@@ -431,8 +414,7 @@ public class TraineeServiceImplTest {
 
         List<TrainerInfo>  response = traineeService.updateTrainers(request);
 
-        assertThat(response).isNotNull();
-        assertThat(response).hasSize(0);
+        assertThat(response).isNotNull().isEmpty();
         verify(traineeRepository).save(activeTrainee);
     }
 
@@ -460,8 +442,7 @@ public class TraineeServiceImplTest {
 
         List<TrainingView> response = traineeService.getTrainings(request);
 
-        assertThat(response).isNotNull();
-        assertThat(response).hasSize(1);
+        assertThat(response).isNotNull().hasSize(1);
         assertThat(response.getFirst().trainingName()).isEqualTo("Morning Session");
     }
 

@@ -55,24 +55,7 @@ public class Trainee {
     @ToString.Exclude
     private Set<Training> trainings = new HashSet<>();
 
-    public Trainee(String firstName, String lastName, String username, String password, boolean isActive, LocalDate dateOfBirth, String address, UUID traineeId) {
-        user = new User(firstName, lastName, username, password, isActive);
-
-        this.dateOfBirth = dateOfBirth;
-        this.address = address;
-    }
-
 //    --------------------- Getters/Setters delegating to user --------------------- //
-
-    public UUID getUserId() {
-        if (user == null) return null;
-        return user.getUserId();
-    }
-
-    public void setUserId(UUID userId) {
-        if (user == null) return;
-        user.setUserId(userId);
-    }
 
     public boolean isActive() {
         if (user == null) return false;

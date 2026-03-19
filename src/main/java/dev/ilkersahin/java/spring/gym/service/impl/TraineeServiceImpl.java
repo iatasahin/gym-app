@@ -242,13 +242,8 @@ public class TraineeServiceImpl implements TraineeService {
     // -------------------------------------------------------------------------
 
     private Trainee findTraineeOrThrow(String username) {
-        Trainee trainee = traineeRepository.findByUserUsername(username)
+        return traineeRepository.findByUserUsername(username)
                 .orElseThrow(() -> new EntityNotFoundException("Trainee not found"));
-        return trainee;
-    }
-
-    private TraineeView toView(Trainee trainee) {
-        return viewMapper.toView(trainee);
     }
 
     private TraineeWithListView toView(Trainee trainee, List<Trainer> trainers) {
