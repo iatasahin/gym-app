@@ -30,10 +30,23 @@
         <java.version>21</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <jjwt.version>0.13.0</jjwt.version>
+        <spring-cloud.version>2025.1.1</spring-cloud.version>
     </properties>
 
     <dependencies>
     <!-- Spring Boot Starters -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-openfeign</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-circuitbreaker-resilience4j</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-webmvc</artifactId>
@@ -160,6 +173,18 @@
         </dependency>
     </dependencies>
 
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${spring-cloud.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
     <profiles>
         <profile>
             <id>integration-test</id>
@@ -207,6 +232,13 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
+                    <image>
+                        <name>iasw/${project.artifactId}:${project.version}</name>
+                        <tags>
+                            <tag>iasw/${project.artifactId}:latest</tag>
+                        </tags>
+                        <publish>true</publish>
+                    </image>
                     <excludes>
                         <exclude>
                             <groupId>org.projectlombok</groupId>
@@ -258,11 +290,13 @@
                             <excludes>
                                 <exclude>dev/ilkersahin/java/spring/gym/config/**</exclude>
                                 <exclude>dev/ilkersahin/java/spring/gym/security/config/**</exclude>
+                                <exclude>dev/ilkersahin/java/spring/gym/security/selfservice/**</exclude>
                                 <exclude>dev/ilkersahin/java/spring/gym/repository/**</exclude>
                                 <exclude>dev/ilkersahin/java/spring/gym/model/**</exclude>
                                 <exclude>dev/ilkersahin/java/spring/gym/dto/**</exclude>
                                 <exclude>dev/ilkersahin/java/spring/gym/exception/**</exclude>
                                 <exclude>dev/ilkersahin/java/spring/gym/actuator/**</exclude>
+                                <exclude>dev/ilkersahin/java/spring/gym/client/**</exclude>
                                 <exclude>dev/ilkersahin/java/spring/gym/metrics/**</exclude>
                                 <exclude>dev/ilkersahin/java/spring/gym/SpringGymApplication.class</exclude>
                             </excludes>

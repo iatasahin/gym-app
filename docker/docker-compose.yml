@@ -1,7 +1,7 @@
 services:
   db:
     image: mysql:9.5
-    container_name: gymappMySqlContainer
+    container_name: gymapp-mysql
     ports:
       - "3306:3306"
     environment:
@@ -42,9 +42,48 @@ services:
     networks:
       - gymapp-network
 
+  eureka:
+    image: iasw/spring-gym-eureka:latest
+    container_name: gymapp-eureka
+    restart: on-failure
+    ports:
+      - "8761:8761"
+    networks:
+      - gymapp-network
+
+  workload-app:
+    image: iasw/spring-gym-workload:latest
+    container_name: gymapp-workload
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    depends_on:
+      - eureka
+    restart: on-failure
+    ports:
+      - "8082:8082"
+    networks:
+      - gymapp-network
+
+  main-app:
+    image: iasw/spring-gym:latest
+    container_name: gymapp-main
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    depends_on:
+      - db
+      - eureka
+    restart: on-failure
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+    networks:
+      - gymapp-network
+
+
 volumes:
   grafana-data:
 
 networks:
   gymapp-network:
+    name: gymapp-network
     driver: bridge
