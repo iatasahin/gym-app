@@ -18,6 +18,7 @@ services:
   prometheus:
     image: prom/prometheus:v2.53.0
     container_name: gymapp-prometheus
+    profiles: [monitoring]
     ports:
       - "9090:9090"
     volumes:
@@ -28,6 +29,7 @@ services:
   grafana:
     image: grafana/grafana:11.3.0
     container_name: gymapp-grafana
+    profiles: [monitoring]
     ports:
       - "3000:3000"
     environment:
@@ -66,6 +68,7 @@ services:
   workload-app:
     image: iasw/spring-gym-workload:latest
     container_name: gymapp-workload
+    profiles: [apps]
     environment:
       - SPRING_PROFILES_ACTIVE=docker
     depends_on:
@@ -80,6 +83,7 @@ services:
   main-app:
     image: iasw/spring-gym:latest
     container_name: gymapp-main
+    profiles: [apps]
     environment:
       - SPRING_PROFILES_ACTIVE=docker
     depends_on:
