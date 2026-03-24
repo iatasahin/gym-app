@@ -42,6 +42,18 @@ services:
     networks:
       - gymapp-network
 
+  artemis:
+    image: apache/activemq-artemis:2.44.0
+    container_name: gymapp-artemis
+    ports:
+      - "61616:61616"
+      - "8161:8161"
+    environment:
+      - ARTEMIS_USER=artemis
+      - ARTEMIS_PASSWORD=artemis
+    networks:
+      - gymapp-network
+
   eureka:
     image: iasw/spring-gym-eureka:latest
     container_name: gymapp-eureka
@@ -58,6 +70,7 @@ services:
       - SPRING_PROFILES_ACTIVE=docker
     depends_on:
       - eureka
+      - artemis
     restart: on-failure
     ports:
       - "8082:8082"
@@ -72,6 +85,7 @@ services:
     depends_on:
       - db
       - eureka
+      - artemis
     restart: on-failure
     ports:
       - "8080:8080"

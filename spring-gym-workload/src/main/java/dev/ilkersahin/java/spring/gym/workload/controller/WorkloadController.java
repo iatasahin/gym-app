@@ -16,20 +16,6 @@ import org.springframework.web.bind.annotation.*;
 public class WorkloadController {
     private final WorkloadService workloadService;
 
-    @PostMapping
-    public ResponseEntity<Void> processWorkload(@Valid @RequestBody WorkloadRequest request) {
-        log.info("Received workload request: trainer='{}', action={}, date={}, duration={}",
-                request.trainerUsername(), request.actionType(),
-                request.trainingDate(), request.trainingDuration());
-
-        workloadService.processWorkload(request);
-
-        log.info("Workload processed successfully: trainer='{}', action={}",
-                request.trainerUsername(), request.actionType());
-
-        return ResponseEntity.ok().build();
-    }
-
     @GetMapping("/{username}")
     public ResponseEntity<WorkloadResponse> getTrainerWorkload(@PathVariable String username) {
         log.info("Fetching workload for trainer '{}'", username);
