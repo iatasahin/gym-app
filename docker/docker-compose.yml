@@ -18,6 +18,7 @@ services:
   prometheus:
     image: prom/prometheus:v2.53.0
     container_name: gymapp-prometheus
+    profiles: [monitoring]
     ports:
       - "9090:9090"
     volumes:
@@ -28,6 +29,7 @@ services:
   grafana:
     image: grafana/grafana:11.3.0
     container_name: gymapp-grafana
+    profiles: [monitoring]
     ports:
       - "3000:3000"
     environment:
@@ -39,6 +41,18 @@ services:
       - grafana-data:/var/lib/grafana
       - ./grafana/provisioning:/etc/grafana/provisioning:ro
       - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    networks:
+      - gymapp-network
+
+  artemis:
+    image: apache/activemq-artemis:2.44.0
+    container_name: gymapp-artemis
+    ports:
+      - "61616:61616"
+      - "8161:8161"
+    environment:
+      - ARTEMIS_USER=artemis
+      - ARTEMIS_PASSWORD=artemis
     networks:
       - gymapp-network
 
@@ -54,10 +68,12 @@ services:
   workload-app:
     image: iasw/spring-gym-workload:latest
     container_name: gymapp-workload
+    profiles: [apps]
     environment:
       - SPRING_PROFILES_ACTIVE=docker
     depends_on:
       - eureka
+      - artemis
     restart: on-failure
     ports:
       - "8082:8082"
@@ -67,11 +83,13 @@ services:
   main-app:
     image: iasw/spring-gym:latest
     container_name: gymapp-main
+    profiles: [apps]
     environment:
       - SPRING_PROFILES_ACTIVE=docker
     depends_on:
       - db
       - eureka
+      - artemis
     restart: on-failure
     ports:
       - "8080:8080"
