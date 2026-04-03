@@ -56,15 +56,6 @@ services:
     networks:
       - gymapp-network
 
-  eureka:
-    image: iasw/spring-gym-eureka:latest
-    container_name: gymapp-eureka
-    restart: on-failure
-    ports:
-      - "8761:8761"
-    networks:
-      - gymapp-network
-
   workload-app:
     image: iasw/spring-gym-workload:latest
     container_name: gymapp-workload
@@ -72,7 +63,6 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=docker
     depends_on:
-      - eureka
       - artemis
     restart: on-failure
     ports:
@@ -88,7 +78,6 @@ services:
       - SPRING_PROFILES_ACTIVE=docker
     depends_on:
       - db
-      - eureka
       - artemis
     restart: on-failure
     ports:
