@@ -1,6 +1,6 @@
 package dev.ilkersahin.java.spring.gym.workload.controller;
 
-import jakarta.persistence.EntityNotFoundException;
+import dev.ilkersahin.java.spring.gym.workload.exception.TrainerNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -30,9 +30,9 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(errorBody(400, "Bad Request", message, request));
     }
 
-    @ExceptionHandler(EntityNotFoundException.class)
+    @ExceptionHandler(TrainerNotFoundException.class)
     public ResponseEntity<Map<String, Object>> handleNotFound(
-            EntityNotFoundException ex, HttpServletRequest request
+            TrainerNotFoundException ex, HttpServletRequest request
     ) {
         log.warn("Not found: {} {} — {}", request.getMethod(), request.getRequestURI(), ex.getMessage());
 

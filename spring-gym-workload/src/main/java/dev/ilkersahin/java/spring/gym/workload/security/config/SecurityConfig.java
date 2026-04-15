@@ -29,12 +29,9 @@ public class SecurityConfig {
 
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/actuator/health/**").permitAll()
-                        .requestMatchers("/h2-console/**").permitAll()
                         .requestMatchers("/api/v1/workload/**").authenticated()
                         .anyRequest().denyAll()
                 )
-
-                .headers(headers -> headers.frameOptions(f -> f.sameOrigin())) // H2 console
 
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(transactionIdFilter, JwtAuthenticationFilter.class);

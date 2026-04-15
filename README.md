@@ -1,7 +1,7 @@
 # spring-gym
 
 A **microservices-based gym management (CRM) system** built with Spring Boot,
-featuring JWT authentication, asynchronous messaging, service discovery,
+featuring JWT authentication, asynchronous messaging,
 OpenAPI documentation, and Prometheus/Grafana monitoring.
 
 ## Architecture
@@ -12,19 +12,13 @@ OpenAPI documentation, and Prometheus/Grafana monitoring.
 │   Main App   ├──────►│ ActiveMQ Artemis ├──────►│  Workload Service │
 │  (port 8080) │       │   (port 61616)   │       │   (port 8082)     │
 │              │       │                  │       │                   │
-└──────┬───────┘       └──────────────────┘       └──────┬────────────┘
-       │                                                 │
-       │               ┌──────────────────┐              │
-       └───────────────►  Eureka Server   ◄──────────────┘
-                       │   (port 8761)    │
-                       └──────────────────┘
+└──────────────┘       └──────────────────┘       └───────────────────┘
 ```
 
 | Service              | Description                                   | Database       |
 |----------------------|-----------------------------------------------|----------------|
 | **Main App**         | Gym CRM — trainees, trainers, trainings, auth | MySQL 9.x      |
-| **Workload Service** | Trainer workload summaries (hours per month)  | H2 (in-memory) |
-| **Eureka Server**    | Service discovery and registration            | —              |
+| **Workload Service** | Trainer workload summaries (hours per month)  | MongoDB        |
 | **ActiveMQ Artemis** | Async messaging between main app and workload | —              |
 
 ## Tech Stack
@@ -34,7 +28,7 @@ OpenAPI documentation, and Prometheus/Grafana monitoring.
 - **ActiveMQ Artemis** (JMS async messaging, dead letter queue)
 - **Spring Security** + **BCrypt** password hashing
 - **MySQL 9.x** + **Flyway** migrations (main app)
-- **H2** in-memory database (workload service)
+- **MongoDB** (workload service — document store with embedded year/month summaries)
 - **JWT** authentication (jjwt 0.13.0, shared secret across services)
 - **OpenAPI 3.0** + Swagger UI
 - **Micrometer** + Prometheus + Grafana
@@ -45,7 +39,7 @@ OpenAPI documentation, and Prometheus/Grafana monitoring.
 
 ### Infrastructure Only (local development)
 
-Start MySQL, ActiveMQ Artemis, and Eureka:
+Start MySQL, MongoDB, ActiveMQ Artemis:
 
 ```bash
 cd docker
@@ -90,9 +84,8 @@ docker compose --profile apps --profile monitoring down
 |-------------------|-----------------------------------------|
 | Swagger UI        | http://localhost:8080/swagger-ui.html   |
 | API Base          | http://localhost:8080/api/v1            |
-| Health (Main)     | http://localhost:8080/actuator/health   |
+| Health (Main)     | http://localhost:8081/actuator/health   |
 | Health (Workload) | http://localhost:8082/actuator/health   |
-| Eureka Dashboard  | http://localhost:8761                   |
 | Artemis Console   | http://localhost:8161 (artemis/artemis) |
 | Grafana           | http://localhost:3000 (admin/admin)     |
 
@@ -178,7 +171,6 @@ java -jar target/spring-gym-1.1-SNAPSHOT.jar --spring.profiles.active=local
 |------------------|-------------|---------------------------------|
 | MySQL            | 3306        | mysql:9.5                       |
 | ActiveMQ Artemis | 61616, 8161 | apache/activemq-artemis:2.40.0  |
-| Eureka Server    | 8761        | iasw/spring-gym-eureka:latest   |
 | Main App         | 8080, 8081  | iasw/spring-gym:latest          |
 | Workload Service | 8082        | iasw/spring-gym-workload:latest |
 | Prometheus       | 9090        | prom/prometheus:v2.53.0         |
@@ -211,7 +203,6 @@ spring-gym/                          # Main app
 │   ├── security/                    # JWT, Spring Security, @SelfService AOP
 │   ├── metrics/                     # Custom Prometheus metrics
 │   └── actuator/health/             # Custom health indicators
-├── spring-gym-eureka/               # Eureka discovery server
 └── spring-gym-workload/             # Workload microservice
     └── src/main/java/.../workload/
         ├── controller/              # GET workload endpoint
