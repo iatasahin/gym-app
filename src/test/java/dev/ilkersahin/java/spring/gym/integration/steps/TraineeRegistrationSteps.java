@@ -1,5 +1,6 @@
 package dev.ilkersahin.java.spring.gym.integration.steps;
 
+import dev.ilkersahin.java.spring.gym.integration.ScenarioContext;
 import io.cucumber.datatable.DataTable;
 import io.cucumber.java.Before;
 import io.cucumber.java.en.Given;
@@ -27,7 +28,8 @@ public class TraineeRegistrationSteps {
     @Autowired
     private DataSource dataSource;
 
-    private Response lastResponse;
+    @Autowired
+    private ScenarioContext context;
 
     @Before
     public void setup() {
@@ -44,6 +46,7 @@ public class TraineeRegistrationSteps {
             stmt.execute("TRUNCATE TABLE trainees");
             stmt.execute("TRUNCATE TABLE username_counters");
             stmt.execute("TRUNCATE TABLE users");
+            stmt.execute("TRUNCATE TABLE blacklisted_tokens");
             stmt.execute("SET FOREIGN_KEY_CHECKS = 1");
         }
     }
@@ -63,33 +66,48 @@ public class TraineeRegistrationSteps {
             body.put("address", row.get("address"));
         }
 
-        lastResponse = given()
+        Response response = given()
                 .contentType("application/json")
                 .body(body)
                 .when()
                 .post("/api/v1/trainees");
 
+        context.setLastResponse(response);
+
+        if (response.getStatusCode() == 201){
+            String username = response.jsonPath().getString("username");
+            String password = response.jsonPath().getString("password");
+            context.storeCredentials(username, password);
+        }
+    }
+
+    @Given("a registered trainee with:")
+    public void aRegisteredTraineeWith(DataTable dataTable){
+        registerTrainee(dataTable);
+        assertThat(context.getLastResponse().getStatusCode())
+                .as("Precondition failed: trainee registration should succeed")
+                .isEqualTo(201);
     }
 
     @Then("the response status is {int}")
     public void verifyStatus(int expectedStatus){
-        assertThat(lastResponse.getStatusCode())
+        assertThat(context.getLastResponse().getStatusCode())
                 .as("Expected HTTP %d but got %d. Body: %s",
                         expectedStatus,
-                        lastResponse.getStatusCode(),
-                        lastResponse.getBody().asString())
+                        context.getLastResponse().getStatusCode(),
+                        context.getLastResponse().getBody().asString())
                 .isEqualTo(expectedStatus);
     }
 
     @Then("the response contains username {string}")
     public void verifyUsername(String expectedUsername){
-        String actualUsername = lastResponse.jsonPath().getString("username");
+        String actualUsername = context.getLastResponse().jsonPath().getString("username");
         assertThat(actualUsername).isEqualTo(expectedUsername);
     }
 
     @Then("the response contains a password of length {int}")
     public void verifyPasswordLength(int expectedLength){
-        String password = lastResponse.jsonPath().getString("password");
+        String password = context.getLastResponse().jsonPath().getString("password");
         assertThat(password)
                 .isNotNull()
                 .hasSize(10);
