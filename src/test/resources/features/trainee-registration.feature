@@ -3,7 +3,7 @@ Feature: Trainee Registration
   The system generates a unique username and a random password.
 
   Background:
-    Given the trainee database is empty
+    Given the database is clean
 
   # --- Happy path ---
 

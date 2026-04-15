@@ -3,7 +3,7 @@ Feature: Get Trainee Profile
   The @SelfService policy prevents access to other trainees' data.
 
   Background:
-    Given the trainee database is empty
+    Given the database is clean
 
   Scenario: Trainee views their own profile
     Given a registered trainee with:

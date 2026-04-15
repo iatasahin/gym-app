@@ -37,13 +37,14 @@ public class TraineeRegistrationSteps {
         RestAssured.port = port;
     }
 
-    @Given("the trainee database is empty")
+    @Given("the database is clean")
     public void cleanDatabase() throws Exception {
         try (Connection conn = dataSource.getConnection();
              Statement stmt = conn.createStatement()) {
             stmt.execute("SET FOREIGN_KEY_CHECKS = 0");
             stmt.execute("TRUNCATE TABLE trainings");
             stmt.execute("TRUNCATE TABLE trainees");
+            stmt.execute("TRUNCATE TABLE trainers");
             stmt.execute("TRUNCATE TABLE username_counters");
             stmt.execute("TRUNCATE TABLE users");
             stmt.execute("TRUNCATE TABLE blacklisted_tokens");
