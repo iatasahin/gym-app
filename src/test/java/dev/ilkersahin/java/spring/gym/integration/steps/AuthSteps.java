@@ -15,10 +15,31 @@ public class AuthSteps {
     private ScenarioContext context;
 
     @When("I log in as {string}")
-    public void logInAs(String username) {
+    public void logInAs(String username) throws InterruptedException {
         String password = context.getPasswordFor(username);
+        String previousToken = context.getAuthToken();
 
-        Response response = given()
+        Response response = doLogin(username, password);
+        context.setLastResponse(response);
+
+        if (response.getStatusCode() == 200) {
+            String newToken = response.jsonPath().getString("token");
+
+            // JWT tokens generated in the same second with identical claims
+            // produce identical tokens. If we just blacklisted the old one,
+            // the "new" token is also blacklisted. Wait for the next second.
+            if (newToken.equals(previousToken)) {
+                Thread.sleep(1100);
+                response = doLogin(username, password);
+                context.setLastResponse(response);
+                newToken = response.jsonPath().getString("token");
+            }
+            context.setAuthToken(newToken);
+        }
+    }
+
+    private static Response doLogin(String username, String password) {
+        return given()
                 .contentType("application/json")
                 .body(Map.of(
                         "username", username,
@@ -26,13 +47,6 @@ public class AuthSteps {
                 ))
                 .when()
                 .post("/api/v1/auth/login");
-
-        context.setLastResponse(response);
-
-        if (response.getStatusCode() == 200) {
-            String token = response.jsonPath().getString("token");
-            context.setAuthToken(token);
-        }
     }
 
     @When("I logout")
