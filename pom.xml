@@ -243,7 +243,7 @@
                         <artifactId>maven-surefire-plugin</artifactId>
                         <configuration>
                             <includes>
-                                <include>**/CucumberRunnerTest.java</include>
+                                <include>**/CucumberRunnerIT.java</include>
                             </includes>
                         </configuration>
                     </plugin>

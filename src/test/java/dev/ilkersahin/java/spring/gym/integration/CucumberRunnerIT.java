@@ -11,5 +11,5 @@ import org.junit.platform.suite.api.Suite;
 @SelectClasspathResource("features")
 @ConfigurationParameter(key = Constants.GLUE_PROPERTY_NAME, value = "dev.ilkersahin.java.spring.gym.integration")
 @ConfigurationParameter(key = Constants.PLUGIN_PROPERTY_NAME, value = "pretty, html:target/cucumber-reports.html")
-public class CucumberRunnerTest {
+public class CucumberRunnerIT {
 }
