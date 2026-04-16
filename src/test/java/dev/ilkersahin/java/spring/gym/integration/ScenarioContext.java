@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -23,6 +24,16 @@ public class ScenarioContext {
 
     @Setter
     private Object receivedMessage;
+
+    @Setter
+    private UUID lastTrainingId;
+
+    public UUID getLastTrainingId() {
+        assertThat(lastTrainingId)
+                .as("No training ID stored. Did a previous step create a training?")
+                .isNotNull();
+        return lastTrainingId;
+    }
 
     public <T> T getReceivedMessage(Class<T> type){
         assertThat(receivedMessage)
