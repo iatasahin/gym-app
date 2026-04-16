@@ -10,6 +10,7 @@ import io.restassured.RestAssured;
 import io.restassured.response.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.jms.core.JmsTemplate;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -27,6 +28,9 @@ public class TraineeRegistrationSteps {
 
     @Autowired
     private DataSource dataSource;
+
+    @Autowired
+    private JmsTemplate jmsTemplate;
 
     @Autowired
     private ScenarioContext context;
@@ -49,6 +53,11 @@ public class TraineeRegistrationSteps {
             stmt.execute("TRUNCATE TABLE users");
             stmt.execute("TRUNCATE TABLE blacklisted_tokens");
             stmt.execute("SET FOREIGN_KEY_CHECKS = 1");
+        }
+
+        jmsTemplate.setReceiveTimeout(100);
+        while (jmsTemplate.receive("workload.queue") != null) {
+            // waits to drain the message queue for 100 ms
         }
     }
 

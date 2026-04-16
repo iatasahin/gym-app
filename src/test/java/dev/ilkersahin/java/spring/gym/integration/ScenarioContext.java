@@ -9,6 +9,8 @@ import org.springframework.stereotype.Component;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 @Component
 @ScenarioScope
 public class ScenarioContext {
@@ -18,6 +20,17 @@ public class ScenarioContext {
     private String authToken;
 
     private final Map<String, String> registeredCredentials = new HashMap<>();
+
+    @Setter
+    private Object receivedMessage;
+
+    public <T> T getReceivedMessage(Class<T> type){
+        assertThat(receivedMessage)
+                .as("No message was received. Did the previous step consume one?")
+                .isNotNull()
+                .isInstanceOf(type);
+        return type.cast(receivedMessage);
+    }
 
     public void storeCredentials(String username, String rawPassword){
         registeredCredentials.put(username, rawPassword);

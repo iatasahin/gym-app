@@ -182,6 +182,9 @@ java -jar target/spring-gym-1.1-SNAPSHOT.jar --spring.profiles.active=local
 ./mvnw test                      # Unit tests only (~5s)
 ./mvnw test -P integration-test  # Integration tests with MySQL
 xdg-open target/site/jacoco/index.html # Coverage report
+
+./mvnw test -P cucumber          # Component and Integration tests with Cucumber
+xdg-open target/cucumber-reports.html  # Cucumber BDD test report
 ```
 
 - **Unit tests**: Fast, no external dependencies
