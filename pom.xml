@@ -340,6 +340,7 @@
                                 <exclude>dev/ilkersahin/java/spring/gym/config/**</exclude>
                                 <exclude>dev/ilkersahin/java/spring/gym/security/config/**</exclude>
                                 <exclude>dev/ilkersahin/java/spring/gym/security/selfservice/**</exclude>
+                                <exclude>dev/ilkersahin/java/spring/gym/security/service/CustomUserDetailsService.class</exclude>
                                 <exclude>dev/ilkersahin/java/spring/gym/repository/**</exclude>
                                 <exclude>dev/ilkersahin/java/spring/gym/model/**</exclude>
                                 <exclude>dev/ilkersahin/java/spring/gym/dto/**</exclude>

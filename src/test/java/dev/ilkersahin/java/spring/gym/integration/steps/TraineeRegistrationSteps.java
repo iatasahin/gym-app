@@ -52,6 +52,7 @@ public class TraineeRegistrationSteps {
             stmt.execute("TRUNCATE TABLE username_counters");
             stmt.execute("TRUNCATE TABLE users");
             stmt.execute("TRUNCATE TABLE blacklisted_tokens");
+            stmt.execute("TRUNCATE TABLE login_attempts");
             stmt.execute("SET FOREIGN_KEY_CHECKS = 1");
         }
 

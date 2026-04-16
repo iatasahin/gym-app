@@ -57,3 +57,10 @@ Feature: Training Creation
       | traineeUsername | trainerUsername | trainingName   | trainingType | trainingDate | durationMinutes |
       | John.Doe        | Jane.Smith      | Morning Cardio | Fitness      | 2024-03-01   | 60              |
     Then the response status is 401
+
+  Scenario: Invalid training type
+    Given I am logged in as "John.Doe"
+    When I create a training with:
+      | traineeUsername | trainerUsername | trainingName | trainingType | trainingDate | durationMinutes |
+      | John.Doe        | Jane.Smith      | Boxing Class | Boxing       | 2024-03-01   | 60              |
+    Then the response status is 400
