@@ -29,7 +29,7 @@
         </root>
     </springProfile>
 
-    <springProfile name="default">
+    <springProfile name="default,integration-test">
         <root level="INFO">
             <appender-ref ref="CONSOLE"/>
             <appender-ref ref="FILE"/>

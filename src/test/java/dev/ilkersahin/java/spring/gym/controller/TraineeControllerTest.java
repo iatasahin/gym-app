@@ -10,8 +10,10 @@ import dev.ilkersahin.java.spring.gym.exception.UserAlreadyActiveException;
 import dev.ilkersahin.java.spring.gym.exception.UserAlreadyInactiveException;
 import dev.ilkersahin.java.spring.gym.service.TraineeService;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -28,6 +30,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class TraineeControllerTest {
 
     @Mock private TraineeService traineeService;

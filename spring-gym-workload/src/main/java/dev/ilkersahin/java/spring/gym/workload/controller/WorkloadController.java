@@ -1,9 +1,7 @@
 package dev.ilkersahin.java.spring.gym.workload.controller;
 
-import dev.ilkersahin.java.spring.gym.workload.dto.WorkloadRequest;
 import dev.ilkersahin.java.spring.gym.workload.dto.WorkloadResponse;
 import dev.ilkersahin.java.spring.gym.workload.service.WorkloadService;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
