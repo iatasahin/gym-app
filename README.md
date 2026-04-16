@@ -178,6 +178,29 @@ java -jar target/spring-gym-1.1-SNAPSHOT.jar --spring.profiles.active=local
 
 ## Testing
 
+The project has three levels of testing:
+
+### Unit Tests
+
+```bash
+./mvnw test                                 # Fast, no external dependencies (~5s)
+xdg-open target/site/jacoco/index.html      # Coverage report
+```
+
+### Cucumber BDD Tests (Component/Integration)
+
+Each service has its own Cucumber test suite with Testcontainers:
+
+```bash
+# Main gym service (MySQL + Artemis containers)
+./mvnw test -P cucumber
+
+# Workload service (MongoDB + Artemis containers)
+cd spring-gym-workload
+./mvnw test -P cucumber
+```
+
+
 ```bash
 ./mvnw test                      # Unit tests only (~5s)
 ./mvnw test -P integration-test  # Integration tests with MySQL
@@ -186,9 +209,48 @@ xdg-open target/site/jacoco/index.html # Coverage report
 ./mvnw test -P cucumber          # Component and Integration tests with Cucumber
 xdg-open target/cucumber-reports.html  # Cucumber BDD test report
 ```
+**Coverage**: 91+ scenarios covering:
+- Trainee/Trainer registration, profiles, updates, deletion
+- Training creation/deletion with ActiveMQ message verification
+- Activation/deactivation (non-idempotent 409 handling)
+- Password changes, authentication, logout with token blacklisting
+- Trainer assignments, unassigned trainers query
+- Training search with filters (date range, trainer, type)
+- Workload message processing (ADD/DELETE)
+- `@SelfService` authorization enforcement on all protected endpoints
 
-- **Unit tests**: Fast, no external dependencies
-- **Integration tests**: TestContainers + MySQL (tagged with `@Tag("integration")`)
+### E2E Tests (Cross-Service)
+
+Full end-to-end tests against Docker Compose services:
+
+```bash
+# 1. Start all services
+cd docker
+docker compose --profile apps up -d
+
+# 2. Wait for services to be healthy
+sleep 30
+
+cd ..
+# 3. Run E2E tests
+cd spring-gym-integration-tests/
+mvn test -P e2e
+
+# 4. Stop services
+docker compose --profile apps down
+```
+
+E2E scenarios verify the complete flow: create training in gym service →
+message sent to ActiveMQ → workload service processes → verify via REST.
+
+### Coverage Reports
+
+```bash
+./mvnw verify                            # Runs tests + generates JaCoCo report
+xdg-open target/site/jacoco/index.html   # Coverage report (80% enforced)
+xdg-open target/cucumber-reports/cucumber.html  # Cucumber BDD report
+```
+
 - **JaCoCo** enforces 80% line coverage (with exclusions)
 
 ## Project Structure
@@ -206,16 +268,25 @@ spring-gym/                          # Main app
 │   ├── security/                    # JWT, Spring Security, @SelfService AOP
 │   ├── metrics/                     # Custom Prometheus metrics
 │   └── actuator/health/             # Custom health indicators
-└── spring-gym-workload/             # Workload microservice
-    └── src/main/java/.../workload/
-        ├── controller/              # GET workload endpoint
-        ├── listener/                # JMS message consumer
-        ├── service/                 # Workload processing logic
-        ├── model/                   # TrainerWorkload + MonthlySummary
-        ├── dto/                     # WorkloadRequest/Response
-        ├── repository/              # Spring Data JPA (H2)
-        ├── config/                  # Security, JMS config
-        └── security/                # JWT validation, TransactionId filter
+├── spring-gym-workload/             # Workload microservice
+│   └── src/main/java/.../workload/
+│       ├── controller/              # GET workload endpoint
+│       ├── listener/                # JMS message consumer
+│       ├── service/                 # Workload processing logic
+│       ├── model/                   # TrainerWorkload + MonthlySummary
+│       ├── dto/                     # WorkloadRequest/Response
+│       ├── repository/              # Spring Data JPA (H2)
+│       ├── config/                  # Security, JMS config
+│       └── security/                # JWT validation, TransactionId filter
+└── spring-gym-integration-tests/            # Cross-service E2E tests
+    ├── pom.xml                              # Spring Boot + Cucumber + RestAssured
+    └── src/test/
+        ├── java/.../integrationtests/
+        │   ├── CucumberRunnerTest.java      # Test runner
+        │   ├── ScenarioContext.java         # Shared state between steps
+        │   └── steps/                       # Step definitions
+        └── resources/
+            └── features/                    # Gherkin feature files
 ```
 
 ## Observability
