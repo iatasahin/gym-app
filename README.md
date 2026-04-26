@@ -78,6 +78,41 @@ docker compose --profile monitoring up -d
 docker compose --profile apps --profile monitoring down
 ```
 
+### Docker demonstrations
+
+SubTask 2:
+```bash
+docker network create gymapp-network
+```
+```bash
+cd docker
+docker compose up
+```
+
+SubTask 1:
+```bash
+cd spring-gym-workload
+docker build -t iasw/spring-gym-workload-df:latest .
+docker run --rm --name gymapp-workload-df -p 8082:8082 --network gymapp-network iasw/spring-gym-workload-df:latest
+```
+```bash
+docker build -t iasw/spring-gym-df:latest .
+docker run --rm --name gymapp-df -p 8080:8080 -p 8081:8081 --network gymapp-network iasw/spring-gym-df:latest
+```
+
+SubTask 3:
+```bash
+docker exec -it gymapp-workload-df sh
+/app # exit
+```
+```bash
+docker logs -f gymapp-workload-df
+```
+
+Note: Docker images has been pushed to Dockerhub 
+under names iasw/spring-gym*-df, 
+they can be run without building locally.
+
 ### Access
 
 | Resource          | URL                                     |
